@@ -1,0 +1,2869 @@
+season:
+  2012:
+    scoring_scheme: A # 第一套评分方案，csv 格式为“选手码,评委,欣赏性,娱乐性,挑战性,创新性,加分项,扣分项"“
+    host: newlife2017 # 主办人
+    chief_judge: false  # 本届无总评委
+    rounds:
+      I1: # I 表示初赛，1 为第一轮
+        players:
+          A:  # 组别
+            A1: '912394'
+            A2: lahztc1
+            A3: R大次郎
+            A4: sbs452
+          B:
+            B1: dd16168
+            B2: LLX奶油马里奥
+            B3: MarioHappy_17
+          C:
+            C1: 玛丽奥中级玩家
+            C2: newlife2017
+            C3: zqh——123
+            C4: wyiming6688
+          D:
+            D1: 僵尸广告歌
+            D2: 马里奥奥里马
+            D3: nmnmoooh
+            D4: 大幽灵王
+        judges:
+          A:
+            J1: nmnmoooh
+            J2: 毒蘑菇vn
+          B:
+            J1: lahztc1
+          C:
+            J1: shasdo
+            J2: Fahlee_5
+          D:
+            J1: wyiming6688
+            J2: 毒蘑菇vn
+      I2:
+        players:
+          A:
+            A1: wyiming6688
+            A2: 僵尸广告歌
+            A3: MarioHappy_17
+            A4: 马里奥奥里马
+            A5: '912394'
+          B:
+            B1: zqh——123
+            B2: nmnmoooh
+            B3: lahztc1
+            B4: LLX奶油马里奥
+        judges:
+          A:
+            J1: shasdo
+            J2: 毒蘑菇vn
+          B:
+            J1: Fahlee_5
+            J2: wyiming6688
+  2013:
+    scoring_scheme: A
+    host: Fahlee_5
+    chief_judge: [Fahlee_5, nmnmoooh] # 总评委一般有两位
+    rounds:
+      P1: # P1 为预选赛/热身赛，本届为热身赛
+        players:
+          a:
+            a1: 三条海里4498
+            a2: '123568024'
+            a3: LLX奶油马里奥
+            a4: duanxiaoqi1234
+          b:
+            b1: 祝贺高考成功
+            b2: newlife2017
+            b3: 僵尸广告歌
+            b4: 毒蘑菇vn
+          c:
+            c1: AAArororo
+            c2: 下辈子当个Blu
+            c3: zqh——123
+            c4: gaere54
+          d:
+            d1: 马里奥奥里马
+            d2: bluesun0505
+            d3: dodoufatch
+            d4: 010802cyn
+        judges:
+          a:
+            J1: 马里奥奥里马
+            J2: nmnmoooh
+            JR: 祝贺高考成功
+          b:
+            J1: shasdo
+            J2: lahztc1
+            JR: nmnmoooh
+          c:
+            J1: 祝贺高考成功
+            J2: wyiming6688
+          d:
+            J1: Fahlee_5
+            J2: 毒蘑菇vn
+            JR: 祝贺高考成功
+        schedule: # 比赛日程
+          registration: # 报名
+            start: 2012-12-23T00:00
+            end: 2013-01-20T14:00
+            tieba_tid: 2062469827
+          draw: # 抽签
+            time: 2013-01-30T22:15
+            tieba_tid: 2130192213
+          match:  # 比赛
+            start: 2013-01-31T13:35
+            end: 2013-02-23T14:00
+            tieba_tid: 2131102394
+          judging:  # 评分
+            start: 2013-01-31T13:35
+            end: 2013-02-23T14:00
+            tieba_tid: 2133819485
+          post_match_checkin: # 晋级选手签到
+            start: 2013-06-24T18:00
+            end: 2013-07-06T20:30
+            tieba_tid: 2414327618
+      P2: # P2 为资格赛
+        players:
+          ①:
+            '1': 百步穿杨又飞剑
+            '2': yxr000504
+            '3': xi7yang3
+            '4': 玛丽的死对头
+          ②:
+            '5': bzshzpm
+            '6': Love雪2000
+            '7': 快乐mario8
+            '8': '1168438795'
+          ③:
+            '9': xise小候侯
+            '10': 大幽灵王
+            '11': 大爷23大买卖吗
+        judges:
+          ①:
+            J1: 马里奥奥里马
+            J2: newlife2017
+          ②:
+            J1: wyiming6688
+            J2: nmnmoooh
+          ③:
+            J1: 毒蘑菇vn
+            J2: Fahlee_5
+        schedule:
+          registration:
+            start: 2013-07-07T10:00 
+            end: 2013-07-10T16:00
+            tieba_tid: 2441649793
+          match:
+            start: 2013-07-11T10:00 
+            end: 2013-07-13T15:00
+            tieba_tid: 2450143073
+          judging:
+            start: 2013-07-13T15:00
+            end: 2013-07-14T16:00
+            tieba_tid: 2450238291
+      [G1, G2, G3, G4]: # G 表示小组赛，四轮选手评委均相同
+        players:
+          A:
+            A1: gaere54
+            A2: '123568024'
+            A3: dodoufatch
+            A4: 百步穿杨又飞剑
+          B:
+            B1: duanxiaoqi1234
+            B2: 下辈子当个Blu
+            B3: 010802cyn
+            B4: 大幽灵王
+          C:
+            C1: 毒蘑菇vn
+            C2: newlife2017
+            C3: 僵尸广告歌
+            C4: bzshzpm
+          D:
+            D1: 马里奥奥里马
+            D2: zqh——123
+            D3: LLX奶油马里奥
+            D4: 玛丽的死对头
+        judges:
+          A:
+            J1: 马里奥奥里马
+            J2: shasdo
+            JR: 毒蘑菇vn
+          B:
+            J1: Fahlee_5
+            J2: 毒蘑菇vn
+            JR: nmnmoooh
+          C:
+            J1: 祝贺高考成功
+            J2: nmnmoooh
+            JR: wyiming6688
+          D:
+            J1: lahztc1
+            J2: newlife2017
+            J3: '123568024'
+            JR: Fahlee_5
+        schedule:
+          draw:
+            time: 2013-07-14T18:00
+          G1: # 按轮次分类
+            match:
+              start: 2013-07-15T20:30
+              end: 2013-07-17T20:30
+              tieba_tid: 2460530236
+            judging:
+              start: 2013-07-17T20:30
+              end: 2013-07-20T16:00
+              tieba_tid: 2460736595
+          G2:
+            match:
+              start: 2013-07-20T20:30
+              end: 2013-07-22T20:30
+              tieba_tid: 2471908206
+            judging:
+              start: 2013-07-22T20:30
+              end: 2013-07-25T16:00
+              tieba_tid: 2460736595
+          G3:
+            match:
+              start: 2013-07-25T20:30
+              end: 2013-07-27T20:30
+              tieba_tid: 2484180465
+            judging:
+              start: 2013-07-27T20:30
+              end: 2013-07-30T16:00
+              tieba_tid: 2460736595
+          G4:
+            match:
+              start: 2013-07-30T20:30
+              end: 2013-08-01T20:30
+              tieba_tid: 2497323986
+            judging:
+              start: 2013-08-01T20:30
+              end: 2013-08-04T16:00
+              tieba_tid: 2460736595
+      [Q1, Q2]: # Q 表示四分之一决赛
+        players:
+          '1':
+            1A: gaere54
+            1B: duanxiaoqi1234
+            JR: 马里奥奥里马
+          '2':
+            2A: 大幽灵王
+            2B: '123568024'
+          '3':
+            3A: 毒蘑菇vn
+            3B: 玛丽的死对头
+          '4':
+            4A: 马里奥奥里马
+            4B: bzshzpm
+        judges:
+          '1':
+            J1: zqh——123
+            J2: nmnmoooh
+          '2':
+            J1: 玛丽的死对头
+            J2: 毒蘑菇vn
+          '3':
+            J1: Fahlee_5
+            J2: 马里奥奥里马
+          '4':
+            J1: '123568024'
+            J2: 祝贺高考成功
+        schedule:
+          Q1:
+            match:
+              start: 2013-08-04T20:30
+              end: 2013-08-06T20:30
+              tieba_tid: 2508911292
+            judging:
+              start: 2013-08-06T20:30
+              end: 2013-08-08T16:00
+              tieba_tid: 2508904939
+          Q2:
+            match:
+              start: 2013-08-08T20:30
+              end: 2013-08-10T20:30
+              tieba_tid: 2518061094
+            judging:
+              start: 2013-08-10T20:30
+              end: 2013-08-12T16:00
+              tieba_tid: 2508904939
+      [S1, S2]: # S 表示半决赛
+        players:
+          I:
+            A: duanxiaoqi1234
+            B: 玛丽的死对头
+          II:
+            C: '123568024'
+            D: 马里奥奥里马
+        judges:
+          I:
+            J1: zqh——123
+            J2: nmnmoooh
+            JR: bluesun0505
+          II:
+            J1: bluesun0505
+            J2: 毒蘑菇vn
+        schedule:
+          S1:
+            match:
+              start: 2013-08-12T20:30
+              end: 2013-08-14T20:30
+              tieba_tid: 2526637995
+            judging:
+              start: 2013-08-14T20:30
+              end: 2013-08-15T16:00
+              tieba_tid: 2526725187
+          S2:
+            match:
+              start: 2013-08-15T20:30
+              end: 2013-08-17T20:30
+              tieba_tid: 2533108263
+            judging:
+              start: 2013-08-17T20:30
+              end: 2013-08-18T16:00
+              tieba_tid: 2526725187
+      F:  # F 表示决赛
+        players:
+          M: duanxiaoqi1234
+          W: 马里奥奥里马
+        judges:
+          J1: nmnmoooh
+          J2: Fahlee_5
+          J3: 祝贺高考成功
+          J4: 毒蘑菇vn
+        schedule:
+          match:
+            start: 2013-08-18T20:30
+            end: 2013-08-20T20:30
+            tieba_tid: 2539354082
+          judging:
+            start: 2013-08-20T20:30
+            end: 2013-08-22T16:00
+            tieba_tid: 2540895836
+  2014:
+    scoring_scheme: B # 第二套评分方案，csv格式为“选手码,评委,欣赏性,设计水平,创新性,挑战性,娱乐性,加分项,扣分项”
+    host: nmnmoooh
+    chief_judge: [nmnmoooh, 马里奥奥里马]
+    rounds:
+      P1:
+        players:
+          a:
+            a1: 和蔼的大马里奥
+            a2: dodoufatch
+            a3: yxr000504
+            a4: zqh——123
+            a5: 快乐mario8
+          b:
+            b1: 毒蘑菇小Mario
+            b2: gaere54
+            b3: 水银龟
+            b4: 大爷23大买卖吗
+            b5: 俺滴娘7
+          c:
+            c1: R大次郎
+            c2: 玛丽的死对头
+            c3: bluesun0505
+            c4: 马里奥奥里马
+            c5: 下辈子当个Blu
+          d:
+            d1: 百步穿杨又飞剑
+            d2: '123568024'
+            d3: xi7yang3
+            d4: 毒蘑菇vn
+            d5: chaojimali1201
+        judges:
+          a:
+            J1: wyiming6688
+            J2: 毒蘑菇vn
+          b:
+            J1: newlife2017
+            J2: bluesun0505
+            JR1: nmnmoooh
+            JR2: Fahlee_5
+          c:
+            J1: nmnmoooh
+            J2: zqh——123
+          d:
+            J1: Fahlee_5
+            J2: 玛丽的死对头
+        schedule:
+          registration:
+            start: 2013-08-31T18:20
+            end: 2014-01-19T16:00
+            tieba_tid: 2567095385
+          pre_match_checkin:  # 报名选手签到
+            start: 2014-01-19T20:00
+            end: 2014-01-26T16:00
+            tieba_tid: 2822968001
+          draw:
+            time: 2014-01-27T18:40
+            tieba_tid: 2836158397
+          match:
+            start: 2014-01-27T20:00
+            end: 2014-02-07T20:00
+            tieba_tid: 2836275813
+          judging:
+            start: 2014-01-27T20:00
+            end: 2014-02-07T20:00
+            tieba_tid: 2837166553
+          post_match_checkin:
+            start: 2014-06-28T20:35
+            end: 2014-07-04T20:30
+            tieba_tid: 3133327218
+        chief_judge: [nmnmoooh, Fahlee_5] # 在轮次下的 chief_judge 仅适用于当前轮次
+      P2:
+        players:
+          '①':
+            '1': bzshzpm
+            '2': '869956924'
+            '3': dasasdhba
+            '4': 节操都去哪了01
+          '②':
+            '5': 梦幻的天堂乐园
+            '6': 窘彳
+            '7': 大爷23大买卖吗
+        judges:
+          '①':
+            J1: 大幽灵王
+            J2: nmnmoooh
+          '②':
+            J1: '123568024'
+            J2: newlife2017
+        schedule:
+          registration:
+            start: 2014-07-04T20:30
+            end: 2014-07-10T17:00
+            tieba_tid: 3145102604
+          match:
+            start: 2014-07-10T20:00
+            end: 2014-07-13T20:00
+            tieba_tid: 3157234826
+          judging:
+            start: 2014-07-10T20:00
+            end: 2014-07-14T17:00
+            tieba_tid: 3157257148
+      [G1, G2, G3]:
+        players:
+          A:
+            A1: 玛丽的死对头
+            A2: dasasdhba
+            A3: 水银龟
+            A4: 百步穿杨又飞剑
+          B:
+            B1: bzshzpm
+            B2: zqh——123
+            B3: R大次郎
+            B4: 梦幻的天堂乐园
+          C:
+            C1: gaere54
+            C2: 和蔼的大马里奥
+            C3: dodoufatch
+            C4: xi7yang3
+          D:
+            D1: bluesun0505
+            D2: 下辈子当个Blu
+            D3: 毒蘑菇vn
+            D4: 快乐mario8
+        judges:
+          A:
+            J1: bluesun0505
+            J2: 马里奥奥里马
+            JR: Fahlee_5
+          B:
+            J1: 大幽灵王
+            J2: 毒蘑菇vn
+            JR: nmnmoooh
+          C:
+            J1: nmnmoooh
+            J2: zqh——123
+            JR1: '123568024'
+            JR2: 马里奥奥里马
+          D:
+            J1: 玛丽的死对头
+            J2: newlife2017
+            JR1: 马里奥奥里马
+            JR2: nmnmoooh
+        schedule:
+          draw:
+            time: 2014-07-14T20:00
+            tieba_tid: 3165049873
+          G1:
+            match:
+              start: 2014-07-15T20:00
+              end: 2014-07-17T20:00
+              tieba_tid: 3166991925
+            judging:
+              start: 2014-07-15T20:00
+              end: 2014-07-20T17:00
+              tieba_tid: 3167181497
+          G2:
+            match:
+              start: 2014-07-20T20:00
+              end: 2014-07-22T20:00
+              tieba_tid: 3176869985
+            judging:
+              start: 2014-07-20T20:00
+              end: 2014-07-25T17:00
+              tieba_tid: 3167181497
+          G3:
+            match:
+              start: 2014-07-25T20:00
+              end: 2014-07-28T20:00
+              tieba_tid: 3187280207
+            judging:
+              start: 2014-07-25T20:00
+              end: 2014-07-30T17:00
+              tieba_tid: 3167181497
+      [Q1, Q2]:
+        players:
+          '1':
+            1A: 玛丽的死对头
+            1B: zqh——123
+          '2':
+            2A: bzshzpm
+            2B: 百步穿杨又飞剑
+          '3':
+            3A: 和蔼的大马里奥
+            3B: bluesun0505
+          '4':
+            4A: 下辈子当个Blu
+            4B: gaere54
+        judges:
+          '1':
+            J1: nmnmoooh
+            J2: LLX奶油马里奥
+            JR: 大幽灵王
+          '2':
+            J1: bluesun0505
+            J2: 玛丽的死对头
+            JR: nmnmoooh
+          '3':
+            J1: 马里奥奥里马
+            J2: 大幽灵王
+            JR: Fahlee_5
+          '4':
+            J1: 毒蘑菇vn
+            J2: zqh——123
+            JR: 马里奥奥里马
+        schedule:
+          Q1:
+            match:
+              start: 2014-07-30T20:00
+              end: 2014-08-02T20:00
+              tieba_tid: 3197527978
+            judging:
+              start: 2014-07-30T20:00
+              end: 2014-08-04T17:00
+              tieba_tid: 3197775490
+          Q2:
+            match:
+              start: 2014-08-04T20:00
+              end: 2014-08-07T20:00
+              tieba_tid: 3208463748
+            judging:
+              start: 2014-08-04T20:00
+              end: 2014-08-09T17:00
+              tieba_tid: 3197775490
+      S:
+        players:
+          I:
+            A: zqh——123
+            B: bluesun0505
+          II:
+            C: 百步穿杨又飞剑
+            D: 下辈子当个Blu
+        judges:
+          I:
+            J1: newlife2017
+            J2: 马里奥奥里马
+            JR: 毒蘑菇vn
+          II:
+            J1: LLX奶油马里奥
+            J2: nmnmoooh
+            JR: 马里奥奥里马
+        schedule:
+          match:
+            start: 2014-08-09T17:05
+            end: 2014-08-11T20:00
+            tieba_tid: 3219094018
+          judging:
+            start: 2014-08-09T20:00
+            end: 2014-08-13T17:00
+            tieba_tid: 3219129321
+      F:
+        players:
+          M: zqh——123
+          W: 下辈子当个Blu
+        judges:
+          J1: nmnmoooh
+          J2: 马里奥奥里马
+          J3: '123568024'
+          J4: 毒蘑菇vn
+        schedule:
+          match:
+            start: 2014-08-14T20:05
+            end: 2014-08-17T20:00
+            tieba_tid: 3230584191
+          judging:
+            start: 2014-08-14T20:00
+            end: 2014-08-19T17:00
+            tieba_tid: 3230604500
+  2015:
+    scoring_scheme: B
+    host: 马里奥奥里马
+    chief_judge: [马里奥奥里马, zqh——123]
+    rounds:
+      P1:
+        players:
+          '1': R大次郎
+          '2': '123568024'
+          '3': 把僵尸炖了
+          '4': suteaury
+          '5': '835743384'
+          '6': 毒蘑菇vn
+          '7': dasasdhba
+          '8': 小皓宇Tom
+          '9': 玛丽的死对头
+          '10': 我懂你不懂的lz
+          '11': 大爷23大买卖吗
+          '12': 我爱吃烧饼哈哈
+          '13': 悲伤的快乐云
+          '14': bzshzpm
+          '15': xi7yang3
+          '16': 节操都去哪了01
+          '17': 水银龟
+        judges:
+          J1: '123568024'
+          J2: zqh——123
+          J3: 大幽灵王
+          J4: 毒蘑菇vn
+          J5: nmnmoooh
+          J6: 马里奥奥里马
+          J7: 玛丽的死对头
+        schedule:
+          registration:
+            start: 2014-11-08T22:45
+            end: 2015-02-04T20:00
+            tieba_tid: 3398899880
+          pre_match_checkin:
+            start: 2015-02-04T20:35
+            end: 2015-02-07T20:00
+            tieba_tid: 3567717721
+          draw:
+            time: 2015-02-08T19:40
+            tieba_tid: 3574991434
+          match:
+            start: 2015-02-09T20:00
+            end: 2015-02-22T20:00
+            tieba_tid: 3576927383
+          judging:
+            start: 2015-02-09T20:00
+            end: 2015-02-22T23:09
+            tieba_tid: 3576954061
+          post_match_checkin:
+            start: 2015-06-25T20:00
+            end: 2015-07-08T16:00
+            tieba_tid: 3850760521
+      P2:
+        players:
+          I:
+            '1': 天碧苑
+            '2': 玛丽奥中级玩家
+            '3': 和蔼的大马里奥
+            '4': 小皓宇Tom
+          II:
+            '5': '1168438795'
+            '6': Lakitu01
+            '7': 残剑魔帝
+            '8': 梦幻的天堂乐园
+        judges:
+          I:
+            J1: zqh——123
+            J2: 大幽灵王
+          II:
+            J1: 马里奥奥里马
+            J2: bluesun0505
+        schedule:
+          registration:
+            start: 2015-07-08T20:00
+            end: 2015-07-12T16:00
+            tieba_tid: 3880157042
+          draw:
+            time: 2015-07-12T20:00
+            tieba_tid: 3889380603
+          match:
+            start: 2015-07-13T17:00
+            end: 2015-07-15T23:00
+            tieba_tid: 3891335252
+          judging:
+            start: 2015-07-13T17:00
+            end: 2015-07-17T16:00
+            tieba_tid: 3891356899
+      [G1, G2, G3, G4]:
+        players:
+          A:
+            A1: 毒蘑菇vn
+            A2: 天碧苑
+            A3: xi7yang3
+            A4: dasasdhba
+          B:
+            B1: '123568024'
+            B2: '1168438795'
+            B3: 把僵尸炖了
+            B4: R大次郎
+          C:
+            C1: 大爷23大买卖吗
+            C2: 水银龟
+            C3: 悲伤的快乐云
+            C4: 我懂你不懂的lz
+          D:
+            D1: 和蔼的大马里奥
+            D2: suteaury
+            D3: '835743384'
+            D4: 我爱吃烧饼哈哈
+        judges:
+          A:
+            J1: zqh——123
+            J2: 祝贺高考成功
+            JR1: bluesun0505
+            JR2: 玛丽的死对头
+          B:
+            J1: 大幽灵王
+            J2: Fahlee_5
+            JR: 马里奥奥里马
+          C:
+            J1: 毒蘑菇vn
+            J2: 马里奥奥里马
+            JR: Fahlee_5
+          D:
+            J1: newlife2017
+            J2: nmnmoooh
+            JR1: zqh——123
+            JR2: bluesun0505
+        schedule:
+          draw:
+            time: 2015-07-17T20:00
+            tieba_tid: 3901278501
+          G1:
+            match:
+              start: 2015-07-18T17:00
+              end: 2015-07-20T23:00
+              tieba_tid: 3903180353
+            judging:
+              start: 2015-07-18T17:00
+              end: 2015-07-22T16:00
+              tieba_tid: 3903300600
+          G2:
+            match:
+              start: 2015-07-22T17:00
+              end: 2015-07-24T23:00
+              tieba_tid: 3912670848
+            judging:
+              start: 2015-07-22T17:00
+              end: 2015-07-26T16:00
+              tieba_tid: 3903300600
+          G3:
+            match:
+              start: 2015-07-26T17:00
+              end: 2015-07-28T23:00
+              tieba_tid: 3922307785
+            judging:
+              start: 2015-07-26T17:00
+              end: 2015-07-30T16:00
+              tieba_tid: 3903300600
+          G4:
+            match:
+              start: 2015-07-30T17:00
+              end: 2015-08-01T23:00
+              tieba_tid: 3932338566
+            judging:
+              start: 2015-07-30T17:00
+              end: 2015-08-03T16:00
+              tieba_tid: 3903300600
+      [Q1, Q2]:
+        players:
+          '1':
+            1A: 毒蘑菇vn
+            1B: '1168438795'
+          '2':
+            2A: '123568024'
+            2B: 天碧苑
+          '3':
+            3A: 大爷23大买卖吗
+            3B: '835743384'
+          '4':
+            4A: 和蔼的大马里奥
+            4B: 我懂你不懂的lz
+        judges:
+          '1':
+            J1: 祝贺高考成功
+            J2: 马里奥奥里马
+            JR: bluesun0505
+          '2':
+            J1: zqh——123
+            J2: 玛丽的死对头
+            JR: 马里奥奥里马
+          '3':
+            J1: 祝贺高考成功
+            J2: 马里奥奥里马
+            JR: bluesun0505
+          '4':
+            J1: zqh——123
+            J2: 玛丽的死对头
+            JR: 马里奥奥里马
+        schedule:
+          draw:
+            time: 2015-08-03T20:00
+            tieba_tid: 3943311273
+          Q1:
+            match:
+              start: 2015-08-04T17:00
+              end: 2015-08-06T23:00
+              tieba_tid: 3945672742
+            judging:
+              start: 2015-08-04T17:00
+              end: 2015-08-08T16:00
+              tieba_tid: 3945685855
+          Q2:
+            match:
+              start: 2015-08-08T17:00
+              end: 2015-08-10T23:00
+              tieba_tid: 3956429534
+            judging:
+              start: 2015-08-08T17:00
+              end: 2015-08-12T16:00
+              tieba_tid: 3945685855
+      S:
+        scoring_scheme: S # 表示该轮评分为总分，未使用分项评分；仅 2015 半决赛使用
+        players:
+          I:
+            A: 毒蘑菇vn
+            B: 大爷23大买卖吗
+          II:
+            C: 天碧苑
+            D: 我懂你不懂的lz
+        scores:
+          A: 76
+          B: 71
+          C: 0
+          D: 80.5
+        schedule:
+          consult:
+            start: 2015-08-12T17:00
+            end: 2015-08-14T22:00
+          match:
+            start: 2015-08-12T17:00
+            end: 2015-08-15T22:00
+            tieba_tid: 3966722003
+      F:
+        players:
+          M: 毒蘑菇vn
+          W: 我懂你不懂的lz
+        judges:
+          J1: 马里奥奥里马
+          J2: Fahlee_5
+          J3: 祝贺高考成功
+          J4: '123568024'
+        schedule:
+          match:
+            start: 2015-08-15T23:00
+            end: 2015-08-18T23:00
+            tieba_tid: 3975096456
+          judging:
+            start: 2015-08-15T23:00
+            end: 2015-08-20T16:00
+            tieba_tid: 3975113295
+  2016:
+    scoring_scheme: B
+    host: Fahlee_5
+    chief_judge: [Fahlee_5, nmnmoooh]
+    rounds:
+      P1:
+        players:
+          '1': s小s飞s侠s
+          '2': 毒蘑菇vn
+          '3': 小皓宇Tom
+          '4': 把僵尸炖了
+          '5': chaojimali1201
+          '6': 我爱吃烧饼哈哈
+          '7': xi7yang3
+          '8': '1168438795'
+          '9': 大爷23大买卖吗
+          '10': Lakitu01
+          '11': R大次郎
+          '12': 我懂你不懂的lz
+        judges:
+          J1: 马里奥奥里马
+          J2: 玛丽的死对头
+          J3: '123568024'
+          J4: 大幽灵王
+          J5: 毒蘑菇vn
+          JR1: Fahlee_5
+          JR2: 祝贺高考成功
+        chief_judge: [马里奥奥里马, 大幽灵王]
+        schedule:
+          registration:
+            start: 2015-11-21T21:00
+            end: 2016-01-30T20:00
+            tieba_tid: 4172968948
+          pre_match_checkin:
+            start: 2016-01-30T21:00
+            end: 2016-02-03T16:00
+            tieba_tid: 4331104799
+          draw:
+            time: 2016-02-03T20:00
+            tieba_tid: 4337500464
+          match:
+            start: 2016-02-04T20:00
+            end: 2016-02-13T20:00
+            tieba_tid: 4339051091
+          judging:
+            start: 2016-02-04T20:00
+            end: 2016-02-14T20:00
+            tieba_tid: 4339091019
+          post_match_checkin:
+            start: 2016-06-26T22:00
+            end: 2016-07-03T20:00
+            tieba_tid: 4634608428
+      P2:
+        players:
+          I:
+            '1': 字luo
+            '2': 天碧苑
+            '3': dasasdhba
+          II:
+            '4': 节操都去哪了01
+            '5': 莫阵剑影
+            '6': yjs2005219
+        judges:
+          I:
+            J1: LLX奶油马里奥
+            J2: nmnmoooh
+          II:
+            J1: 大幽灵王
+            J2: Fahlee_5
+        schedule:
+          registration:
+            start: 2016-02-14T14:30
+            end: 2016-07-05T16:00
+            tieba_tid: 4352991393
+          pre_match_checkin:
+            start: 2016-07-05T20:00
+            end: 2016-07-09T16:00
+            tieba_tid: 4652654648
+          draw:
+            time: 2016-07-09T20:00
+            tieba_tid: 4660390709
+          match:
+            start: 2016-07-09T22:00
+            end: 2016-07-12T20:00
+            tieba_tid: 4660619766
+          judging:
+            start: 2016-07-09T22:00
+            end: 2016-07-13T16:00
+            tieba_tid: 4660729184
+      [G1, G2, G3]:
+        players:
+          A:
+            A1: dasasdhba
+            A2: '1168438795'
+            A3: xi7yang3
+            A4: 天碧苑
+          B:
+            B1: 节操都去哪儿了01
+            B2: R大次郎
+            B3: 把僵尸炖了
+            B4: 小皓宇Tom
+          C:
+            C1: 毒蘑菇vn
+            C2: 莫阵剑影
+            C3: 我懂你不懂的lz
+            C4: s小s飞s侠s
+          D:
+            D1: 大爷23大买卖吗
+            D2: Lakitu01
+            D3: chaojimali1201
+            D4: 字luo
+        judges:
+          A:
+            J1: 马里奥奥里马
+            J2: 大幽灵王
+            JR1: Fahlee_5
+            JR2: 毒蘑菇vn
+          B:
+            J1: nmnmoooh
+            J2: '123568024'
+            JR: 马里奥奥里马
+          C:
+            J1: Fahlee_5
+            J2: 祝贺高考成功
+            JR: bluesun0505
+          D:
+            J1: LLX奶油马里奥
+            J2: 玛丽的死对头
+            JR: nmnmoooh
+        schedule:
+          draw:
+            time: 2016-07-13T20:00
+          G1:
+            match:
+              start: 2016-07-14T20:00
+              end: 2016-07-17T20:00
+              tieba_tid: 4670326113
+            judging:
+              start: 2016-07-14T20:00
+              end: 2016-07-19T16:00
+              tieba_tid: 4670409279
+          G2:
+            match:
+              start: 2016-07-18T20:00
+              end: 2016-07-21T20:00
+              tieba_tid: 4678247561
+            judging:
+              start: 2016-07-19T20:00
+              end: 2016-07-23T16:00
+              tieba_tid: 4670409279
+          G3:
+            match:
+              start: 2016-07-22T20:00
+              end: 2016-07-25T20:00
+              tieba_tid: 4686936282
+            judging:
+              start: 2016-07-23T20:00
+              end: 2016-07-27T16:00
+              tieba_tid: 4670409279
+      [Q1, Q2]:
+        players:
+          '1':
+            1A: dasasdhba
+            1B: 把僵尸炖了
+          '2':
+            2A: 节操都去哪了01
+            2B: '1168438795'
+          '3':
+            3A: 我懂你不懂的lz
+            3B: Lakitu01
+          '4':
+            4A: 大爷23大买卖吗
+            4B: 莫阵剑影
+        judges:
+          '1':
+            J1: 马里奥奥里马
+            J2: 大幽灵王
+          '2':
+            J1: 玛丽的死对头
+            J2: LLX奶油马里奥
+          '3':
+            J1: nmnmoooh
+            J2: 毒蘑菇vn
+          '4':
+            J1: '123568024'
+            J2: 祝贺高考成功
+        schedule:
+          draw:
+            time: 2016-07-27T20:00
+            tieba_tid: 4696829043
+          Q1:
+            match:
+              start: 2016-07-28T20:00
+              end: 2016-07-31T20:00
+              tieba_tid: 4698883805
+            judging:
+              start: 2016-07-28T20:00
+              end: 2016-08-01T16:00
+              tieba_tid: 4698931239
+          Q2:
+            match:
+              start: 2016-08-01T20:00
+              end: 2016-08-04T20:00
+              tieba_tid: 4706631065
+            judging:
+              start: 2016-08-01T20:00
+              end: 2016-08-05T16:00
+              tieba_tid: 4698931239
+      [S1, S2]:
+        players:
+          I:
+            A: dasasdhba
+            B: Lakitu01
+          II:
+            C: 节操都去哪了01
+            D: 莫阵剑影
+        judges:
+          I:
+            J1: Fahlee_5
+            J2: 大幽灵王
+          II:
+            J1: 玛丽的死对头
+            J2: bluesun0505
+            JR1: nmnmoooh
+            JR2: Fahlee_5
+            JR3: 马里奥奥里马
+        schedule:
+          S1:
+            match:
+              start: 2016-08-05T20:00
+              end: 2016-08-08T20:00
+              tieba_tid: 4714417562
+            judging:
+              start: 2016-08-05T20:00
+              end: 2016-08-09T16:00
+              tieba_tid: 4714429026
+          S2:
+            match:
+              start: 2016-08-09T20:00
+              end: 2016-08-12T20:00
+              tieba_tid: 4721814612
+            judging:
+              start: 2016-08-09T20:00
+              end: 2016-08-13T16:00
+              tieba_tid: 4714429026
+      F:
+        players:
+          M: dasasdhba
+          W: 节操都去哪了01
+        judges:
+          J1: Fahlee_5
+          J2: nmnmoooh
+          J3: '123568024'
+          J4: 马里奥奥里马
+        schedule:
+          match:
+            start: 2016-08-13T20:00
+            end: 2016-08-16T20:00
+            tieba_tid: 4728946866
+          judging:
+            start: 2016-08-13T20:00
+            end: 2016-08-18T20:00
+            tieba_tid: 4728980542
+  2017:
+    scoring_scheme: B
+    host: Fahlee_5
+    chief_judge: [Fahlee_5, nmnmoooh]
+    rounds:
+      P1:
+        players:
+          a:
+            a1: 节操与天堂
+            a2: Lakitu01
+            a3: xi7yang3
+            a4: s小s飞s侠s
+            a5: 我懂你不懂的lz
+          b:
+            b1: 字luo
+            b2: 把僵尸炖了
+            b3: suteaury
+            b4: 百步穿杨又飞剑
+            b5: yjs2005219
+          c:
+            c1: chaojimali1201
+            c2: 冻结的双重射手
+            c3: 天碧苑
+            c4: 水银龟
+            c5: 878yfy
+          d:
+            d1: 我爱吃烧饼哈哈
+            d2: LLX奶油马里奥
+            d3: R大次郎
+            d4: 小皓宇Tom
+        judges:
+          a:
+            J1: 大爷23大买卖吗
+            J2: bluesun0505
+          b:
+            J1: nmnmoooh
+            J2: '1168438795'
+          c:
+            J1: Fahlee_5
+            J2: 大幽灵王
+          d:
+            J1: 马里奥奥里马
+            J2: 祝贺高考成功
+        schedule:
+          registration:
+            start: 2016-11-01T08:00
+            end: 2017-01-18T20:00
+            tieba_tid: 4844596378
+          pre_match_checkin:
+            start: 2017-01-18T21:00
+            end: 2017-01-24T16:00
+            tieba_tid: 4944683837
+          draw:
+            time: 2017-01-24T20:00
+            tieba_tid: 4954056790
+          match:
+            start: 2017-01-25T20:00
+            end: 2017-02-09T20:00
+            tieba_tid: 4955320354
+          judging:
+            start: 2017-01-25T20:00
+            end: 2017-02-10T16:00
+            tieba_tid: 4956157507
+          post_match_checkin:
+            start: 2017-06-24T22:00
+            end: 2017-07-08T16:00
+            tieba_tid: 5182050851
+      P2:
+        players:
+          I:
+            '1': 毒蘑菇vn
+            '2': koopa4
+            '3': yjs2005219
+            '4': 烈火战神219
+          II:
+            '5': R大次郎
+            '6': TNT与爬行者
+            '7': '869956924'
+            '8': 张云天我最爱
+        judges:
+          I:
+            J1: nmnmoooh
+            J2: 我懂你不懂的lz
+          II:
+            J1: zqh——123
+            J2: 大爷23大买卖吗
+        schedule:
+          registration:
+            start: 2017-06-24T22:00
+            end: 2017-07-08T16:00
+            tieba_tid: 5182051799
+          draw:
+            time: 2017-07-08T20:00
+            tieba_tid: 5211439860
+          match:
+            start: 2017-07-09T20:00
+            end: 2017-07-12T20:00
+            tieba_tid: 5213440018
+          judging:
+            start: 2017-07-09T20:00
+            end: 2017-07-14T16:00
+            tieba_tid: 5213485117
+      [G1, G2, G3]:
+        players:
+          A:
+            A1: chaojimali1201
+            A2: 天碧苑
+            A3: Lakitu01
+            A4: 节操与天堂
+          B:
+            B1: 毒蘑菇vn
+            B2: s小s飞s侠s
+            B3: xi7yang3
+            B4: 878yfy
+          C:
+            C1: suteaury
+            C2: R大次郎
+            C3: 冻结的双重射手
+            C4: 字luo
+          D:
+            D1: koopa4
+            D2: 我懂你不懂的lz
+            D3: 把僵尸炖了
+            D4: TNT与爬行者
+        judges:
+          A:
+            J1: 我懂你不懂的lz
+            J2: nmnmoooh
+            JR: zqh——123
+          B:
+            J1: '123568024'
+            J2: bluesun0505
+            JR: Fahlee_5
+          C:
+            J1: 玛丽的死对头
+            J2: Fahlee_5
+            JR: 马里奥奥里马
+          D:
+            J1: 大爷23大买卖吗
+            J2: 马里奥奥里马
+            JR: nmnmoooh
+        schedule:
+          draw:
+            time: 2017-07-14T20:00
+            tieba_tid: 5222849527
+          G1:
+            match:
+              start: 2017-07-15T20:00
+              end: 2017-07-18T20:00
+              tieba_tid: 5224670837
+            judging:
+              start: 2017-07-15T20:00
+              end: 2017-07-20T16:00
+              tieba_tid: 5224732063
+          G2:
+            match:
+              start: 2017-07-19T20:00
+              end: 2017-07-22T20:00
+              tieba_tid: 5232226927
+            judging:
+              start: 2017-07-19T20:00
+              end: 2017-07-24T16:00
+              tieba_tid: 5224732063
+          G3:
+            match:
+              start: 2017-07-23T20:00
+              end: 2017-07-26T20:00
+              tieba_tid: 5239560923
+            judging:
+              start: 2017-07-23T20:00
+              end: 2017-07-28T16:00
+              tieba_tid: 5224732063
+      [Q1, Q2]:
+        players:
+          '1':
+            1A: 我懂你不懂的lz
+            1B: chaojimali1201
+          '2':
+            2A: s小s飞s侠s
+            2B: 字luo
+          '3':
+            3A: R大次郎
+            3B: 毒蘑菇vn
+          '4':
+            4A: Lakitu01
+            4B: koopa4
+        judges:
+          '1':
+            J1: 马里奥奥里马
+            J2: 玛丽的死对头
+          '2':
+            J1: bluesun0505
+            J2: 大爷23大买卖吗
+          '3':
+            J1: Fahlee_5
+            J2: '123568024'
+          '4':
+            J1: nmnmoooh
+            J2: zqh——123
+        schedule:
+          draw:
+            time: 2017-07-28T20:00
+            tieba_tid: 5247460919
+          Q1:
+            match:
+              start: 2017-07-29T20:00
+              end: 2017-08-01T20:00
+              tieba_tid: 5248799919
+            judging:
+              start: 2017-07-29T20:00
+              end: 2017-08-03T16:00
+              tieba_tid: 5248901997
+          Q2:
+            match:
+              start: 2017-08-03T20:00
+              end: 2017-08-06T20:00
+              tieba_tid: 5256063533
+            judging:
+              start: 2017-08-03T20:00
+              end: 2017-08-08T16:00
+              tieba_tid: 5248901997
+      S:
+        players:
+          I:
+            A: 我懂你不懂的lz
+            B: s小s飞s侠s
+          II:
+            C: R大次郎
+            D: koopa4
+        judges:
+          I:
+            J1: Fahlee_5
+            J2: 毒蘑菇vn
+            JR1: nmnmoooh
+            JR2: zqh——123
+          II:
+            J1: zqh——123
+            J2: 马里奥奥里马
+        schedule:
+          match:
+            start: 2017-08-08T20:00
+            end: 2017-08-11T20:00
+            tieba_tid: 5263127660
+          judging:
+            start: 2017-08-08T20:00
+            end: 2017-08-13T16:00
+            tieba_tid: 5263140179
+      F:
+        players:
+          M: 我懂你不懂的lz
+          W: koopa4
+        judges:
+          J1: Fahlee_5
+          J2: nmnmoooh
+          J3: zqh——123
+          J4: 马里奥奥里马
+        schedule:
+          match:
+            start: 2017-08-13T20:00
+            end: 2017-08-16T20:00
+            tieba_tid: 5270436759
+          judging:
+            start: 2017-08-13T20:00
+            end: 2017-08-18T20:00
+            tieba_tid: 5270454110
+  2018:
+    scoring_scheme: B
+    host: zqh——123
+    chief_judge: [zqh——123, 大幽灵王]
+    rounds:
+      P1:
+        players:
+          a:
+            a1: R大次郎
+            a2: xi7yang3
+            a3: 字luo
+            a4: 色粉堵塞
+          b:
+            b1: yjs2005219
+            b2: 番木瓜反抗
+            b3: s小s飞s侠s
+            b4: 小皓宇Tom
+          c:
+            c1: Lakitu01
+            c2: 巃嵸巋巚
+            c3: TNT与爬行者
+            c4: 节操与天堂
+          d:
+            d1: 无语的我456
+            d2: 大爷23大买卖吗
+            d3: chaojimali1201
+            d4: 冻结的双重射手
+            d5: 张云天我最爱
+        judges:
+          a:
+            J1: 我懂你不懂的lz
+            J2: nmnmoooh
+            JR: LLX奶油马里奥
+          b:
+            J1: 天碧苑
+            J2: LLX奶油马里奥
+          c:
+            J1: s小s飞s侠s
+            J2: '123568024'
+          d:
+            J1: R大次郎
+            J2: zqh——123
+        chief_judge: [Fahlee_5, nmnmoooh]
+        schedule:
+          registration:
+            start: 2017-10-03T21:30
+            end: 2018-02-02T16:00
+            tieba_tid: 5353667937
+          pre_match_checkin:
+            start: 2018-02-02T20:00
+            end: 2018-02-07T16:00
+            tieba_tid: 5538559384
+          draw:
+            time: 2018-02-07T20:00
+            tieba_tid: 5544355805
+          match:
+            start: 2018-02-08T20:00
+            end: 2018-02-20T20:00
+            tieba_tid: 5545517309
+          judging:
+            start: 2018-02-08T20:00
+            end: 2018-02-21T16:00
+            tieba_tid: 5545561685
+          post_match_checkin:
+            start: 2018-06-25T20:00
+            end: 2018-07-04T16:00
+            tieba_tid: 5766440679
+      P2:
+        players:
+          I:
+            '1': koopa4
+            '2': 肥羊羊98
+            '3': 王一凡01234567
+          II:
+            '4': suteaury
+            '5': 水银龟
+        judges:
+          I:
+            J1: zqh——123
+            J2: bluesun0505
+          II:
+            J1: 马里奥奥里马
+            J2: s小s飞s侠s
+        schedule:
+          registration:
+            start: 2018-06-25T20:00
+            end: 2018-07-04T16:00
+            tieba_tid: 5766441244
+          draw:
+            time: 2018-07-04T20:00
+            tieba_tid: 5781978771
+          match:
+            start: 2018-07-05T20:00
+            end: 2018-07-11T20:00
+            tieba_tid: 5783295470
+          judging:
+            start: 2018-07-05T20:00
+            end: 2018-07-14T16:00
+            tieba_tid: 5783311471
+      [G1, G2, G3]:
+        players:
+          A:
+            A1: 番木瓜反抗
+            A2: 冻结的双重射手
+            A3: 小皓宇Tom
+            A4: TNT与爬行者
+          B:
+            B1: 巃嵸巋巚
+            B2: s小s飞s侠s
+            B3: 节操与天堂
+            B4: 张云天我最爱
+          C:
+            C1: 大爷23大买卖吗
+            C2: 字luo
+            C3: 无语的我456
+            C4: yjs2005219
+          D:
+            D1: R大次郎
+            D2: Lakitu01
+            D3: xi7yang3
+            D4: 色粉堵塞
+        judges:
+          A:
+            J1: bluesun0505
+            J2: 大爷23大买卖吗
+            JR: zqh——123
+          B:
+            J1: 马里奥奥里马
+            J2: 我懂你不懂的lz
+            JR: nmnmoooh
+          C:
+            J1: EX我爱幽灵
+            J2: R大次郎
+            JR: Fahlee_5
+          D:
+            J1: zqh——123
+            J2: 天碧苑
+            JR: s小s飞s侠s
+        schedule:
+          draw:
+            time: 2018-07-15T20:00
+            tieba_tid: 5796482897
+          G1:
+            match:
+              start: 2018-07-16T20:00
+              end: 2018-07-19T20:00
+              tieba_tid: 5797859704
+            judging:
+              start: 2018-07-16T20:00
+              end: 2018-07-21T16:00
+              tieba_tid: 5797881691
+          G2:
+            match:
+              start: 2018-07-20T20:00
+              end: 2018-07-23T20:00
+              tieba_tid: 5803379918
+            judging:
+              start: 2018-07-20T20:00
+              end: 2018-07-25T16:00
+              tieba_tid: 5803636124
+          G3:
+            match:
+              start: 2018-07-24T20:00
+              end: 2018-07-27T20:00
+              tieba_tid: 5808691780
+            judging:
+              start: 2018-07-24T20:00
+              end: 2018-07-29T16:00
+              tieba_tid: 5808845185
+      [Q1, Q2]:
+        players:
+          '1':
+            1A: TNT与爬行者
+            1B: 巃嵸巋巚
+          '2':
+            2A: s小s飞s侠s
+            2B: yjs2005219
+          '3':
+            3A: R大次郎
+            3B: 番木瓜反抗
+          '4':
+            4A: 大爷23大买卖吗
+            4B: xi7yang3
+        judges:
+          '1':
+            J1: EX我爱幽灵
+            J2: 天碧苑
+            JR1: zqh——123
+            JR2: R大次郎
+          '2':
+            J1: nmnmoooh
+            J2: 大爷23大买卖吗
+          '3':
+            J1: zqh——123
+            J2: Fahlee_5
+            JR: 马里奥奥里马
+          '4':
+            J1: bluesun0505
+            J2: LLX奶油马里奥
+            JR: 马里奥奥里马
+        schedule:
+          draw:
+            time: 2018-07-30T20:00
+            tieba_tid: 5816983293
+          Q1:
+            match:
+              start: 2018-07-31T20:00
+              end: 2018-08-03T20:00
+              tieba_tid: 5818510654
+            judging:
+              start: 2018-07-31T20:00
+              end: 2018-08-05T16:00
+              tieba_tid: 5818519216
+          Q2:
+            match:
+              start: 2018-08-04T20:00
+              end: 2018-08-07T20:00
+              tieba_tid: 5825024891
+            judging:
+              start: 2018-08-04T20:00
+              end: 2018-08-09T16:00
+              tieba_tid: 5825108821
+      S:
+        players:
+          I:
+            A: 巃嵸巋巚
+            B: s小s飞s侠s
+          II:
+            C: R大次郎
+            D: 大爷23大买卖吗
+        judges:
+          I:
+            J1: '123568024'
+            J2: zqh——123
+          II:
+            J1: 马里奥奥里马
+            J2: LLX奶油马里奥
+        schedule:
+          match:
+            start: 2018-08-10T20:00
+            end: 2018-08-13T20:00
+            tieba_tid: 5834700391
+          judging:
+            start: 2018-08-10T20:00
+            end: 2018-08-15T16:00
+            tieba_tid: 5834966873
+      F:
+        players:
+          M: s小s飞s侠s
+          W: R大次郎
+        judges:
+          J1: EX我爱幽灵
+          J2: bluesun0505
+          J3: 马里奥奥里马
+          J4: nmnmoooh
+        schedule:
+          match:
+            start: 2018-08-16T20:00
+            end: 2018-08-19T20:00
+            tieba_tid: 5843069363
+          judging:
+            start: 2018-08-16T20:00
+            end: 2018-08-21T20:00
+            tieba_tid: 5843079982
+  2019:
+    scoring_scheme: B
+    host: 巃嵸巋巚
+    chief_judge: [R大次郎, 毒蘑菇vn]
+    rounds:
+      P1:
+        players:
+          a:
+            a1: 绿色的糖果233
+            a2: '123568024'
+            a3: 无视我……
+            a4: xi7yang3
+            a5: 2333ty
+            a6: 肥羊羊98
+          b:
+            b1: LLX奶油马里奥
+            b2: TNT与爬行者
+            b3: yjs2005219
+            b4: 张云天我最爱
+            b5: R大次郎
+            b6: 把僵尸炖了
+          c:
+            c1: s小s飞s侠s
+            c2: 878yfy
+            c3: 数字1528君
+            c4: '1168438795'
+            c5: koopa4
+            c6: 我懂你不懂的lz
+          d:
+            d1: bluesun0505
+            d2: 小皓宇Tom
+            d3: 水银龟
+            d4: 色粉堵塞
+            d5: 天碧苑
+            d6: 王一凡01234567
+        judges:
+          a:
+            J1: Fahlee_5
+            J2: s小s飞s侠s
+          b:
+            J1: nmnmoooh
+            J2: 马里奥奥里马
+          c:
+            J1: bluesun0505
+            J2: 巃嵸巋巚
+          d:
+            J1: '1168438795'
+            J2: '123568024'
+            JR: R大次郎
+        chief_judge: [Fahlee_5, nmnmoooh]
+        schedule:
+          registration:
+            start: 2018-10-08T22:00
+            end: 2019-01-30T16:00
+            tieba_tid: 5907306781
+          pre_match_checkin:
+            start: 2019-01-24T20:30
+            end: 2019-01-30T16:00
+            tieba_tid: 6017012309
+          draw:
+            time: 2019-01-30T20:00
+            tieba_tid: 6022527096
+          match:
+            start: 2019-01-31T20:00
+            end: 2019-02-13T20:00
+            tieba_tid: 6023466525
+          judging:
+            start: 2019-01-31T20:00
+            end: 2019-02-15T16:00
+            tieba_tid: 6023901751
+          post_match_checkin:
+            start: 2019-06-25T20:00
+            end: 2019-07-06T16:00
+            tieba_tid: 6174580525
+      P2:
+        players:
+          I:
+            '1': 2333ty
+            '2': xi7yang3
+            '3': suteaury
+            '4': chaojimali1201
+          II:
+            '5': 王一凡01234567
+            '6': 878yfy
+            '7': '1168438795'
+            '8': 916熊二
+        judges:
+          I:
+            J1: '123568024'
+            J2: bluesun0505
+          II:
+            J1: s小s飞s侠s
+            J2: nmnmoooh
+        schedule:
+          registration:
+            start: 2019-06-25T20:00
+            end: 2019-07-06T16:00
+            tieba_tid: 6174580798
+          draw:
+            time: 2019-07-06T18:00
+            tieba_tid: 6174580525
+          match:
+            start: 2019-07-06T20:00
+            end: 2019-07-12T20:00
+            tieba_tid: 6186113907
+          judging:
+            start: 2019-07-06T20:00
+            end: 2019-07-14T16:00
+            tieba_tid: 6186124820
+      [G1, G2, G3, G4]:
+        players:
+          A:
+            A1: koopa4
+            A2: 2333ty
+            A3: 王一凡01234567
+            A4: 肥羊羊98
+          B:
+            B1: '1168438795'
+            B2: s小s飞s侠s
+            B3: 我懂你不懂的lz
+            B4: 数字1528君
+          C:
+            C1: '123568024'
+            C2: 把僵尸炖了
+            C3: 绿色的糖果233
+            C4: 色粉堵塞
+          D:
+            D1: 878yfy
+            D2: suteaury
+            D3: 小皓宇Tom
+            D4: TNT与爬行者
+        judges:
+          A:
+            J1: s小s飞s侠s
+            J2: 马里奥奥里马
+          B:
+            J1: 毒蘑菇vn
+            J2: '123568024'
+            JR1: Fahlee_5
+            JR2: nmnmoooh
+          C:
+            J1: LLX奶油马里奥
+            J2: zqh——123
+          D:
+            J1: 巃嵸巋巚
+            J2: R大次郎
+        schedule:
+          draw:
+            time: 2019-07-15T18:00
+            tieba_tid: 6195075257
+          topics: # 本届 G1~G4 表示小组赛第几题
+            G1: 
+              time: 2019-07-15T20:00  # 题目公布时间
+              tieba_tid: 6195160662 # 题目贴
+            G2:
+              time: 2019-07-17T20:00
+              tieba_tid: 6197231071
+            G3:
+              time: 2019-07-19T20:00
+              tieba_tid: 6199365254
+            G4:
+              time: 2019-07-21T20:00
+              tieba_tid: 6201270845
+          deadlines:  # 四道题顺序任意，每个 deadline 前要提交一道题的关卡；最后一个 deadline 为小组赛上传截止时间
+            - 2019-07-21T20:00
+            - 2019-07-24T20:00
+            - 2019-07-27T20:00
+          judging:
+            start: 2019-07-15T20:00
+            end: 2019-07-30T16:00
+            tieba_tid:
+              G1: 6195169909
+              G2: 6197236634
+              G3: 6199373105
+              G4: 6201278704
+      Q:
+        players:
+          '1':
+            1A: 把僵尸炖了
+            1B: '1168438795'
+          '2':
+            2A: suteaury
+            2B: '123568024'
+          '3':
+            3A: 我懂你不懂的lz
+            3B: 2333ty
+          '4':
+            4A: koopa4
+            4B: 小皓宇Tom
+        judges:
+          '1':
+            J1: Fahlee_5
+            J2: 毒蘑菇vn
+          '2':
+            J1: 巃嵸巋巚
+            J2: LLX奶油马里奥
+          '3':
+            J1: R大次郎
+            J2: 马里奥奥里马
+          '4':
+            J1: '123568024'
+            J2: s小s飞s侠s
+            JR: nmnmoooh
+        schedule:
+          draw:
+            time: 2019-08-01T18:00
+            tieba_tid: 6212499460
+          match:
+            start: 2019-08-01T20:00
+            end: 2019-08-04T20:00
+            tieba_tid: 6212587393
+          judging:
+            start: 2019-08-01T20:00
+            end: 2019-08-06T16:00
+            tieba_tid: 6212598984
+      S:
+        players:
+          I:
+            A: '123568024'
+            B: '1168438795'
+          II:
+            C: 我懂你不懂的lz
+            D: 小皓宇Tom
+        judges:
+          I:
+            J1: Fahlee_5
+            J2: s小s飞s侠s
+            JR: nmnmoooh
+          II:
+            J1: 毒蘑菇vn
+            J2: LLX奶油马里奥
+        schedule:
+          draw:
+            time: 2019-08-07T18:00
+          match:
+            start: 2019-08-07T20:00
+            end: 2019-08-10T20:00
+            tieba_tid: 6218774234
+          judging:
+            start: 2019-08-07T20:00
+            end: 2019-08-12T16:00
+            tieba_tid: 6218771062
+      F:
+        players:
+          M: '1168438795'
+          W: 我懂你不懂的lz
+        judges:
+          J1: 毒蘑菇vn
+          J2: R大次郎
+          J3: LLX奶油马里奥
+          J4: zqh——123
+        schedule:
+          draw:
+            time: 2019-08-13T18:00
+          match:
+            start: 2019-08-13T20:00
+            end: 2019-08-16T20:00
+            tieba_tid: 6225064203
+          judging:
+            start: 2019-08-13T20:00
+            end: 2019-08-18T16:00
+            tieba_tid: 6225070825
+  2020:
+    scoring_scheme: C # 第三套评分方案，csv 格式为“选手码,评委,得体度,美观度,独特度,思辨度,完成度,合理度,有效度,参与度,耐玩度,成就度,加分项,扣分项”；得体度、美观度为欣赏性，独特度、思辨度为创新性，完成度、合理度、有效度为设计性，参与度、耐玩度、成就度为游戏性
+    host: '1168438795'
+    chief_judge: [LLX奶油马里奥, '123568024']
+    rounds:
+      P1:
+        scoring_scheme: B # 轮次下 scoring_scheme 仅适用本轮次
+        players:
+          '1': 2333ty
+          '2': 克洛伊Prime
+          '3': 无视我233
+          '4': 把僵尸炖了
+          '5': s小s飞s侠s
+          '6': 小鱼倾城
+          '7': 数字1528君
+          '8': wyf01234567
+          '9': 小皓宇Tom
+          '10': 色粉堵塞
+          '11': 绿色的糖果
+          '12': zqh——123
+        judges:
+          J1: 马里奥奥里马
+          J2: yuyangmiau
+          J3: 我懂你不懂的lz
+          J4: '123568024'
+          J5: '1168438795'
+          J6: s小s飞s侠s
+          J7: LLX奶油马里奥  
+        schedule:
+          registration:
+            start: 2019-10-10T18:00
+            end: 2020-01-18T16:00
+            mf_tid: 76
+          pre_match_checkin:
+            start: 2020-01-14T20:00
+            end: 2020-01-18T16:00
+            mf_tid: 284
+          draw:
+            time: 2020-01-18T19:00
+            mf_tid: 290
+          match:
+            start: 2020-01-18T20:00
+            end: 2020-02-01T20:00
+            mf_tid: 291
+          judging:
+            start: 2020-01-18T20:00
+            end: 2020-02-03T16:00
+            mf_tid: 293
+          post_match_checkin:
+            start: 2020-06-25T20:00
+            end: 2020-07-12T20:00
+            mf_tid: 540
+      P2:
+        players:
+          '1': nmnmoooh
+          '2': 6463喝喝了
+          '3': JJ带我飞
+          '4': 快乐mario9
+          '5': yuyangmiau
+          '6': '1201297974'
+          '7': 玛丽的死对头
+        judges:
+          J1: '1168438795'
+          J2: s小s飞s侠s
+          J3: zqh——123
+          J4: yuyangmiau
+        schedule:
+          match:
+            start: 2020-06-25T20:00
+            end: 2020-07-12T20:00
+            mf_tid: 541
+          judging:
+            start: 2020-06-25T20:00
+            end: 2020-07-14T16:00
+            mf_tid: 563
+      [I1, I2, I3]: # I 表示初赛
+        players:
+          A:
+            A1: 无视我233
+            A2: 绿色的糖果
+            A3: zqh——123
+            A4: 2333ty
+          B:
+            B1: s小s飞s侠s
+            B2: 6463喝喝了
+            B3: '1201297974'
+            B4: 小鱼倾城
+          C:
+            C1: 数字1528君
+            C2: 把僵尸炖了
+            C3: yuyangmiau
+            C4: 色粉堵塞
+          D:
+            D1: nmnmoooh
+            D2: wyf01234567
+            D3: 快乐mario9
+            D4: JJ带我飞
+        judges:
+          A:
+            J1: '123568024'
+            J2: 玛丽的死对头
+            JR: Fahlee
+          B:
+            J1: 天碧苑
+            J2: LLX奶油马里奥
+            JR1: Fahlee
+            JR2: nmnmoooh
+          C:
+            J1: '1168438795'
+            J2: s小s飞s侠s
+            JR: '123568024'
+          D:
+            J1: zqh——123
+            J2: yuyangmiau
+            JR1: s小s飞s侠s
+            JR2: LLX奶油马里奥
+            JR3: '1168438795'          
+        schedule:
+          draw:
+            time: 2020-07-15T18:00
+          topics:
+            I1:
+              time: 2020-07-15T20:00
+              mf_tid: 570
+            I2:
+              time: 2020-07-16T20:00
+              mf_tid: 574
+            I3:
+              time: 2020-07-17T20:00
+              mf_tid: 579
+          deadlines:
+            - 2020-07-19T20:00
+            - 2020-07-22T20:00
+          judging:
+            start: 2020-07-15T20:00
+            end: 2020-07-26T16:00
+            mf_tid:
+              I1: 571
+              I2: 581
+              I3: 582
+      R:  # R 表示复赛
+        players:
+          '1':
+            1A: nmnmoooh
+            1B: 无视我233
+            1C: yuyangmiau
+          '2':
+            2A: s小s飞s侠s
+            2B: 把僵尸炖了
+            2C: 绿色的糖果
+          '3':
+            3A: 数字1528君
+            3B: 6463喝喝了
+            3C: wyf01234567
+        judges:
+          '1':
+            J1: Fahlee
+            J2: 玛丽的死对头
+            JR: 马里奥奥里马
+          '2':
+            J1: LLX奶油马里奥
+            J2: Tian-BY
+          '3':
+            J1: '123568024'
+            J2: '1168438795'
+        schedule:
+          draw:
+            time: 2020-07-27T18:00
+            mf_tid: 607
+          match:
+            start: 2020-07-27T20:00
+            end: 2020-08-01T20:00
+            mf_tid: 608
+          judging:
+            start: 2020-07-27T20:00
+            end: 2020-08-05T16:00
+            mf_tid: 609
+      F:
+        players:
+          S: nmnmoooh
+          M: s小s飞s侠s
+          W: 把僵尸炖了
+          P: wyf01234567
+        judges:
+          J1: LLX奶油马里奥
+          J2: '123568024'
+          J3: zqh——123
+          J4: 马里奥奥里马
+        schedule:
+          draw:
+            time: 2020-08-06T18:00
+            mf_tid: 631
+          match:
+            start: 2020-08-06T20:00
+            end: 2020-08-13T20:00
+            mf_tid: 634
+          judging:
+            start: 2020-08-06T20:00
+            end: 2020-08-17T16:00
+            mf_tid: 637
+  2021:
+    scoring_scheme: C
+    host: Fahlee_5
+    chief_judge: [yuyangmiau, s小s飞s侠s]
+    rounds:
+      P1:
+        players:
+          a:
+            a1: TNT与爬行者
+            a2: 克洛伊Prime
+            a3: 绿色的糖果
+            a4: 快乐mario9
+            a5: s小s飞s侠s
+          b:
+            b1: 把僵尸炖了
+            b2: zqh——123
+            b3: 2333ty
+            b4: yuyangmiau
+            b5: 大爷23大买卖吗
+          c:
+            c1: ZHIYUAN
+            c2: ƒresh★LAKE
+            c3: '1168438795'
+            c4: 无视我233
+            c5: nmnmoooh
+          d:
+            d1: 6463喝喝了
+            d2: 数字1528君
+            d3: Hypercube
+            d4: Tian-BY
+        judges:
+          a:
+            J1: '123568024'
+            J2: Tian-BY
+          b:
+            J1: Fahlee
+            J2: s小s飞s侠s
+          c:
+            J1: yuyangmiau
+            J2: 把僵尸炖了
+            JR: '123568024'
+          d:
+            J1: '1168438795'
+            J2: 马里奥奥里马
+        chief_judge: ['123568024', Fahlee]
+        schedule:
+          registration:
+            start: 2020-09-30T20:00
+            end: 2021-02-05T16:00
+            mf_tid: 710
+          pre_match_checkin:
+            start: 2021-01-29T18:00
+            end: 2021-02-05T16:00
+            mf_tid: 857
+          draw:
+            time: 2021-02-05T20:00
+            mf_tid: 887
+          match:
+            start: 2021-02-06T20:00
+            end: 2021-02-22T20:00
+            mf_tid: 899
+          judging:
+            start: 2021-02-06T20:00
+            end: 2021-02-24T16:00
+            mf_tid: 900
+          post_match_checkin:
+            start: 2021-06-22T20:00
+            end: 2021-07-12T16:00
+            mf_tid: 1228
+      P2:
+        players:
+          '1': 大爷23大买卖吗
+          '2': Andrews123
+          '3': 色粉堵塞
+          '4': 超级玛丽迷01
+          '5': '124536'
+        judges:
+          J1: 把僵尸炖了
+          J2: s小s飞s侠s
+          J3: yuyangmiau
+          J4: zqh——123
+        schedule:
+          registration:
+            start: 2021-06-22T20:00
+            end: 2021-07-04T20:00
+            mf_tid: 1225
+          match:
+            start: 2021-07-04T20:00
+            end: 2021-07-11T20:00
+            mf_tid: 1260
+          judging:
+            start: 2021-07-04T20:00
+            end: 2021-07-11T20:00
+            mf_tid: 1263
+      [I1, I2, I3, I4]:
+        players:
+          A:
+            A1: 把僵尸炖了
+            A2: 数字1528君
+            A3: TNT与爬行者
+            A4: 快乐mario9
+          B:
+            B1: 色粉堵塞
+            B2: zqh——123
+            B3: 绿色的糖果
+            B4: 超级玛丽迷01
+          C:
+            C1: 无视我233
+            C2: Andrews123
+            C3: 2333ty
+            C4: 克洛伊Prime
+          D:
+            D1: '124536'
+            D2: '1168438795'
+            D3: ƒresh★LAKE
+            D4: 6463喝喝了
+        judges:
+          A:
+            J1: '123568024'
+            J2: yuyangmiau
+            JR: zqh——123
+          B:
+            J1: 把僵尸炖了
+            J2: 马里奥奥里马
+            JR: s小s飞s侠s
+          C:
+            J1: Fahlee
+            J2: s小s飞s侠s
+          D:
+            J1: 我懂你不懂的lz
+            J2: zqh——123
+        schedule:
+          draw:
+            time: 2021-07-12T20:00
+            mf_tid: 1282
+          topics:
+            I1:
+              time: 2021-07-13T20:00
+              mf_tid: 1285
+            I2:
+              time: 2021-07-14T20:00
+              mf_tid: 1288
+            I3:
+              time: 2021-07-15T20:00
+              mf_tid: 1294
+            I4:
+              time: 2021-07-16T20:00
+              mf_tid: 1295
+          deadlines:
+            - 2021-07-19T20:00
+            - 2021-07-22T20:00
+            - 2021-07-25T20:00
+          judging:
+            start: 2021-07-13T20:00
+            end: 2021-07-28T16:00
+            mf_tid:
+              I1: 1286
+              I2: 1289
+              I3: 1290
+              I4: 1291
+      [R1, R2, R3]:
+        players:
+          '1':
+            1A: 无视我233
+            1B: '1168438795'
+            1C: zqh——123
+            1D: 数字1528君
+          '2':
+            2A: 超级玛丽迷01
+            2B: 把僵尸炖了
+            2C: 6463喝喝了
+            2D: Andrews123
+        judges:
+          '1':
+            J1: s小s飞s侠s
+            J2: 马里奥奥里马
+          '2':
+            J1: yuyangmiau
+            J2: 我懂你不懂的lz
+            JR1: nmnmoooh
+            JR2: s小s飞s侠s
+        schedule:
+          draw:
+            time: 2021-07-29T20:00
+            mf_tid: 1343
+          match:
+            start: 2021-07-30T20:00
+            deadlines:
+              - 2021-08-04T20:00
+              - 2021-08-07T20:00
+            mf_tid: 1344
+          judging:
+            start: 2021-07-30T20:00
+            end: 2021-08-10T16:00
+            mf_tid:
+              R1: 1347
+              R2: 1348
+              R3: 1349
+      F:
+        players:
+          S: 数字1528君
+          M: '1168438795'
+          W: 把僵尸炖了
+          P: 6463喝喝了
+        judges:
+          J1: s小s飞s侠s
+          J2: zqh——123
+          J3: 我懂你不懂的lz
+          J4: 马里奥奥里马
+        schedule:
+          match:
+            start: 2021-08-11T20:00
+            end: 2021-08-14T20:00
+            mf_tid: 1402
+          judging:
+            start: 2021-08-11T20:00
+            end: 2021-08-16T16:00
+            mf_tid: 1403
+  2022:
+    scoring_scheme: C
+    host: '1168438795'
+    chief_judge: ['1168438795', Fahlee_5]
+    rounds:
+      P1:
+        players:
+          I:
+            '1': zqh——123
+            '3': 把僵尸炖了
+            '5': 数字1528君
+            '7': 超级玛丽迷01
+          II:
+            '2': 无视我233
+            '4': ƒresh★LAKE
+            '6': Andrews123
+            '8': 我懂你不懂的lz
+          walk-in:
+            '9': 快乐mario9
+            '10': 2333ty
+            '11': 大爷
+            '12': s小s飞s侠s
+        judges:
+          I:
+            J1: Fahlee
+            J2: 马里奥奥里马
+          II:
+            J1: '1168438795'
+            J2: 玛丽的死对头
+          walk-in:
+            J1: zqh——123
+            J2: 无视我233
+        chief_judge: false  # 本轮无总评委
+        schedule:
+          registration:
+            start: 2021-12-31T20:00
+            end: 2022-01-21T16:00
+            mf_tid: 1856
+          match:
+            start: 2022-01-21T20:00
+            end: 2022-02-07T20:00
+            mf_tid: 1895
+          judging:
+            start: 2022-01-21T20:00
+            end: 2022-02-09T16:00
+            mf_tid: 1896
+          post_match_checkin:
+            start: 2022-07-01T20:00
+            end: 2022-07-14T16:00
+            mf_tid: 2137
+      P2:
+        players:
+          - 绿色的糖果
+          - TNT与爬行者
+        judges:
+          J1: '1168438795'
+          J2: zqh——123
+          J3: 马里奥奥里马
+        chief_judge: false
+        schedule:
+          match:
+            start: 2022-07-01T20:00
+            end: 2022-07-12T20:00
+            mf_tid: 2135
+          judging:
+            start: 2022-07-01T20:00
+            end: 2022-07-14T16:00
+            mf_tid: 2136
+      [I1, I2, I3]:
+        players:
+          A:
+            A1: 无视我233
+            A2: 超级玛丽迷01
+            A3: 大爷
+            A4: Andrews123
+            A5: TNT与爬行者
+          B:
+            B1: 我懂你不懂的lz
+            B2: zqh——123
+            B3: ƒresh★LAKE
+            B4: 绿色的糖果
+          C:
+            C1: 把僵尸炖了
+            C2: 2333ty
+            C3: 快乐mario9
+            C4: s小s飞s侠s
+        judges:
+          A:
+            J1: 玛丽的死对头
+            J2: 我懂你不懂的lz
+          B:
+            J1: Fahlee
+            J2: 马里奥奥里马
+          C:
+            J1: zqh——123
+            J2: '1168438795'
+        schedule:
+          draw:
+            time: 2022-07-14T19:00
+            mf_tid: 2157
+          match:
+            start: 2022-07-15T20:00 # 本次三道题同时公布，只有一个开始时间
+            deadlines:
+              - 2022-07-20T22:00
+              - 2022-07-24T22:00
+            mf_tid:
+              I1: 2163
+              I2: 2164
+              I3: 2165
+          judging:
+            start: 2022-07-15T20:00
+            deadlines:  # 第 N 个评分 deadline 要评完第 N 个上传 deadline 前的关卡
+              - 2022-07-23T22:00
+              - 2022-07-27T22:00
+            mf_tid:
+              I1: 2166
+              I2: 2167
+              I3: 2168
+          promotion:
+            time: 2022-07-28T12:00
+            mf_tid: 2211
+      R:
+        players:
+          '1':
+            1A: 把僵尸炖了
+            1B: 大爷
+            1C: 我懂你不懂的lz
+          '2':
+            2A: zqh——123
+            2B: s小s飞s侠s
+            2C: TNT与爬行者
+          '3':
+            3A: 无视我233
+            3B: ƒresh★LAKE
+            3C: 2333ty
+        judges:
+          '1':
+            J1: 马里奥奥里马
+            J2: '1168438795'
+          '2':
+            J1: Tian-BY
+            J2: 马里奥奥里马
+          '3':
+            J1: '1168438795'
+            J2: 玛丽的死对头
+        schedule:
+          draw:
+            time: 2022-07-28T18:00
+            mf_tid: 2213
+          match:
+            start: 2022-07-28T20:00
+            end: 2022-08-01T22:00
+            mf_tid: 2215
+          judging:
+            start: 2022-07-28T20:00
+            end: 2022-08-04T22:00
+            mf_tid: 2217
+          promotion:
+            time: 2022-08-05T12:00
+            mf_tid: 2237
+      F:
+        players:
+          S: 无视我233
+          M: s小s飞s侠s
+          W: 大爷
+          P: zqh——123
+        judges:
+          J1: '1168438795'
+          J2: 玛丽的死对头
+          J3: '123568024'
+          J4: 马里奥奥里马
+        schedule:
+          draw:
+            time: 2022-08-05T18:45
+          match:
+            start: 2022-08-05T19:30
+            end: 2022-08-09T22:00
+            mf_tid: 2238
+          judging:
+            start: 2022-08-05T19:30
+            end: 2022-08-12T22:00
+            mf_tid: 2240
+  2023:
+    scoring_scheme: C
+    host: 'zqh——123'
+    chief_judge: ['zqh——123', 马里奥奥里马]
+    rounds:
+      P1:
+        scoring_scheme: D # 2023 年热身赛试行的大众评分方案，后被废止；csv 格式为“选手码,评分员,欣赏性,创新性,设计性,游戏性,加分项,扣分项”
+        players:
+          a:
+            a1: 把僵尸炖了
+            a2: 冻结的双重射手
+            a3: 无视我233
+            a4: 快乐mario9
+            ~a4: 叶子的叶子 # 波浪号表示该选手被取消资格
+            a5: 大爷
+            a6: 绿色的糖果
+          b:
+            b1: 数字1528君
+            b2: zqh——123
+            b3: 2333ty
+            b4: '1168438795'
+            b5: ƒresh★LAKE
+        judges:
+          a:
+            J1: Fahlee
+            J2: zqh——123
+            JZ1: ƒresh★LAKE
+            JZ2: '1168438795'
+            JZ3: 2333ty
+          b:
+            J1: 玛丽的死对头
+            J2: 马里奥奥里马
+            JZ1: 大爷
+            JZ2: newlife2017
+            JZ3: 绿色的糖果
+        chief_judge: false
+        schedule:
+          registration:
+            start: 2023-01-01T11:00
+            end: 2023-01-13T18:00
+            mf_tid: 2477
+          draw:
+            time: 2023-01-13T20:00
+            mf_tid: 2536
+          match:
+            start: 2023-01-13T22:00
+            end: 2023-01-30T22:00
+            mf_tid: 2537
+          judging:
+            start: 2023-01-13T22:00
+            end: 2023-02-01T16:00
+            mf_tid: 2538
+          post_match_checkin:
+            start: 2023-07-05T20:00
+            end: 2023-07-19T16:00
+            mf_tid: 2753
+      P2:
+        players:
+          - Andrews123
+          - kangyi
+        judges:
+          J1: '1168438795'
+          J2: zqh——123
+        chief_judge: false
+        schedule:
+          match:
+            start: 2023-07-05T20:00
+            end: 2023-07-16T22:00
+            mf_tid: 2754
+          judging:
+            start: 2023-07-05T20:00
+            end: 2023-07-19T16:00
+            mf_tid: 2755
+      [I1, I2, I3]:
+        players:
+          A:
+            A1: 冻结的双重射手
+            A2: 大爷
+            A3: kangyi
+          B:
+            B1: ƒresh★LAKE
+            B2: Andrews123
+            B3: 2333ty
+        judges:
+          A:
+            J1: zqh——123
+            J2: 马里奥奥里马
+          B:
+            J1: '1168438795'
+            J2: 马里奥奥里马
+        schedule:
+          draw:
+            time: 2023-07-19T18:00
+            mf_tid: 2798
+          match:
+            start: 2023-07-19T20:00
+            deadlines:
+              - 2023-07-24T22:00
+              - 2023-07-28T22:00
+            mf_tid:
+              I1: 2790
+              I2: 2791
+              I3: 2792
+          judging:
+            start: 2023-07-19T20:00
+            deadlines:
+              - 2023-07-27T22:00
+              - 2023-07-31T22:00
+            mf_tid:
+              I1: 2793
+              I2: 2816
+              I3: 2795
+          promotion:
+            time: 2023-08-01T12:00
+            mf_tid: 2818
+      F:
+        players:
+          S: 2333ty
+          M: ƒresh★LAKE
+          W: 冻结的双重射手
+          P: 大爷
+        judges:
+          J1: zqh——123
+          J2: 马里奥奥里马
+          J3: '1168438795'
+          J4: yuyangmiau
+        schedule:
+          draw:
+            time: 2023-08-01T18:00
+          match:
+            start: 2023-08-01T20:00
+            end: 2023-08-06T22:00
+            mf_tid: 2825
+          judging:
+            start: 2023-08-01T20:00
+            end: 2023-08-09T22:00
+            mf_tid: 2826
+  2024:
+    scoring_scheme: C
+    host: '1168438795'
+    chief_judge: ['1168438795', 玛丽的死对头]
+    rounds:
+      P1:
+        players:
+          '1': 安德鲁斯123
+          '2': zqh——123
+          '3': 数字1528君
+        judges:
+          J1: ƒresh★LAKE
+          J2: '1168438795'
+          J3: 马里奥奥里马
+        chief_judge: false
+        schedule:
+          registration:
+            start: 2024-01-28T00:00
+            end: 2024-02-03T16:00
+            mf_tid: 3073
+          match:
+            start: 2024-02-03T20:00
+            end: 2024-02-17T22:00
+            mf_tid: 3077
+          judging:
+            start: 2024-02-03T20:00
+            end: 2024-02-20T16:00
+            mf_tid: 3078
+          post_match_checkin:
+            start: 2024-06-21T20:00
+            end: 2024-07-17T16:00
+            mf_tid: 3226
+      P2:
+        players:
+          '4': 一只果果果果果
+          '5': 超级玛丽迷01
+          '6': 无视我233
+          '7': 有名氏
+          '8': 绿色的糖果
+          '9': AngryStar6K
+          '10': 大爷
+        judges:
+          J1: 玛丽的死对头
+          J2: 马里奥奥里马
+          J3: ƒresh★LAKE
+          J4: '1168438795'
+        chief_judge: false
+        schedule:
+          registration:
+            start: 2024-06-21T20:00
+            end: 2024-07-05T16:00
+            mf_tid: 3226
+          match:
+            start: 2024-07-05T20:00
+            end: 2024-07-14T22:00
+            mf_tid: 3241
+          judging:
+            start: 2024-07-05T20:00
+            end: 2024-07-16T22:00
+            mf_tid: 3242
+      [I1, I2, I3]:
+        players:
+          A:
+            A1: 一只果果果果果
+            A2: 绿色的糖果
+            A3: zqh——123
+          B:
+            B1: 数字1528君
+            B2: AngryStar6K
+            B3: 安德鲁斯123
+          C:
+            C1: 大爷
+            C2: 有名氏
+            C3: 超级玛丽迷01
+        judges:
+          A:
+            J1: ƒresh★LAKE
+            J2: 玛丽的死对头
+            JR: '1168438795'
+          B:
+            J1: 马里奥奥里马
+            J2: 我懂你不懂的lz
+            JR: zqh——123
+          C:
+            J1: Tian-BY
+            J2: '1168438795'
+            JR: zqh——123
+        schedule:
+          draw:
+            time: 2024-07-17T18:00
+            mf_tid: 3264
+          match:
+            start: 2024-07-17T20:00
+            deadlines:
+              - 2024-07-23T22:00
+              - 2024-07-27T22:00
+            mf_tid:
+              I1: 3265
+              I2: 3266
+              I3: 3267
+          judging:
+            start: 2024-07-17T20:00
+            deadlines:
+              - 2024-07-27T22:00
+              - 2024-07-31T22:00
+            mf_tid:
+              I1: 3268
+              I2: 3269
+              I3: 3270
+          promotion:
+            time: 2024-08-01T16:00
+            mf_tid: 3302
+      R:
+        players:
+          '1':
+            1A: 一只果果果果果
+            1B: 数字1528君
+            1C: 大爷
+          '2':
+            2A: zqh——123
+            2B: AngryStar6K
+            2C: 超级玛丽迷01
+        judges:
+          '1':
+            J1: ƒresh★LAKE
+            J2: 玛丽的死对头
+            JR: 马里奥奥里马
+          '2':
+            J1: '1168438795'
+            J2: 我懂你不懂的lz
+            JR: 马里奥奥里马
+        schedule:
+          draw:
+            time: 2024-08-01T18:00
+            mf_tid: 3304
+          match:
+            start: 2024-08-01T20:00
+            end: 2024-08-07T22:00
+            mf_tid: 3303
+          judging:
+            start: 2024-08-01T20:00
+            end: 2024-08-10T22:00
+            mf_tid: 3305
+          promotion:
+            time: 2024-08-11T16:00
+            mf_tid: 3319
+      F:
+        players:
+          S: AngryStar6K
+          M: 数字1528君
+          W: 一只果果果果果
+          P: 超级玛丽迷01
+        judges:
+          J1: '1168438795'
+          J2: 玛丽的死对头
+          J3: 马里奥奥里马
+          J4: 我懂你不懂的lz
+        schedule:
+          draw:
+            time: 2024-08-11T18:00
+            mf_tid: 3321
+          match:
+            start: 2024-08-11T20:00
+            end: 2024-08-17T22:00
+            mf_tid: 3322
+          judging:
+            start: 2024-08-11T20:00
+            end: 2024-08-20T22:00
+            mf_tid: 3323
+  2025:
+    scoring_scheme: E # 2025 年热身赛试行新的大众评分方案，csv格式为“选手码,评委,得体度,美观度,独特度,思辨度,完成度,合理度,有效度,参与度,耐玩度,成就度,加分项,扣分项,换算后大众评分”；本方案每关只有一位评委评分员
+    rounds:
+      P1:
+        players:
+          '1': 有名氏
+          '2': 超级玛丽迷01
+          '3': zqh——123
+          '4': 一只果果果果果
+          '5': 蓝太阳
+          '6': AngryStar6K
+          '7': 绿色的糖果
+          '8': 大爷
+          '9': '1168438795'
+        judges:
+          J1: 我懂你不懂的lz
+          J2: 玛丽的死对头
+          J3: ƒresh★LAKE
+        chief_judge: false
+        schedule:
+          registration:
+            start: 2025-01-15T20:00
+            end: 2025-01-22T16:00
+            mf_tid: 3482
+          match:
+            start: 2025-01-22T20:00
+            end: 2025-02-05T22:00
+            mf_tid: 3490
+          judging:
+            start: 2025-01-22T20:00
+            end: 2025-02-09T22:00
+            mf_tid: 3491
+          voting:
+            start: 2025-02-05T22:00
+            end: 2025-02-09T22:00
+            mf_tid: 3512
