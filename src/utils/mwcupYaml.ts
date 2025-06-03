@@ -106,7 +106,8 @@ function getStageZh(mainStage: string, season?: any) {
   return stageMap[mainStage] || mainStage;
 }
 
-function getContentZh(mainStage: string, contentKey: string) {
+function getContentZh(mainStage: string, contentKey: string, season?: any) {
+  
   // 处理deadline的情况
   const deadlineMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-deadline(\d+)$/);
   if (deadlineMatch) {
@@ -150,7 +151,9 @@ function getContentZh(mainStage: string, contentKey: string) {
     } else if (action === 'match') {
       return '比赛开始';
     } else if (action === 'judging') {
-      return '评分';
+      // 从season中获取当前轮次的judging数据
+      const judging = season?.rounds?.[mainStage.split('-')[0]]?.schedule?.judging;
+      return judging?.deadlines ? '评分开始' : '评分';
     } else if (action === 'draw') {
       return '抽签';
     }
@@ -207,7 +210,7 @@ function getContentWeight(content: string) {
   // 处理带有数字的内容（如"第一轮截止"）
   if (content.includes('关上传截止')) return 4.5;
   if (content.includes('关评分截止')) return 4.7;
-  if (content === '评分') return 4.6;
+  if (content.startsWith('评分')) return 4.6;
   if (content === '晋级名单公布') return 4.8;
   if (content.includes('题公布')) return 4.2;
   if (content === '比赛开始') return 4;
@@ -278,7 +281,7 @@ export function getYearSchedules(doc: any, tidType: 'tieba' | 'archive' | 'mf' =
                 schedule[`${roundKey}-match`] = scheduleObj.match;
               }
             }
-            
+
             // 处理评分帖
             if (scheduleObj.judging) {
               const judgingData = scheduleObj.judging;
@@ -382,7 +385,7 @@ export function getYearSchedules(doc: any, tidType: 'tieba' | 'archive' | 'mf' =
         contentKey = m[2];
       }
       const stageZh = getStageZh(mainStage, season);
-      const contentZh = contentKey === 'draw' ? '抽签' : getContentZh(mainStage, contentKey);
+      const contentZh = contentKey === 'draw' ? '抽签' : getContentZh(mainStage, contentKey, season);
 
       if (typeof value === 'object' && value !== null) {
         const v = value as Record<string, any>;
@@ -452,15 +455,7 @@ export function getYearSchedules(doc: any, tidType: 'tieba' | 'archive' | 'mf' =
       // 对每个轮次内的内容进行排序
       const sortedItems: ScheduleItem[] = [];
       for (const [, roundItems] of roundGroups) {
-        // 去除重复的比赛开始项
-        const uniqueItems = roundItems.filter((item, index, self) => 
-          !(item.content === '比赛开始' && 
-            self.findIndex(i => i.content === '比赛开始' && 
-                               i.start === item.start && 
-                               i.end === item.end) !== index)
-        );
-        
-        uniqueItems.sort((a, b) => {
+        roundItems.sort((a, b) => {
           const weightA = getContentWeight(a.content);
           const weightB = getContentWeight(b.content);
           
@@ -472,7 +467,7 @@ export function getYearSchedules(doc: any, tidType: 'tieba' | 'archive' | 'mf' =
           if (b.start) return 1;
           return 0;
         });
-        sortedItems.push(...uniqueItems);
+        sortedItems.push(...roundItems);
       }
       
       result.push({ year, items: sortedItems });
