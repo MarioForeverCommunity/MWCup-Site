@@ -110,15 +110,4 @@ th, td {
 .time-cell {
   text-align: center;
 }
-.multiple-links {
-  text-align: left;
-  margin: 2px 0;
-}
-.multiple-links :deep(a) {
-  color: #0066cc;
-  text-decoration: none;
-}
-.multiple-links :deep(a):hover {
-  text-decoration: underline;
-}
 </style>
