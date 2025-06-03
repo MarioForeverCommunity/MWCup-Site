@@ -88,7 +88,7 @@ onMounted(async () => {
             </template>
             <td>
               <template v-if="item.multipleLinks">
-                <div v-for="link in item.multipleLinks" :key="link" v-html="link" class="multiple-links"></div>
+                <div v-for="link in item.multipleLinks" :key="link" v-html="link"></div>
               </template>
               <a v-else-if="item.link" :href="item.link" target="_blank">链接</a>
             </td>
