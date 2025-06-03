@@ -63,6 +63,7 @@ season:
     chief_judge: [Fahlee_5, nmnmoooh] # 总评委一般有两位
     rounds:
       P1: # P1 为预选赛/热身赛，本届为热身赛
+        is_warmup: true
         players:
           a:
             a1: 三条海里4498
@@ -877,6 +878,7 @@ season:
     chief_judge: [Fahlee_5, nmnmoooh]
     rounds:
       P1:
+        is_warmup: true
         players:
           '1': s小s飞s侠s
           '2': 毒蘑菇vn
@@ -1931,6 +1933,7 @@ season:
     chief_judge: [LLX奶油马里奥, '123568024']
     rounds:
       P1:
+        is_warmup: true
         scoring_scheme: B # 轮次下 scoring_scheme 仅适用本轮次
         players:
           '1': 2333ty
@@ -2349,6 +2352,7 @@ season:
     chief_judge: ['1168438795', Fahlee_5]
     rounds:
       P1:
+        is_warmup: true
         players:
           I:
             '1': zqh——123
@@ -2531,6 +2535,7 @@ season:
     chief_judge: ['zqh——123', 马里奥奥里马]
     rounds:
       P1:
+        is_warmup: true
         scoring_scheme: D # 2023 年热身赛试行的大众评分方案，后被废止；csv 格式为“选手码,评分员,欣赏性,创新性,设计性,游戏性,加分项,扣分项”
         players:
           a:
@@ -2668,6 +2673,7 @@ season:
     chief_judge: ['1168438795', 玛丽的死对头]
     rounds:
       P1:
+        is_warmup: true
         players:
           '1': 安德鲁斯123
           '2': zqh——123
@@ -2835,6 +2841,7 @@ season:
     scoring_scheme: E # 2025 年热身赛试行新的大众评分方案，csv格式为“选手码,评委,得体度,美观度,独特度,思辨度,完成度,合理度,有效度,参与度,耐玩度,成就度,加分项,扣分项,换算后大众评分”；本方案每关只有一位评委评分员
     rounds:
       P1:
+        is_warmup: true
         players:
           '1': 有名氏
           '2': 超级玛丽迷01

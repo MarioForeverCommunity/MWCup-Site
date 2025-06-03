@@ -63,7 +63,7 @@ const contentOrder: Record<string, number> = {
   'promotion': 7,          // 晋级名单公布
 };
 
-function getStageZh(mainStage: string) {
+function getStageZh(mainStage: string, season?: any) {
   // 处理带有批量轮次的抽签情况（如 Q1,Q2-draw）
   const drawMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-draw$/);
   if (drawMatch) {
@@ -84,6 +84,15 @@ function getStageZh(mainStage: string) {
            stageType === 'Q' ? '四分之一决赛' :
            stageType === 'S' ? '半决赛' :
            stageType === 'R' ? '复赛' : mainStage;
+  }
+
+  // 处理热身赛标记
+  if (mainStage === 'P1') {
+    // 获取当前轮次的完整数据
+    const roundData = Object.entries(season.rounds).find(([key]) => key === 'P1')?.[1];
+    if (roundData && (roundData as any).is_warmup) {
+      return '热身赛';
+    }
   }
 
   // 处理单个轮次的情况
@@ -372,7 +381,7 @@ export function getYearSchedules(doc: any, tidType: 'tieba' | 'archive' | 'mf' =
         mainStage = m[1];
         contentKey = m[2];
       }
-      const stageZh = getStageZh(mainStage);
+      const stageZh = getStageZh(mainStage, season);
       const contentZh = contentKey === 'draw' ? '抽签' : getContentZh(mainStage, contentKey);
 
       if (typeof value === 'object' && value !== null) {
