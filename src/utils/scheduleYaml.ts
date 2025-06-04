@@ -253,6 +253,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'archive' | 'mf' 
                     if (tid) {
                       const num = topic.match(/[GIQSR](\d+)/)?.[1] || topic.match(/(\d+)$/)?.[1];
                       const cnNum = num ? `第${['零','一','二','三','四','五','六','七','八','九','十'][Number(num)] || num}题` : '链接';
+                      // 不添加任何样式类，样式将在Vue组件中统一处理
                       links.push(`<a href="${getTidLink(tid as string, 'mf')}" target="_blank">${cnNum}</a>`);
                     }
                   }
@@ -305,6 +306,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'archive' | 'mf' 
                   if (tid) {
                     const num = topic.match(/[GIQSR](\d+)/)?.[1] || topic.match(/(\d+)$/)?.[1];
                     const cnNum = num ? `第${['零','一','二','三','四','五','六','七','八','九','十'][Number(num)] || num}题` : '链接';
+                    // 不添加任何样式类，样式将在Vue组件中统一处理
                     links.push(`<a href="${getTidLink(tid as string, linkType)}" target="_blank">${cnNum}</a>`);
                   }
                 }
