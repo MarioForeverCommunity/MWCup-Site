@@ -15,47 +15,32 @@
     <div v-else class="statistics-content">
       <!-- 冠军列表 -->
       <div class="champions-section">
-        <h3>历届冠军</h3>
+        <h3>历届决赛排名</h3>
         <div class="table-wrapper">
           <table class="champions-table">
             <thead>
               <tr>
                 <th>年份</th>
-                <th>男子组冠军</th>
-                <th>女子组冠军</th>
+                <th>冠军</th>
+                <th>亚军</th>
+                <th v-if="hasThirdPrize">季军</th>
+                <th v-if="hasFourthPrize">第四名</th>
                 <th>主办人</th>
                 <th>总评委</th>
               </tr>
-            </thead>            <tbody>
+            </thead>
+            <tbody>
               <tr v-for="champion in champions" :key="champion.year">
                 <td class="year">{{ champion.year }}年第{{ getEditionNumber(champion.year) }}届</td>
-                <td class="champion male">{{ champion.maleChampion || '-' }}</td>
-                <td class="champion female">{{ champion.femaleChampion || '-' }}</td>
+                <td class="champion">{{ champion.first || '-' }}</td>
+                <td>{{ champion.second || '-' }}</td>
+                <td v-if="hasThirdPrize">{{ champion.third || '-' }}</td>
+                <td v-if="hasFourthPrize">{{ champion.fourth || '-' }}</td>
                 <td class="host">{{ champion.host || '-' }}</td>
                 <td class="judges">{{ champion.chiefJudges?.join('、') || '-' }}</td>
               </tr>
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <!-- 统计信息 -->
-      <div class="stats-section">
-        <h3>统计信息</h3>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <h4>总届数</h4>
-            <p class="stat-value">{{ champions.length }}</p>
-          </div>
-          <div class="stat-card">
-            <h4>多次夺冠选手</h4>
-            <div class="multi-champion-list">
-              <div v-for="(count, player) in multipleChampions" :key="player" class="multi-champion-item">
-                <span class="player">{{ player }}</span>
-                <span class="count">{{ count }}次</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -66,11 +51,14 @@
 import { ref, onMounted, computed } from 'vue'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
+import { loadRoundScoreData, type PlayerScore } from '../utils/scoreCalculator'
 
 interface ChampionInfo {
   year: string
-  maleChampion?: string
-  femaleChampion?: string
+  first?: string
+  second?: string
+  third?: string
+  fourth?: string
   host?: string
   chiefJudges?: string[]
 }
@@ -79,26 +67,22 @@ const champions = ref<ChampionInfo[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
+const hasThirdPrize = computed(() => parseInt(champions.value[0]?.year || '0') >= 2020)
+const hasFourthPrize = computed(() => parseInt(champions.value[0]?.year || '0') >= 2020)
+
 const multipleChampions = computed(() => {
-  const championCounts: { [key: string]: number } = {}
-  
+  const counts: { [key: string]: number } = {}
   champions.value.forEach(c => {
-    if (c.maleChampion) {
-      championCounts[c.maleChampion] = (championCounts[c.maleChampion] || 0) + 1
-    }
-    if (c.femaleChampion) {
-      championCounts[c.femaleChampion] = (championCounts[c.femaleChampion] || 0) + 1
-    }
+    if (c.first) counts[c.first] = (counts[c.first] || 0) + 1
+    if (c.second) counts[c.second] = (counts[c.second] || 0) + 1
+    if (c.third) counts[c.third] = (counts[c.third] || 0) + 1
+    if (c.fourth) counts[c.fourth] = (counts[c.fourth] || 0) + 1
   })
   
-  // 过滤出多次夺冠的选手
   const multiple: { [key: string]: number } = {}
-  for (const [player, count] of Object.entries(championCounts)) {
-    if (count > 1) {
-      multiple[player] = count
-    }
+  for (const [player, count] of Object.entries(counts)) {
+    if (count > 1) multiple[player] = count
   }
-  
   return multiple
 })
 
@@ -109,28 +93,66 @@ async function loadChampions() {
   try {
     const yamlDoc = await fetchMarioWorkerYaml()
     const seasonData = extractSeasonData(yamlDoc)
-    
     const championList: ChampionInfo[] = []
     
     for (const [year, yearData] of Object.entries(seasonData)) {
       if (typeof yearData === 'object' && yearData !== null) {
         const data = yearData as any
-        const finalRound = data.rounds?.F
         
-        if (finalRound?.players) {
-          const championInfo: ChampionInfo = {
-            year,
-            host: data.host,
-            chiefJudges: Array.isArray(data.chief_judge) ? data.chief_judge : 
-                         data.chief_judge ? [data.chief_judge] : undefined
+        const championInfo: ChampionInfo = {
+          year,
+          host: data.host,
+          chiefJudges: Array.isArray(data.chief_judge) ? data.chief_judge : 
+                       data.chief_judge ? [data.chief_judge] : undefined
+        }
+        
+        try {
+          // 尝试加载并使用决赛评分数据
+          const scoreData = await loadRoundScoreData(year, 'F', yamlDoc)
+          if (scoreData?.playerScores?.length > 0) {
+            // 按平均分排序
+            const sortedPlayers = [...scoreData.playerScores].sort(
+              (a, b) => (b.averageScore ?? 0) - (a.averageScore ?? 0)
+            )
+            
+            // 分配名次
+            championInfo.first = sortedPlayers[0].playerName
+            if (sortedPlayers.length > 1) championInfo.second = sortedPlayers[1].playerName
+            if (parseInt(year) >= 2020) {
+              if (sortedPlayers.length > 2) championInfo.third = sortedPlayers[2].playerName
+              if (sortedPlayers.length > 3) championInfo.fourth = sortedPlayers[3].playerName
+            }
+            championList.push(championInfo)
+            continue
+          }
+          throw new Error('评分数据不完整')
+        } catch (err) {
+          console.warn(`${year} 年决赛评分数据加载失败:`, err)
+          
+          // 使用 yaml 中的记录作为备选
+          const finalRound = data.rounds?.F
+          if (!finalRound?.players) {
+            console.warn(`${year} 年决赛选手记录不存在，跳过`)
+            continue
           }
           
-          // 提取冠军信息
-          if (finalRound.players.M) {
-            championInfo.maleChampion = finalRound.players.M
+          // 确定冠亚军
+          if (finalRound.players.S) {
+            championInfo.first = finalRound.players.S
+            championInfo.second = finalRound.players.M || finalRound.players.W
+          } else if (finalRound.players.M) {
+            championInfo.first = finalRound.players.M
+            championInfo.second = finalRound.players.W
           }
-          if (finalRound.players.W) {
-            championInfo.femaleChampion = finalRound.players.W
+          
+          // 2020年及之后的比赛额外记录季军和第四名
+          if (parseInt(year) >= 2020) {
+            if (!championInfo.second && finalRound.players.W) {
+              championInfo.third = finalRound.players.W
+            }
+            if (finalRound.players.P) {
+              championInfo.fourth = finalRound.players.P
+            }
           }
           
           championList.push(championInfo)
@@ -138,7 +160,7 @@ async function loadChampions() {
       }
     }
     
-    // 按年份排序
+    // 按年份降序排序
     championList.sort((a, b) => parseInt(b.year) - parseInt(a.year))
     champions.value = championList
     
@@ -235,13 +257,8 @@ onMounted(() => {
   text-align: center;
 }
 
-.champion.male {
+.champion {
   color: #3498db;
-  font-weight: 500;
-}
-
-.champion.female {
-  color: #e91e63;
   font-weight: 500;
 }
 
