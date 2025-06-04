@@ -18,6 +18,7 @@ export interface ScoreRecord {
   isBackup?: boolean;
   isCollaborative?: boolean;
   collaborativeJudges?: string[];
+  scoringScheme?: string; // 添加评分方案字段
 }
 
 export interface PlayerScore {
@@ -156,13 +157,17 @@ export function parseCsvToScoreRecords(
 
     // 计算最终总分（四舍五入到一位小数）
     const finalScore = Math.round((totalScore + bonusPoints - penaltyPoints) * 10) / 10;
-
+    // 如果是协商评分，直接从YAML中查找评委名称而不是使用CSV中的judgeCode
+    const judgeName = judgeInfo.isCollaborative 
+      ? judgeInfo.collaborativeJudges?.map(j => getJudgeName(j, playerMap, playerCode)).join(', ') || ''
+      : '';
+      
     records.push({
       playerCode,
       judgeCode: judgeInfo.originalCode,
       originalJudgeCode: judgeCode, // 保存原始的judge code
       playerName,
-      judgeName: '', // 暂时为空，稍后填充
+      judgeName: judgeName, // 协商评分的名称会在这里填充，其他评委稍后填充
       scores,
       bonusPoints: bonusPoints || undefined,
       penaltyPoints: penaltyPoints || undefined,
@@ -174,9 +179,15 @@ export function parseCsvToScoreRecords(
     });
   }  // 现在填充评委名称（可以访问所有记录来判断重评）
   for (const record of records) {
-    const judgeInfo = parseJudgeCode(record.originalJudgeCode);
-    record.judgeName = getJudgeName(record.judgeCode, playerMap, judgeInfo, records, record.playerCode, year, round);
+    // 只对非协商评分的记录填充评委名称，协商评分保持原样
+    if (!record.isCollaborative) {
+      record.judgeName = getJudgeName(record.judgeCode, playerMap, record.playerCode);
+    }
   }
+  // 为所有记录添加评分方案信息
+  records.forEach(record => {
+    record.scoringScheme = scoringScheme;
+  });
 
   // 计算选手总分
   const playerScores = calculatePlayerScores(records);
@@ -229,7 +240,7 @@ function parseCSVLine(line: string): string[] {
 /**
  * 解析评委代码
  */
-function parseJudgeCode(judgeCode: string) {
+export function parseJudgeCode(judgeCode: string) {
   let isRevoked = false;
   let isBackup = false;
   let isCollaborative = false;
@@ -247,7 +258,9 @@ function parseJudgeCode(judgeCode: string) {
     isCollaborative = true;
     const innerCode = originalCode.slice(1, -1);
     collaborativeJudges = innerCode.split(',').map(j => j.trim());
-    originalCode = innerCode;
+    // 在协商评分的情况下，评委码是逗号分隔的多个评委的组合
+    // 保持原始格式，不要修改，这样才能在YAML中正确查找评委名称
+    // originalCode = innerCode; 
   }
 
   // 检查是否为预备评委
@@ -267,7 +280,7 @@ function parseJudgeCode(judgeCode: string) {
 /**
  * 构建选手和评委名称映射
  */
-function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
+export function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
   const seasonData = yamlData.season[year];
   let roundData = seasonData?.rounds?.[round];
   
@@ -294,6 +307,7 @@ function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
   }
 
   const players: { [key: string]: string } = {};
+  const playerGroups: { [key: string]: string } = {}; // 新增：记录选手分组
   const judges: { [key: string]: string } = {};
 
   // 收集选手映射
@@ -316,12 +330,13 @@ function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
           }
         }
       } else {
-        // 分组结构：players: { A: { A1: 用户名, A2: 用户名 }, ... }
-        for (const group of Object.values(roundData.players) as any[]) {
+        // 分组结构：players: { A: { A1: 用户名, ... }, ... }
+        for (const [groupKey, group] of Object.entries(roundData.players) as [string, any][]) {
           if (typeof group === 'object' && group !== null) {
             for (const [code, name] of Object.entries(group)) {
               if (typeof name === 'string') {
                 players[code] = name;
+                playerGroups[code] = groupKey; // 记录选手分组
               }
             }
           }
@@ -344,11 +359,11 @@ function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
         }
       } else {
         // 分组结构：judges: { A: { J1: 用户名, J2: 用户名 }, ... }
-        for (const group of Object.values(roundData.judges) as any[]) {
+        for (const [groupKey, group] of Object.entries(roundData.judges) as [string, any][]) {
           if (typeof group === 'object' && group !== null) {
             for (const [code, name] of Object.entries(group)) {
               if (typeof name === 'string') {
-                judges[code] = name;
+                judges[`${groupKey}-${code}`] = name; // 记录分组-评委码
               }
             }
           }
@@ -357,7 +372,7 @@ function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
     }
   }
 
-  return { players, judges };
+  return { players, judges, playerGroups };
 }
 
 /**
@@ -370,52 +385,30 @@ function getPlayerName(playerCode: string, playerMap: any): string {
 /**
  * 获取评委姓名
  */
-function getJudgeName(judgeCode: string, playerMap: any, judgeInfo: any, allRecords: ScoreRecord[], playerCode: string, year: string, round: string): string {
-  if (judgeInfo.isCollaborative && judgeInfo.collaborativeJudges) {
-    const names = judgeInfo.collaborativeJudges.map((j: string) => {
-      const baseName = playerMap.judges[j] || j;
-      if (j.includes('JR')) {
-        // 检查是否有对应的作废评分来判断是重评还是预备
-        const baseJudgeCode = j.replace('JR', 'J');
-        const hasRevokedJudge = allRecords.some(r => 
-          r.playerCode === playerCode && 
-          r.isRevoked && 
-          r.judgeCode.replace(/^~/, '') === baseJudgeCode
-        );
-        return hasRevokedJudge ? `${baseName}（重评）` : `${baseName}（预备）`;
-      }
-      return baseName;
-    });
-    return names.join('、');
-  }
-
-  const baseName = playerMap.judges[judgeCode] || judgeCode;
-  
-  // 特殊处理：2023 warmup round (P1) 的JZ评委显示"大众"注释
-  if (year === '2023' && round === 'P1' && judgeCode.startsWith('JZ')) {
-    return `${baseName}（大众）`;
-  }
-  
-  if (judgeInfo.isBackup) {
-    // 检查是否有对应的作废评分来判断是重评还是预备
-    let baseJudgeCode = judgeCode;
-    if (judgeCode.match(/^JR\d*$/)) {
-      // JR1 -> J1, JR -> J1 (假设默认对应J1)
-      baseJudgeCode = judgeCode.replace('JR', 'J');
-      if (baseJudgeCode === 'J') {
-        baseJudgeCode = 'J1';
+function getJudgeName(judgeCode: string, playerMap: any, playerCode?: string): string {
+  // 优先分组查找
+  if (playerCode && playerMap.playerGroups) {
+    const group = playerMap.playerGroups[playerCode];
+    if (group) {
+      const groupJudgeKey = `${group}-${judgeCode}`;
+      if (playerMap.judges[groupJudgeKey]) {
+        return playerMap.judges[groupJudgeKey];
       }
     }
-    
-    const hasRevokedJudge = allRecords.some(r => 
-      r.playerCode === playerCode && 
-      r.isRevoked && 
-      r.judgeCode.replace(/^~/, '') === baseJudgeCode
-    );
-    return hasRevokedJudge ? `${baseName}（重评）` : `${baseName}（预备）`;
   }
-  
-  return baseName;
+  // 兼容旧逻辑
+  const baseName = playerMap.judges[judgeCode];
+  if (!baseName && judgeCode.length > 1) {
+    const parts = judgeCode.match(/^[A-Za-z]+(\d+.*)$/);
+    if (parts && parts[1]) {
+      const simpleCode = 'J' + parts[1];
+      const simpleName = playerMap.judges[simpleCode];
+      if (simpleName) {
+        return simpleName;
+      }
+    }
+  }
+  return baseName || judgeCode;
 }
 
 /**
@@ -423,6 +416,7 @@ function getJudgeName(judgeCode: string, playerMap: any, judgeInfo: any, allReco
  */
 function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
   const playerGroups: { [key: string]: ScoreRecord[] } = {};
+  const scoringScheme = records.length > 0 ? records[0].scoringScheme : '';
   
   // 按选手分组
   for (const record of records) {
@@ -431,9 +425,7 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
     }
     playerGroups[record.playerCode].push(record);
   }
-
   const playerScores: PlayerScore[] = [];
-
   for (const [playerCode, playerRecords] of Object.entries(playerGroups)) {
     // 过滤掉被作废的评分
     const validRecords = playerRecords.filter(r => !r.isRevoked);
@@ -441,20 +433,28 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
     if (validRecords.length === 0) continue;
 
     const totalSum = validRecords.reduce((sum, record) => sum + record.totalScore, 0);
-    const averageScore = Math.round((totalSum / validRecords.length) * 10) / 10;
+    let averageScore;
+    if (scoringScheme === 'E') {
+      // 方案E：每个选手只有一条记录，直接用该行的totalScore和换算后大众评分加权
+      const record = validRecords[0];
+      const judgeScore = record.totalScore;
+      const publicScore = record.scores['换算后大众评分'] || 0;
+      let avg = judgeScore * 0.75 + publicScore * 0.25;
+      averageScore = Number(Number(avg.toFixed(2)).toFixed(1));
+    } else {
+      // 其他评分方案的正常计算
+      averageScore = Number((totalSum / validRecords.length).toFixed(1));
+    }
 
     playerScores.push({
       playerCode,
       playerName: validRecords[0].playerName,
       records: validRecords,
-      totalSum: Math.round(totalSum * 10) / 10,
+      totalSum: Number((totalSum).toFixed(1)),
       averageScore,
       validRecordsCount: validRecords.length
     });
   }
-
-  // 按平均分降序排序
-  playerScores.sort((a, b) => b.averageScore - a.averageScore);
 
   return playerScores;
 }
@@ -591,8 +591,7 @@ function handleDirectScores(yamlData: any, year: string, round: string): RoundSc
         };
         
         records.push(record);
-        
-        playerScores.push({
+          playerScores.push({
           playerCode,
           playerName,
           records: [record],
@@ -602,9 +601,6 @@ function handleDirectScores(yamlData: any, year: string, round: string): RoundSc
         });
       }
     }
-    
-    // 按平均分降序排序
-    playerScores.sort((a, b) => b.averageScore - a.averageScore);
     
     return {
       year,

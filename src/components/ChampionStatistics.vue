@@ -51,7 +51,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
-import { loadRoundScoreData, type PlayerScore } from '../utils/scoreCalculator'
+import { loadRoundScoreData } from '../utils/scoreCalculator'
 
 interface ChampionInfo {
   year: string
@@ -69,23 +69,6 @@ const error = ref<string | null>(null)
 
 const hasThirdPrize = computed(() => parseInt(champions.value[0]?.year || '0') >= 2020)
 const hasFourthPrize = computed(() => parseInt(champions.value[0]?.year || '0') >= 2020)
-
-const multipleChampions = computed(() => {
-  const counts: { [key: string]: number } = {}
-  champions.value.forEach(c => {
-    if (c.first) counts[c.first] = (counts[c.first] || 0) + 1
-    if (c.second) counts[c.second] = (counts[c.second] || 0) + 1
-    if (c.third) counts[c.third] = (counts[c.third] || 0) + 1
-    if (c.fourth) counts[c.fourth] = (counts[c.fourth] || 0) + 1
-  })
-  
-  const multiple: { [key: string]: number } = {}
-  for (const [player, count] of Object.entries(counts)) {
-    if (count > 1) multiple[player] = count
-  }
-  return multiple
-})
-
 async function loadChampions() {
   loading.value = true
   error.value = null
@@ -297,21 +280,6 @@ onMounted(() => {
   color: #3498db;
   margin: 0;
   text-align: center;
-}
-
-.multi-champion-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.multi-champion-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
 }
 
 .player {

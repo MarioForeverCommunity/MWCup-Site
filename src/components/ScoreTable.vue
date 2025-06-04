@@ -11,8 +11,7 @@
         <p class="scheme-info">评分方案: {{ scoreData.scoringScheme }}</p>
       </div>
 
-      <!-- 控制面板 -->
-      <div class="controls-panel">
+      <!-- 控制面板 -->      <div class="controls-panel">
         <div class="filter-controls">
           <label>筛选评委类型:</label>
           <select v-model="filterJudgeType">
@@ -21,20 +20,6 @@
             <option value="backup">预备评委</option>
             <option value="collaborative">协商评分</option>
             <option value="revoked">撤销评分</option>
-          </select>
-        </div>
-        
-        <div class="sort-controls">
-          <label>排序方式:</label>
-          <select v-model="sortBy">
-            <option value="player">按选手</option>
-            <option value="judge">按评委</option>
-            <option value="total">按总分</option>
-            <option value="average">按平均分</option>
-          </select>
-          <select v-model="sortOrder">
-            <option value="asc">升序</option>
-            <option value="desc">降序</option>
           </select>
         </div>
           <div class="search-controls">
@@ -48,9 +33,9 @@
   
       </div>
 
-      <!-- 详细评分表 -->
-      <div class="detailed-scores">
+      <!-- 详细评分表 -->      <div class="detailed-scores">
         <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
+        <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
         
         <!-- 分页控制 -->
         <div class="pagination-controls" v-if="totalPages > 1">
@@ -77,62 +62,87 @@
             <option :value="100">100条/页</option>
           </select>
         </div>
-
         <div class="table-wrapper">
           <table class="score-table">
-            <thead>
+            <thead>              <!-- 评分方案为C或E时，添加分类行 -->              <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
+                <th :colspan="2" class="empty-header">人员</th>
+                <th colspan="2" class="category-header">欣赏性</th>
+                <th colspan="2" class="category-header">创新性</th>
+                <th colspan="3" class="category-header">设计性</th>
+                <th colspan="3" class="category-header">游戏性</th>
+                <th :colspan="scoreData.columns.length - 10 + 2" class="empty-header">其他项</th>
+              </tr>
               <tr>
                 <th>选手</th>
                 <th>评委</th>
-                <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>
-                <th>总分</th>
+                <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>                <th>总分</th>
+                <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
               </tr>
             </thead>
             <tbody>
-              <tr 
-                v-for="record in paginatedDetailRecords" 
-                :key="`${record.playerCode}-${record.judgeCode}`"
-                :class="{ 'revoked-score': record.isRevoked }"
-              >
-                <td class="player-name">
-                  <span class="player-code">{{ record.playerCode }}</span>
-                  <span class="player-name-text">{{ record.playerName }}</span>
-                </td>                <td class="judge-name">
-                  <div v-if="record.isCollaborative && record.collaborativeJudges">
-                    <div 
-                      v-for="(judge, index) in record.collaborativeJudges" 
-                      :key="index"
-                      class="collaborative-judge-item"
-                    >                      {{ getJudgeName(judge) }}
-                      <span class="collaborative-tag">协商</span>
-                      <span v-if="isReEvaluationJudge(judge, record)" class="re-evaluation-tag">重评</span>
-                      <span v-else-if="isBackupJudge(judge)" class="backup-tag">预备</span>
-                      <span v-else-if="isPublicJudge(judge)" class="public-tag">大众</span>
-                    </div>
-                  </div>
-                  <div v-else>
-                    {{ record.judgeName.replace(/（[^）]*）/g, '') }}
-                    <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
-                    <span v-if="record.judgeName.includes('（重评）')" class="re-evaluation-tag">重评</span>
-                    <span v-else-if="record.judgeName.includes('（预备）')" class="backup-tag">预备</span>
-                    <span v-else-if="record.judgeName.includes('（大众）')" class="public-tag">大众</span>
-                  </div>
-                </td>
-                <td 
-                  v-for="column in scoreData.columns" 
-                  :key="column"
-                  class="score-cell"
-                >
-                  {{ formatScore(record.scores[column]) }}
-                </td>
-                <td class="total-score">{{ record.totalScore }}</td>
-              </tr>
+              <template v-for="(playerGroup, playerIndex) in groupedDetailRecords" :key="playerGroup.playerCode">
+                <template v-for="(record, recordIndex) in playerGroup.records" :key="`${record.playerCode}-${record.judgeCode}`">
+                  <tr :class="{ 'revoked-score': record.isRevoked }">
+                    <!-- 只在该选手的第一行显示选手信息，并合并行 -->
+                    <td v-if="recordIndex === 0" :rowspan="playerGroup.records.length" class="player-name player-cell-merged">
+                      <span v-if="record.playerCode !== record.playerName" class="player-code">{{ record.playerCode }}</span>
+                      <span class="player-name-text">{{ record.playerName }}</span>
+                    </td>
+                    
+                    <td class="judge-name">
+                      <!-- 手动处理协商评分的评委 -->                      <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
+                        <div 
+                          v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())" 
+                          :key="index"
+                          class="collaborative-judge-item"
+                        >
+                          <!-- 显示评委名 -->
+                          {{ getUserDisplayName(judgeCode, userMapping) }}
+                          <span class="collaborative-tag">协商</span>
+                          
+                          <!-- 显示重评、预备或大众评委标签 -->
+                          <span v-if="isBackupJudge(judgeCode)" class="backup-tag">预备</span>
+                          <span v-else-if="isPublicJudge(judgeCode)" class="public-tag">大众</span>
+                        </div>
+                      </div>
+                      
+                      <!-- 处理正常评委 -->
+                      <div v-else>
+                        <!-- 显示评委名称，使用judgeName而不是judgeCode查询用户映射 -->
+                        {{ record.judgeName.replace(/（[^）]*）/g, '').trim() }}
+                        
+                        <!-- 显示协商标签 -->
+                        <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
+                        
+                        <!-- 显示重评、预备或大众评委标签 -->
+                        <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
+                        <span v-else-if="isBackupJudge(record.judgeCode)" class="backup-tag">预备</span>
+                        <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
+                      </div>
+                    </td>
+                      <td 
+                      v-for="column in scoreData.columns" 
+                      :key="column"
+                      class="score-cell"
+                    >
+                      {{ formatScore(record.scores[column]) }}
+                    </td>
+                    <td class="total-score">{{ record.totalScore }}</td>
+                    <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
+                      {{ getPlayerAverageScore(record.playerCode) }}
+                    </td>
+                  </tr>                </template>                <!-- 添加一个极细的分隔线作为选手间的分隔符 -->
+                <tr v-if="playerIndex < groupedDetailRecords.length - 1" class="player-separator">
+                  <td :colspan="scoreData.columns.length + 4" class="separator-cell"></td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
-      </div>      <!-- 选手总分表 -->
+      </div><!-- 选手总分表 -->
       <div class="player-totals">
         <h4>选手总分 ({{ filteredPlayerScores.length }} 名选手)</h4>
+        <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
         <div class="table-wrapper">
           <table class="total-table">
             <thead>
@@ -141,13 +151,13 @@
                 <th>选手</th>
                 <th>有效评分次数</th>
                 <th>总分之和</th>
-                <th>平均分</th>
+                <th>平均分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
               </tr>
             </thead>
             <tbody>              <tr v-for="(player, index) in filteredPlayerScores" :key="player.playerCode">
                 <td class="rank">{{ index + 1 }}</td>
                 <td class="player-name">
-                  <span class="player-code">{{ player.playerCode }}</span>
+                  <span v-if="player.playerCode !== player.playerName" class="player-code">{{ player.playerCode }}</span>
                   <span class="player-name-text">{{ player.playerName }}</span>
                 </td>
                 <td class="count">{{ player.validRecordsCount }}</td>
@@ -167,6 +177,7 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { loadRoundScoreData, type RoundScoreData } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
+import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
 
 const props = defineProps<{
   year: string
@@ -174,8 +185,6 @@ const props = defineProps<{
 }>()
 
 // 控制状态
-const sortBy = ref<'player' | 'judge' | 'total' | 'average'>('average')
-const sortOrder = ref<'asc' | 'desc'>('desc')
 const filterJudgeType = ref<'all' | 'normal' | 'backup' | 'collaborative' | 'revoked'>('all')
 const searchPlayer = ref('')
 
@@ -183,34 +192,9 @@ const scoreData = ref<RoundScoreData | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const roundDisplayName = ref<string>('')
+const userMapping = ref<UserMapping>({})
 
-// 协商评分辅助函数
-function getJudgeName(judgeCode: string): string {
-  // 从playerMap中获取评委名称
-  if (!scoreData.value) return judgeCode;
-  
-  const seasonData = extractSeasonData({ season: { [props.year]: scoreData.value } });
-  const roundData = seasonData[props.year]?.rounds?.[props.round];
-  
-  if (roundData?.judges) {
-    // 尝试从judges映射中找到评委名称
-    if (typeof roundData.judges === 'object' && !Array.isArray(roundData.judges)) {
-      // 扁平结构
-      if (typeof roundData.judges[judgeCode] === 'string') {
-        return roundData.judges[judgeCode];
-      }
-      
-      // 分组结构
-      for (const group of Object.values(roundData.judges) as any[]) {
-        if (typeof group === 'object' && group !== null && typeof group[judgeCode] === 'string') {
-          return group[judgeCode];
-        }
-      }
-    }
-  }
-  
-  return judgeCode; // 如果找不到，返回原始代码
-}
+// 使用 userMapper.ts 中的 getUserDisplayName 函数来获取评委和选手的名称
 
 function isBackupJudge(judgeCode: string): boolean {
   return judgeCode.includes('JR');
@@ -267,29 +251,35 @@ const filteredDetailRecords = computed(() => {
     )
   }
   
-  // 排序
-  records.sort((a, b) => {
-    let compareValue = 0
-    
-    switch (sortBy.value) {
-      case 'player':
-        compareValue = a.playerName.localeCompare(b.playerName, 'zh-CN')
-        break
-      case 'judge':
-        compareValue = a.judgeName.localeCompare(b.judgeName, 'zh-CN')
-        break
-      case 'total':
-        compareValue = (a.totalScore || 0) - (b.totalScore || 0)
-        break
-      case 'average':
-        compareValue = (a.totalScore || 0) - (b.totalScore || 0)
-        break
-    }
-    
-    return sortOrder.value === 'asc' ? compareValue : -compareValue
-  })
+  // 不再进行排序，保持原始顺序
   
   return records
+})
+
+// 按选手分组后的详细记录
+const groupedDetailRecords = computed(() => {
+  if (!filteredDetailRecords.value.length) return []
+  
+  // 先按选手代码对记录进行分组
+  const groups: { [key: string]: any } = {}
+  
+  // 分页之后的记录
+  const recordsToDisplay = paginatedDetailRecords.value
+  
+  recordsToDisplay.forEach((record) => {
+    const key = record.playerCode
+    if (!groups[key]) {
+      groups[key] = {
+        playerCode: record.playerCode,
+        playerName: record.playerName,
+        records: []
+      }
+    }
+    groups[key].records.push(record)
+  })
+  
+  // 转换为数组格式
+  return Object.values(groups)
 })
 
 // 分页功能
@@ -307,7 +297,7 @@ const totalPages = computed(() => {
 })
 
 // 重置分页当筛选条件改变时
-watch([filterJudgeType, searchPlayer, sortBy, sortOrder], () => {
+watch([filterJudgeType, searchPlayer], () => {
   currentPage.value = 1
 })
 
@@ -331,26 +321,8 @@ const filteredPlayerScores = computed(() => {
     )
   }
   
-  // 排序
-  players.sort((a, b) => {
-    let compareValue = 0
-    
-    switch (sortBy.value) {
-      case 'player':
-        compareValue = a.playerName.localeCompare(b.playerName, 'zh-CN')
-        break
-      case 'total':
-        compareValue = a.totalSum - b.totalSum
-        break
-      case 'average':
-        compareValue = a.averageScore - b.averageScore
-        break
-      default:
-        compareValue = a.averageScore - b.averageScore
-    }
-    
-    return sortOrder.value === 'asc' ? compareValue : -compareValue
-  })
+  // 选手总分表仍然按平均分从高到低排序
+  players = [...players].sort((a, b) => b.averageScore - a.averageScore)
   
   return players
 })
@@ -367,6 +339,9 @@ async function loadScoreData() {
     // 加载YAML数据
     const yamlDoc = await fetchMarioWorkerYaml()
     const seasonData = extractSeasonData(yamlDoc)
+    
+    // 加载用户映射数据
+    userMapping.value = await loadUserMapping()
     
     // 获取轮次显示名称
     const roundData = seasonData[props.year]?.rounds?.[props.round]
@@ -413,7 +388,25 @@ function formatScore(score: number | undefined): string {
   if (score === undefined || score === null) {
     return '-'
   }
-  return score.toString()
+  // 对数字类型进行格式化，保留一位小数
+  if (typeof score === 'number') {
+    return score.toFixed(1)
+  } else if (typeof score === 'string') {
+    return score
+  } else {
+    return '-'
+  }
+}
+
+// 获取选手的平均分
+function getPlayerAverageScore(playerCode: string): string {
+  if (!scoreData.value) return '-';
+  
+  const playerScore = scoreData.value.playerScores.find(p => p.playerCode === playerCode);
+  if (!playerScore) return '-';
+  
+  // 返回四舍五入到小数点后1位的分数
+  return playerScore.averageScore.toFixed(1);
 }
 
 // 监听props变化
@@ -461,6 +454,13 @@ onMounted(() => {
   font-size: 14px;
 }
 
+.scoring-note {
+  margin: 5px 0 10px;
+  color: #e74c3c;
+  font-size: 13px;
+  font-style: italic;
+}
+
 /* 控制面板样式 */
 .controls-panel {
   background: #f8f9fa;
@@ -474,7 +474,7 @@ onMounted(() => {
   align-items: center;
 }
 
-.filter-controls, .sort-controls, .search-controls {
+.filter-controls, .search-controls {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -609,6 +609,13 @@ onMounted(() => {
   padding-bottom: 5px;
 }
 
+.scoring-note {
+  margin: 0 0 10px 0;
+  color: #e74c3c;
+  font-size: 14px;
+  font-style: italic;
+}
+
 .table-wrapper {
   overflow-x: auto;
   border: 1px solid #ddd;
@@ -619,12 +626,13 @@ onMounted(() => {
   width: 100%;
   border-collapse: collapse;
   background: white;
+  font-size: 14px;
 }
 
 .score-table th, .score-table td,
 .total-table th, .total-table td {
-  padding: 10px 12px;
-  text-align: left;
+  padding: 8px 10px;
+  text-align: center;
   border-bottom: 1px solid #eee;
 }
 
@@ -633,22 +641,49 @@ onMounted(() => {
   font-weight: 600;
   color: #495057;
   border-bottom: 2px solid #dee2e6;
+  text-align: center;
+}
+
+.category-header {
+  background-color: #e9ecef;
+  color: #343a40;
+  font-weight: 500;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.empty-header {
+  background-color: #f8f9fa;
 }
 
 .player-name {
   font-weight: 500;
   color: #2c3e50;
+  text-align: left;
+}
+
+.player-cell-merged {
+  background-color: #f8f9fa;
+  vertical-align: middle;
+  border-right: 2px solid #dee2e6;
+}
+
+.player-separator .separator-cell {
+  background-color: #f8f9fa;
+  border-bottom: 2px #dee2e6;
+  padding: 0;
+  line-height: 2px;
+  height: 2px;
 }
 
 .player-code {
   display: inline-block;
   background-color: #3498db;
   color: white;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 3px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
-  margin-right: 8px;
+  margin-right: 6px;
   font-family: 'Courier New', monospace;
 }
 
@@ -659,6 +694,7 @@ onMounted(() => {
 .judge-name {
   color: #34495e;
   position: relative;
+  text-align: left;
 }
 
 .collaborative-judge-item {
@@ -673,57 +709,86 @@ onMounted(() => {
   display: inline-block;
   background-color: #17a2b8;
   color: white;
-  font-size: 10px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  margin-left: 5px;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  margin-left: 4px;
 }
 
 .re-evaluation-tag {
   display: inline-block;
   background-color: #dc3545;
   color: white;
-  font-size: 10px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  margin-left: 5px;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  margin-left: 4px;
 }
 
 .backup-tag {
   display: inline-block;
   background-color: #6c757d;
   color: white;
-  font-size: 10px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  margin-left: 5px;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  margin-left: 4px;
 }
 
 .public-tag {
   display: inline-block;
   background-color: #28a745;
   color: white;
-  font-size: 10px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  margin-left: 5px;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  margin-left: 4px;
 }
 
 .score-cell {
   text-align: center;
   font-family: 'Courier New', monospace;
+  font-size: 13px;
 }
 
 .total-score {
   font-weight: 600;
-  color: #e74c3c;
   text-align: center;
+  font-size: 13px;
 }
 
+.final-score {
+  font-weight: 600;
+  color: #e74c3c;
+  text-align: center;
+  background-color: #f8f9fa;
+  font-size: 13px;
+}
+
+.special-scheme-indicator {
+  color: #e74c3c;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+/* 完全重构撤销的评分行样式，以分离处理透明度 */
 .revoked-score {
   background-color: #f8d7da;
-  opacity: 0.7;
+}
+
+/* 只有评分单元格和总分应用透明度和删除线 */
+.revoked-score .score-cell, 
+.revoked-score .total-score {
   text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* 确保选手名称、评委名称和最终得分不会应用删除线效果 */
+.revoked-score .player-name,
+.revoked-score .judge-name,
+.revoked-score .final-score {
+  text-decoration: none;
+  opacity: 1;
 }
 
 .rank {
@@ -735,29 +800,16 @@ onMounted(() => {
 .count, .sum, .average {
   text-align: center;
   font-family: 'Courier New', monospace;
+  font-size: 13px;
 }
 
 .average {
   font-weight: 600;
   color: #e74c3c;
-  font-size: 16px;
+  font-size: 14px;
 }
 
-/* 排名前三的特殊样式 */
-.total-table tbody tr:nth-child(1) .rank {
-  color: #f39c12;
-  font-size: 18px;
-}
-
-.total-table tbody tr:nth-child(2) .rank {
-  color: #95a5a6;
-  font-size: 16px;
-}
-
-.total-table tbody tr:nth-child(3) .rank {
-  color: #e67e22;
-  font-size: 16px;
-}
+/* 移除排名前三的特殊样式 */
 
 /* 响应式设计 */
 @media (max-width: 768px) {
@@ -767,8 +819,8 @@ onMounted(() => {
   
   .score-table th, .score-table td,
   .total-table th, .total-table td {
-    padding: 8px 6px;
-    font-size: 14px;
+    padding: 6px 4px;
+    font-size: 12px;
   }
   
   .score-header h3 {
