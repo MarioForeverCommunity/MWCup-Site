@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { fetchMWCupYaml, getYearSchedules } from '../utils/mwcupYaml';
-import type { YearSchedule } from '../utils/mwcupYaml';
+import { fetchMWCupYaml, getYearSchedules } from '../utils/scheduleYaml';
+import type { YearSchedule } from '../utils/scheduleYaml';
 
 const schedules = ref<YearSchedule[]>([]);
 
