@@ -75,7 +75,8 @@
               <tr>
                 <th>选手</th>
                 <th>评委</th>
-                <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>                <th>总分</th>
+                <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>
+                <th>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '总分' }}</th>
                 <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
               </tr>
             </thead>
@@ -150,7 +151,7 @@
                 <th>排名</th>
                 <th>选手</th>
                 <th>有效评分次数</th>
-                <th>总分之和</th>
+                <th v-if="scoreData.scoringScheme !== 'E'">总分之和</th>
                 <th>平均分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
               </tr>
             </thead>
@@ -161,7 +162,7 @@
                   <span class="player-name-text">{{ player.playerName }}</span>
                 </td>
                 <td class="count">{{ player.validRecordsCount }}</td>
-                <td class="sum">{{ player.totalSum }}</td>
+                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ player.totalSum }}</td>
                 <td class="average">{{ player.averageScore }}</td>
               </tr>
             </tbody>
