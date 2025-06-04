@@ -265,11 +265,32 @@ export function getYearSchedules(doc: any, tidType: 'tieba' | 'archive' | 'mf' =
             if (scheduleObj.match) {
               if (scheduleObj.match.deadlines) {
                 // 添加比赛开始时间
-                schedule[`${roundKey}-match`] = {
-                  time: scheduleObj.match.start,
-                  tieba_tid: scheduleObj.match.tieba_tid,
-                  mf_tid: scheduleObj.match.mf_tid
-                };
+                // 检查 mf_tid 是否是对象类型（包含多个链接）
+                if (scheduleObj.match.mf_tid && typeof scheduleObj.match.mf_tid === 'object') {
+                  // 与 judging 类似，处理多个题目链接
+                  const matchTids = scheduleObj.match.mf_tid;
+                  const links: string[] = [];
+                  
+                  for (const [topic, tid] of Object.entries(matchTids)) {
+                    if (tid) {
+                      const num = topic.match(/[GIQSR](\d+)/)?.[1] || topic.match(/(\d+)$/)?.[1];
+                      const cnNum = num ? `第${['零','一','二','三','四','五','六','七','八','九','十'][Number(num)] || num}题` : '链接';
+                      links.push(`<a href="${getTidLink(tid as string, 'mf')}" target="_blank">${cnNum}</a>`);
+                    }
+                  }
+                  
+                  schedule[`${roundKey}-match`] = {
+                    start: scheduleObj.match.start,
+                    links
+                  };
+                } else {
+                  // 原来的处理方式（单个链接）
+                  schedule[`${roundKey}-match`] = {
+                    time: scheduleObj.match.start,
+                    tieba_tid: scheduleObj.match.tieba_tid,
+                    mf_tid: scheduleObj.match.mf_tid
+                  };
+                }
                 
                 // 添加每轮截止时间
                 scheduleObj.match.deadlines.forEach((deadline: string, index: number) => {
