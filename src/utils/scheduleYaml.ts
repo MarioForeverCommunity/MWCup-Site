@@ -1,11 +1,7 @@
-import yaml from 'js-yaml';
+import { fetchMWCupYaml, extractSeasonData } from './yamlLoader';
 
-export async function fetchMWCupYaml(): Promise<any> {
-  const res = await fetch('/data/mwcup.yaml');
-  const text = await res.text();
-  const doc = yaml.load(text) as any;
-  return doc;
-}
+// 重新导出fetchMWCupYaml以保持向后兼容
+export { fetchMWCupYaml };
 
 export interface ScheduleItem {
   stage: string; // 比赛阶段（如"预选赛"）
@@ -137,7 +133,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: any) {
   // 处理带有批量轮次的情况（如 I1,I2,I3,I4-I1）
   const batchMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-([A-Za-z]+)(\d+)?$/);
   if (batchMatch) {
-    const [, stageType, action, num] = batchMatch;
+    const [, , action, num] = batchMatch;
     if (action.match(/^[GIQSR]$/)) {
       // 处理题目公布（如 I1,I2,I3,I4-I1）
       const topicNum = Number(num);
@@ -187,24 +183,6 @@ function getTidLink(tid: string, type: 'tieba' | 'archive' | 'mf' = 'tieba') {
   return `https://tieba.baidu.com/p/${tid}`;
 }
 
-// 自动展开批量轮次（如 [G1, G2, G3, G4]）为独立轮次
-type Season = any;
-function expandRounds(season: Season): Season {
-  if (!season.rounds) return season;
-  const expanded: Record<string, any> = {};
-  for (const key in season.rounds) {
-    if (/^\[.*\]$/.test(key)) {
-      const rounds = key.replace(/\[|\]/g, '').split(',').map(r => r.trim());
-      for (const r of rounds) {
-        expanded[r] = season.rounds[key];
-      }
-    } else {
-      expanded[key] = season.rounds[key];
-    }
-  }
-  return { ...season, rounds: expanded };
-}
-
 // 获取内容的排序权重
 function getContentWeight(content: string) {
   // 处理带有数字的内容（如"第一轮截止"）
@@ -223,9 +201,9 @@ function getContentWeight(content: string) {
 }
 
 // 获取 schedule 表结构
-export function getYearSchedules(doc: any, tidType: 'tieba' | 'archive' | 'mf' = 'tieba'): YearSchedule[] {
+export function getYearSchedules(doc: any, _tidType: 'tieba' | 'archive' | 'mf' = 'tieba'): YearSchedule[] {
   const result: YearSchedule[] = [];
-  const seasonObj = doc?.season ? doc.season : doc;
+  const seasonObj = extractSeasonData(doc);
   if (!seasonObj || typeof seasonObj !== 'object') return result;
   for (const year of Object.keys(seasonObj)) {
     const season = seasonObj[year];
