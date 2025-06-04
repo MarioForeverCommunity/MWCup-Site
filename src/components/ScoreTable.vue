@@ -45,15 +45,7 @@
             placeholder="输入选手名称..."
           />
         </div>
-        
-        <div class="export-controls">
-          <button @click="exportToCSV" class="export-btn">
-            导出CSV
-          </button>
-          <button @click="exportToJSON" class="export-btn">
-            导出JSON
-          </button>
-        </div>
+  
       </div>
 
       <!-- 详细评分表 -->
@@ -424,89 +416,6 @@ function formatScore(score: number | undefined): string {
   return score.toString()
 }
 
-// 导出功能
-function exportToCSV() {
-  if (!scoreData.value) return
-  
-  const filename = `${scoreData.value.year}${scoreData.value.round}_评分数据.csv`
-  
-  // 创建CSV内容
-  let csvContent = '\uFEFF' // BOM for UTF-8
-  
-  // 详细评分表头
-  csvContent += '选手代码,选手姓名,评委代码,评委姓名'
-  for (const column of scoreData.value.columns) {
-    csvContent += `,${column}`
-  }
-  csvContent += ',总分,状态\n'
-  
-  // 详细评分数据
-  for (const record of filteredDetailRecords.value) {
-    const status = []
-    if (record.isRevoked) status.push('撤销')
-    if (record.isBackup) status.push('预备')
-    if (record.isCollaborative) status.push('协商')
-    
-    csvContent += `${record.playerCode},${record.playerName},${record.judgeCode},${record.judgeName}`
-    for (const column of scoreData.value.columns) {
-      csvContent += `,${formatScore(record.scores[column])}`
-    }
-    csvContent += `,${record.totalScore},"${status.join('|')}"\n`
-  }
-  
-  // 空行分隔
-  csvContent += '\n'
-  
-  // 选手总分表头
-  csvContent += '排名,选手代码,选手姓名,有效评分次数,总分之和,平均分\n'
-  
-  // 选手总分数据
-  filteredPlayerScores.value.forEach((player, index) => {
-    csvContent += `${index + 1},${player.playerCode},${player.playerName},${player.validRecordsCount},${player.totalSum},${player.averageScore}\n`
-  })
-  
-  downloadFile(csvContent, filename, 'text/csv')
-}
-
-function exportToJSON() {
-  if (!scoreData.value) return
-  
-  const filename = `${scoreData.value.year}${scoreData.value.round}_评分数据.json`
-  
-  const exportData = {
-    metadata: {
-      year: scoreData.value.year,
-      round: scoreData.value.round,
-      scoringScheme: scoreData.value.scoringScheme,
-      exportTime: new Date().toISOString(),
-      totalRecords: filteredDetailRecords.value.length,
-      totalPlayers: filteredPlayerScores.value.length
-    },
-    columns: scoreData.value.columns,
-    detailRecords: filteredDetailRecords.value,
-    playerScores: filteredPlayerScores.value
-  }
-  
-  const jsonContent = JSON.stringify(exportData, null, 2)
-  downloadFile(jsonContent, filename, 'application/json')
-}
-
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.style.display = 'none'
-  
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  
-  URL.revokeObjectURL(url)
-}
-
 // 监听props变化
 watch(() => [props.year, props.round], loadScoreData, { immediate: true })
 
@@ -595,31 +504,6 @@ onMounted(() => {
   width: 200px;
 }
 
-.export-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.export-btn {
-  padding: 8px 16px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.export-btn:hover {
-  background: #2980b9;
-}
-
-.export-btn:active {
-  background: #21618c;
-}
-
 /* 分页控制样式 */
 .pagination-controls {
   display: flex;
@@ -677,18 +561,8 @@ onMounted(() => {
   .filter-controls, .sort-controls, .search-controls {
     justify-content: space-between;
   }
-  
-  .search-controls input {
+    .search-controls input {
     width: 100%;
-  }
-  
-  .export-controls {
-    justify-content: center;
-  }
-  
-  .export-btn {
-    flex: 1;
-    max-width: 120px;
   }
   
   .table-wrapper {
