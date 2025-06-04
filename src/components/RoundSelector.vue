@@ -6,11 +6,10 @@
     
     <div class="selector-controls">
       <div class="control-group">
-        <label for="year-select">年份:</label>
-        <select id="year-select" v-model="selectedYear" @change="onYearChange">
+        <label for="year-select">年份:</label>        <select id="year-select" v-model="selectedYear" @change="onYearChange">
           <option value="">请选择年份</option>
           <option v-for="year in availableYears" :key="year" :value="year">
-            {{ year }}年
+            {{ year }}年第{{ getEditionNumber(year) }}届
           </option>
         </select>
       </div>
@@ -38,6 +37,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
+import { getEditionNumber } from '../utils/editionHelper'
 import ScoreTable from './ScoreTable.vue'
 
 const seasonData = ref<any>(null)
@@ -53,27 +53,44 @@ const availableRounds = computed(() => {
   if (!selectedYear.value || !seasonData.value?.[selectedYear.value]?.rounds) {
     return []
   }
-  
-  const rounds = seasonData.value[selectedYear.value].rounds
+    const rounds = seasonData.value[selectedYear.value].rounds
   const roundList: { code: string; name: string }[] = []
-  
   for (const [roundKey, roundData] of Object.entries(rounds)) {
-    // 处理数组形式的轮次（如 [G1, G2, G3, G4]）
-    if (Array.isArray(roundKey)) {
-      // 将数组中的每个轮次单独添加
-      for (const singleRound of roundKey) {
+    // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
+    if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
+      try {
+        const parsedKey = JSON.parse(roundKey);
+        if (Array.isArray(parsedKey)) {
+          for (const singleRound of parsedKey) {
+            roundList.push({
+              code: singleRound,
+              name: getRoundDisplayName(singleRound, roundData as any)
+            });
+          }
+          continue;
+        }
+      } catch {
+        // JSON解析失败，按普通轮次处理
+      }
+    }
+    
+    // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
+    if (roundKey.includes(',')) {
+      const singleRounds = roundKey.split(',').map(r => r.trim());
+      for (const singleRound of singleRounds) {
         roundList.push({
           code: singleRound,
           name: getRoundDisplayName(singleRound, roundData as any)
-        })
+        });
       }
-    } else {
-      // 处理普通的单轮次
-      roundList.push({
-        code: roundKey,
-        name: getRoundDisplayName(roundKey, roundData as any)
-      })
+      continue;
     }
+    
+    // 处理普通的单轮次
+    roundList.push({
+      code: roundKey,
+      name: getRoundDisplayName(roundKey, roundData as any)
+    });
   }
   
   // 按轮次类型排序
@@ -90,7 +107,6 @@ const availableRounds = computed(() => {
 
 function getRoundDisplayName(roundCode: string, roundData: any): string {
   const roundNames: { [key: string]: string } = {
-    'P1': '热身赛/预选赛',
     'P2': '资格赛',
     'I1': '初赛第一轮',
     'I2': '初赛第二轮', 
@@ -113,13 +129,12 @@ function getRoundDisplayName(roundCode: string, roundData: any): string {
     'F': '决赛'
   }
   
-  let name = roundNames[roundCode] || roundCode
-  
-  if (roundData?.is_warmup) {
-    name += ' (热身)'
+  // 特殊处理P1轮次
+  if (roundCode === 'P1') {
+    return roundData?.is_warmup ? '热身赛' : '预选赛'
   }
   
-  return name
+  return roundNames[roundCode] || roundCode
 }
 
 function onYearChange() {

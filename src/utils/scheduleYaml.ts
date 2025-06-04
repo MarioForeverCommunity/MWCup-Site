@@ -1,4 +1,4 @@
-import { fetchMarioWorkerYaml, extractSeasonData } from './yamlLoader';
+import { extractSeasonData } from './yamlLoader';
 
 // 重新导出fetchMarioWorkerYaml以保持向后兼容
 export { fetchMarioWorkerYaml } from './yamlLoader';

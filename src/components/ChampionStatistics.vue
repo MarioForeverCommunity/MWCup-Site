@@ -26,10 +26,9 @@
                 <th>主办人</th>
                 <th>总评委</th>
               </tr>
-            </thead>
-            <tbody>
+            </thead>            <tbody>
               <tr v-for="champion in champions" :key="champion.year">
-                <td class="year">{{ champion.year }}</td>
+                <td class="year">{{ champion.year }}年第{{ getEditionNumber(champion.year) }}届</td>
                 <td class="champion male">{{ champion.maleChampion || '-' }}</td>
                 <td class="champion female">{{ champion.femaleChampion || '-' }}</td>
                 <td class="host">{{ champion.host || '-' }}</td>
@@ -66,6 +65,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
+import { getEditionNumber } from '../utils/editionHelper'
 
 interface ChampionInfo {
   year: string

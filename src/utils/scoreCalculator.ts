@@ -2,6 +2,8 @@
  * 比赛评分计算工具类
  */
 
+// import { loadUserMapping } from './userMapper'
+
 export interface ScoreRecord {
   playerCode: string;
   judgeCode: string;
@@ -61,15 +63,21 @@ export function parseCsvToScoreRecords(
     const lines = csvText.trim().split('\n');
     if (lines.length === 0) {
       throw new Error('CSV文件为空');
-    }
-
-    // 解析表头
+    }    // 解析表头
     const headers = lines[0].split(',').map(h => h.trim());
-    const playerCodeIndex = headers.findIndex(h => h === '选手码');
+    let playerCodeIndex = headers.findIndex(h => h === '选手码');
+    let isUsernameFormat = false;
+    
+    // 如果找不到"选手码"，尝试查找"选手用户名"（用于2022P2和2023P2等特殊格式）
+    if (playerCodeIndex === -1) {
+      playerCodeIndex = headers.findIndex(h => h === '选手用户名');
+      isUsernameFormat = true;
+    }
+    
     const judgeCodeIndex = headers.findIndex(h => h === '评委');
     
     if (playerCodeIndex === -1) {
-      throw new Error('CSV格式错误：找不到"选手码"列');
+      throw new Error('CSV格式错误：找不到"选手码"或"选手用户名"列');
     }
     if (judgeCodeIndex === -1) {
       throw new Error('CSV格式错误：找不到"评委"列');
@@ -89,24 +97,36 @@ export function parseCsvToScoreRecords(
     const expectedColumns = SCORING_SCHEMES[scoringScheme as keyof typeof SCORING_SCHEMES];
     if (!expectedColumns) {
       throw new Error(`未知的评分方案: ${scoringScheme}`);
-    }
-  // 解析数据行
+    }  // 解析数据行
   const records: ScoreRecord[] = [];
   const playerMap = buildPlayerJudgeMap(yamlData, year, round);
 
   // 先解析所有记录，但不处理评委名称
   for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
-    if (values.length < 2) continue;
+    const values = parseCSVLine(lines[i]);    if (values.length < 2) continue;
 
-    const playerCode = values[playerCodeIndex]?.trim();
+    const originalPlayerValue = values[playerCodeIndex]?.trim();
     const judgeCode = values[judgeCodeIndex]?.trim();
     
-    if (!playerCode || !judgeCode || judgeCode === 'CANCELED') continue;
+    if (!originalPlayerValue || !judgeCode || judgeCode === 'CANCELED') continue;
 
     // 解析评委信息
     const judgeInfo = parseJudgeCode(judgeCode);
-    const playerName = getPlayerName(playerCode, playerMap);
+    
+    // 处理选手信息：根据CSV格式决定playerCode和playerName
+    let playerCode: string;
+    let playerName: string;
+    
+    if (isUsernameFormat) {
+      // "选手用户名"格式：原值是用户名，需要生成或查找对应的代码
+      playerName = originalPlayerValue;
+      // 在这种情况下，我们使用用户名作为代码（因为没有单独的代码列）
+      playerCode = originalPlayerValue;
+    } else {
+      // "选手码"格式：原值是代码，需要查找对应的用户名
+      playerCode = originalPlayerValue;
+      playerName = getPlayerName(playerCode, playerMap);
+    }
 
     // 解析分数
     const scores: { [key: string]: number } = {};
@@ -155,7 +175,7 @@ export function parseCsvToScoreRecords(
   }  // 现在填充评委名称（可以访问所有记录来判断重评）
   for (const record of records) {
     const judgeInfo = parseJudgeCode(record.originalJudgeCode);
-    record.judgeName = getJudgeName(record.judgeCode, playerMap, judgeInfo, records, record.playerCode);
+    record.judgeName = getJudgeName(record.judgeCode, playerMap, judgeInfo, records, record.playerCode, year, round);
   }
 
   // 计算选手总分
@@ -249,7 +269,25 @@ function parseJudgeCode(judgeCode: string) {
  */
 function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
   const seasonData = yamlData.season[year];
-  const roundData = seasonData?.rounds?.[round];
+  let roundData = seasonData?.rounds?.[round];
+  
+  // 如果直接找不到，检查是否在多轮次键中
+  if (!roundData && seasonData?.rounds) {
+    for (const [key, data] of Object.entries(seasonData.rounds)) {
+      // 检查方括号格式的多轮次键，如 [G1, G2, G3]
+      if (key.startsWith('[') && key.endsWith(']')) {
+        const rounds = key.slice(1, -1).split(',').map(r => r.trim());
+        if (rounds.includes(round)) {
+          roundData = data;
+          break;
+        }
+      } else if (key.includes(',') && key.split(',').map(r => r.trim()).includes(round)) {
+        // 处理逗号分隔的轮次键（如果存在）
+        roundData = data;
+        break;
+      }
+    }
+  }
   
   if (!roundData) {
     return { players: {}, judges: {} };
@@ -260,11 +298,32 @@ function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
 
   // 收集选手映射
   if (roundData.players) {
-    for (const group of Object.values(roundData.players) as any[]) {
-      if (typeof group === 'object' && group !== null) {
-        for (const [code, name] of Object.entries(group)) {
+    if (Array.isArray(roundData.players)) {
+      // 数组结构：players: [用户名1, 用户名2, ...]
+      roundData.players.forEach((name: string, index: number) => {
+        if (typeof name === 'string') {
+          players[(index + 1).toString()] = name;
+        }
+      });
+    } else if (typeof roundData.players === 'object') {
+      // 检查是否为扁平结构或分组结构
+      const firstValue = Object.values(roundData.players)[0];
+      if (typeof firstValue === 'string') {
+        // 扁平结构：players: { '1': 用户名, '2': 用户名, ... }
+        for (const [code, name] of Object.entries(roundData.players)) {
           if (typeof name === 'string') {
             players[code] = name;
+          }
+        }
+      } else {
+        // 分组结构：players: { A: { A1: 用户名, A2: 用户名 }, ... }
+        for (const group of Object.values(roundData.players) as any[]) {
+          if (typeof group === 'object' && group !== null) {
+            for (const [code, name] of Object.entries(group)) {
+              if (typeof name === 'string') {
+                players[code] = name;
+              }
+            }
           }
         }
       }
@@ -273,11 +332,25 @@ function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
 
   // 收集评委映射
   if (roundData.judges) {
-    for (const group of Object.values(roundData.judges) as any[]) {
-      if (typeof group === 'object' && group !== null) {
-        for (const [code, name] of Object.entries(group)) {
+    if (typeof roundData.judges === 'object' && !Array.isArray(roundData.judges)) {
+      // 检查是否为扁平结构或分组结构
+      const firstValue = Object.values(roundData.judges)[0];
+      if (typeof firstValue === 'string') {
+        // 扁平结构：judges: { J1: 用户名, J2: 用户名, ... }
+        for (const [code, name] of Object.entries(roundData.judges)) {
           if (typeof name === 'string') {
             judges[code] = name;
+          }
+        }
+      } else {
+        // 分组结构：judges: { A: { J1: 用户名, J2: 用户名 }, ... }
+        for (const group of Object.values(roundData.judges) as any[]) {
+          if (typeof group === 'object' && group !== null) {
+            for (const [code, name] of Object.entries(group)) {
+              if (typeof name === 'string') {
+                judges[code] = name;
+              }
+            }
           }
         }
       }
@@ -297,7 +370,7 @@ function getPlayerName(playerCode: string, playerMap: any): string {
 /**
  * 获取评委姓名
  */
-function getJudgeName(judgeCode: string, playerMap: any, judgeInfo: any, allRecords: ScoreRecord[], playerCode: string): string {
+function getJudgeName(judgeCode: string, playerMap: any, judgeInfo: any, allRecords: ScoreRecord[], playerCode: string, year: string, round: string): string {
   if (judgeInfo.isCollaborative && judgeInfo.collaborativeJudges) {
     const names = judgeInfo.collaborativeJudges.map((j: string) => {
       const baseName = playerMap.judges[j] || j;
@@ -317,6 +390,11 @@ function getJudgeName(judgeCode: string, playerMap: any, judgeInfo: any, allReco
   }
 
   const baseName = playerMap.judges[judgeCode] || judgeCode;
+  
+  // 特殊处理：2023 warmup round (P1) 的JZ评委显示"大众"注释
+  if (year === '2023' && round === 'P1' && judgeCode.startsWith('JZ')) {
+    return `${baseName}（大众）`;
+  }
   
   if (judgeInfo.isBackup) {
     // 检查是否有对应的作废评分来判断是重评还是预备
@@ -386,9 +464,8 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
  */
 function determineDisplayColumns(headers: string[], records: ScoreRecord[]): string[] {
   const displayColumns: string[] = [];
-  
-  for (const header of headers) {
-    if (header === '选手码' || header === '评委') {
+    for (const header of headers) {
+    if (header === '选手码' || header === '选手用户名' || header === '评委') {
       continue; // 这些列不在scores中，单独处理
     }
     
@@ -419,19 +496,37 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   if (!yamlData || !yamlData.season) {
     throw new Error('YAML配置数据无效');
   }
-
   // 检查年份和轮次是否存在
   const seasonData = yamlData.season[year];
   if (!seasonData) {
     throw new Error(`找不到${year}年的比赛数据`);
   }
-
-  const roundData = seasonData.rounds?.[round];
+  // 查找轮次数据，支持多轮次键
+  let roundData = seasonData.rounds?.[round];
+    // 如果直接找不到，检查是否在多轮次键中
+  if (!roundData && seasonData.rounds) {
+    for (const [key, data] of Object.entries(seasonData.rounds)) {
+      // 检查方括号格式的多轮次键，如 [G1, G2, G3]
+      if (key.startsWith('[') && key.endsWith(']')) {
+        const rounds = key.slice(1, -1).split(',').map(r => r.trim());
+        if (rounds.includes(round)) {
+          roundData = data;
+          break;
+        }
+      } else if (key.includes(',') && key.split(',').map(r => r.trim()).includes(round)) {
+        // 处理逗号分隔的轮次键（如果存在）
+        roundData = data;
+        break;
+      }
+    }
+  }
+  
   if (!roundData) {
     throw new Error(`找不到${year}年${round}轮的比赛数据`);
   }
-  
-  // 首先检查是否为特殊的总分制评分
+    // 加载用户映射
+  // const userMapping = await loadUserMapping();
+    // 首先检查是否为特殊的总分制评分
   const directScores = handleDirectScores(yamlData, year, round);
   if (directScores) {
     return directScores;
@@ -472,8 +567,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
 function handleDirectScores(yamlData: any, year: string, round: string): RoundScoreData | null {
   const seasonData = yamlData.season[year];
   const roundData = seasonData?.rounds?.[round];
-  
-  if (roundData?.scoring_scheme === 'S' && roundData?.scores) {
+    if (roundData?.scoring_scheme === 'S' && roundData?.scores) {
     const playerMap = buildPlayerJudgeMap(yamlData, year, round);
     const records: ScoreRecord[] = [];
     const playerScores: PlayerScore[] = [];

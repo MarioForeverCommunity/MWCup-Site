@@ -6,10 +6,8 @@
     
     <div v-else-if="error" class="error">
       {{ error }}
-    </div>
-      <div v-else-if="scoreData" class="score-content">
-      <div class="score-header">
-        <h3>{{ scoreData.year }}年 {{ scoreData.round }} 评分结果</h3>
+    </div>      <div v-else-if="scoreData" class="score-content">      <div class="score-header">
+        <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届{{ roundDisplayName }}评分结果</h3>
         <p class="scheme-info">评分方案: {{ scoreData.scoringScheme }}</p>
       </div>
 
@@ -104,11 +102,29 @@
                 :key="`${record.playerCode}-${record.judgeCode}`"
                 :class="{ 'revoked-score': record.isRevoked }"
               >
-                <td class="player-name">{{ record.playerName }}</td>                <td class="judge-name">
-                  {{ record.judgeName }}
-                  <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
-                  <span v-if="record.isBackup && record.judgeName.includes('重评')" class="re-evaluation-tag">重评</span>
-                  <span v-else-if="record.isBackup" class="backup-tag">预备</span>
+                <td class="player-name">
+                  <span class="player-code">{{ record.playerCode }}</span>
+                  <span class="player-name-text">{{ record.playerName }}</span>
+                </td>                <td class="judge-name">
+                  <div v-if="record.isCollaborative && record.collaborativeJudges">
+                    <div 
+                      v-for="(judge, index) in record.collaborativeJudges" 
+                      :key="index"
+                      class="collaborative-judge-item"
+                    >                      {{ getJudgeName(judge) }}
+                      <span class="collaborative-tag">协商</span>
+                      <span v-if="isReEvaluationJudge(judge, record)" class="re-evaluation-tag">重评</span>
+                      <span v-else-if="isBackupJudge(judge)" class="backup-tag">预备</span>
+                      <span v-else-if="isPublicJudge(judge)" class="public-tag">大众</span>
+                    </div>
+                  </div>
+                  <div v-else>
+                    {{ record.judgeName.replace(/（[^）]*）/g, '') }}
+                    <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
+                    <span v-if="record.judgeName.includes('（重评）')" class="re-evaluation-tag">重评</span>
+                    <span v-else-if="record.judgeName.includes('（预备）')" class="backup-tag">预备</span>
+                    <span v-else-if="record.judgeName.includes('（大众）')" class="public-tag">大众</span>
+                  </div>
                 </td>
                 <td 
                   v-for="column in scoreData.columns" 
@@ -136,10 +152,12 @@
                 <th>平均分</th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="(player, index) in filteredPlayerScores" :key="player.playerCode">
+            <tbody>              <tr v-for="(player, index) in filteredPlayerScores" :key="player.playerCode">
                 <td class="rank">{{ index + 1 }}</td>
-                <td class="player-name">{{ player.playerName }}</td>
+                <td class="player-name">
+                  <span class="player-code">{{ player.playerCode }}</span>
+                  <span class="player-name-text">{{ player.playerName }}</span>
+                </td>
                 <td class="count">{{ player.validRecordsCount }}</td>
                 <td class="sum">{{ player.totalSum }}</td>
                 <td class="average">{{ player.averageScore }}</td>
@@ -156,6 +174,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { loadRoundScoreData, type RoundScoreData } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
+import { getEditionNumber } from '../utils/editionHelper'
 
 const props = defineProps<{
   year: string
@@ -171,6 +190,57 @@ const searchPlayer = ref('')
 const scoreData = ref<RoundScoreData | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
+const roundDisplayName = ref<string>('')
+
+// 协商评分辅助函数
+function getJudgeName(judgeCode: string): string {
+  // 从playerMap中获取评委名称
+  if (!scoreData.value) return judgeCode;
+  
+  const seasonData = extractSeasonData({ season: { [props.year]: scoreData.value } });
+  const roundData = seasonData[props.year]?.rounds?.[props.round];
+  
+  if (roundData?.judges) {
+    // 尝试从judges映射中找到评委名称
+    if (typeof roundData.judges === 'object' && !Array.isArray(roundData.judges)) {
+      // 扁平结构
+      if (typeof roundData.judges[judgeCode] === 'string') {
+        return roundData.judges[judgeCode];
+      }
+      
+      // 分组结构
+      for (const group of Object.values(roundData.judges) as any[]) {
+        if (typeof group === 'object' && group !== null && typeof group[judgeCode] === 'string') {
+          return group[judgeCode];
+        }
+      }
+    }
+  }
+  
+  return judgeCode; // 如果找不到，返回原始代码
+}
+
+function isBackupJudge(judgeCode: string): boolean {
+  return judgeCode.includes('JR');
+}
+
+function isPublicJudge(judgeCode: string): boolean {
+  // 2023 P1轮次的JZ评委是大众评委
+  return props.year === '2023' && props.round === 'P1' && judgeCode.startsWith('JZ');
+}
+
+function isReEvaluationJudge(judgeCode: string, record: any): boolean {
+  if (!isBackupJudge(judgeCode) || !scoreData.value) return false;
+  
+  // 检查是否有对应的作废评分来判断是重评还是预备
+  const baseJudgeCode = judgeCode.replace('JR', 'J');
+  
+  return scoreData.value.allRecords.some(r => 
+    r.playerCode === record.playerCode && 
+    r.isRevoked && 
+    r.judgeCode.replace(/^~/, '') === baseJudgeCode
+  );
+}
 
 // 筛选详细评分记录
 const filteredDetailRecords = computed(() => {
@@ -301,9 +371,40 @@ async function loadScoreData() {
   loading.value = true
   error.value = null
   
-  try {    // 加载YAML数据
+  try {
+    // 加载YAML数据
     const yamlDoc = await fetchMarioWorkerYaml()
     const seasonData = extractSeasonData(yamlDoc)
+    
+    // 获取轮次显示名称
+    const roundData = seasonData[props.year]?.rounds?.[props.round]
+    if (props.round === 'P1') {
+      roundDisplayName.value = roundData?.is_warmup ? '热身赛' : '预选赛'
+    } else {
+      const roundNames: { [key: string]: string } = {
+        'P2': '资格赛',
+        'I1': '初赛第一轮',
+        'I2': '初赛第二轮', 
+        'I3': '初赛第三轮',
+        'I4': '初赛第四轮',
+        'G1': '小组赛第一轮',
+        'G2': '小组赛第二轮',
+        'G3': '小组赛第三轮',
+        'G4': '小组赛第四轮',
+        'Q1': '四分之一决赛第一轮',
+        'Q2': '四分之一决赛第二轮',
+        'Q': '四分之一决赛',
+        'R1': '复赛第一轮',
+        'R2': '复赛第二轮',
+        'R3': '复赛第三轮',
+        'R': '复赛',
+        'S1': '半决赛第一轮',
+        'S2': '半决赛第二轮',
+        'S': '半决赛',
+        'F': '决赛'
+      }
+      roundDisplayName.value = roundNames[props.round] || props.round
+    }
     
     // 加载评分数据
     const data = await loadRoundScoreData(props.year, props.round, { season: seasonData })
@@ -665,9 +766,33 @@ onMounted(() => {
   color: #2c3e50;
 }
 
+.player-code {
+  display: inline-block;
+  background-color: #3498db;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-right: 8px;
+  font-family: 'Courier New', monospace;
+}
+
+.player-name-text {
+  font-weight: 500;
+}
+
 .judge-name {
   color: #34495e;
   position: relative;
+}
+
+.collaborative-judge-item {
+  margin-bottom: 4px;
+}
+
+.collaborative-judge-item:last-child {
+  margin-bottom: 0;
 }
 
 .collaborative-tag {
@@ -693,6 +818,16 @@ onMounted(() => {
 .backup-tag {
   display: inline-block;
   background-color: #6c757d;
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  margin-left: 5px;
+}
+
+.public-tag {
+  display: inline-block;
+  background-color: #28a745;
   color: white;
   font-size: 10px;
   padding: 2px 4px;
