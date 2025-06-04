@@ -1,7 +1,7 @@
-import { fetchMWCupYaml, extractSeasonData } from './yamlLoader';
+import { fetchMarioWorkerYaml, extractSeasonData } from './yamlLoader';
 
-// 重新导出fetchMWCupYaml以保持向后兼容
-export { fetchMWCupYaml };
+// 重新导出fetchMarioWorkerYaml以保持向后兼容
+export { fetchMarioWorkerYaml } from './yamlLoader';
 
 export interface ScheduleItem {
   stage: string; // 比赛阶段（如"预选赛"）

@@ -13,12 +13,15 @@ export async function loadYamlFromUrl(url: string): Promise<any> {
 }
 
 /**
- * 获取MWCup YAML数据
- * @returns MWCup YAML数据
+ * 获取Mario Worker 杯YAML数据
+ * @returns Mario Worker 杯YAML数据
  */
-export async function fetchMWCupYaml(): Promise<any> {
+export async function fetchMarioWorkerYaml(): Promise<any> {
   return await loadYamlFromUrl('/data/mwcup.yaml');
 }
+
+// 保持向后兼容性的别名
+export const fetchMWCupYaml = fetchMarioWorkerYaml;
 
 /**
  * 从YAML文档中提取季节数据

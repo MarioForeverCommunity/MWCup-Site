@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { fetchMWCupYaml, getYearSchedules } from '../utils/scheduleYaml';
+import { fetchMarioWorkerYaml, getYearSchedules } from '../utils/scheduleYaml';
 import type { YearSchedule } from '../utils/scheduleYaml';
 
 const schedules = ref<YearSchedule[]>([]);
@@ -47,7 +47,7 @@ function formatTime(time?: string) {
 }
 
 onMounted(async () => {
-  const doc = await fetchMWCupYaml();
+  const doc = await fetchMarioWorkerYaml();
   schedules.value = getYearSchedules(doc);
 });
 </script>
