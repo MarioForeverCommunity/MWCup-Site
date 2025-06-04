@@ -37,31 +37,8 @@
         <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
         <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
         
-        <!-- 分页控制 -->
-        <div class="pagination-controls" v-if="totalPages > 1">
-          <button 
-            @click="currentPage = Math.max(1, currentPage - 1)"
-            :disabled="currentPage === 1"
-            class="page-btn"
-          >
-            上一页
-          </button>
-          <span class="page-info">
-            第 {{ currentPage }} / {{ totalPages }} 页
-          </span>
-          <button 
-            @click="currentPage = Math.min(totalPages, currentPage + 1)"
-            :disabled="currentPage === totalPages"
-            class="page-btn"
-          >
-            下一页
-          </button>
-          <select v-model="pageSize" class="page-size-select">
-            <option :value="25">25条/页</option>
-            <option :value="50">50条/页</option>
-            <option :value="100">100条/页</option>
-          </select>
-        </div>
+        <!-- 删除分页相关控件和 pageSize 选择器 -->
+        <!-- <div class="pagination-controls" v-if="totalPages > 1"> ... </div> -->
         <div class="table-wrapper">
           <table class="score-table">
             <thead>              <!-- 评分方案为C或E时，添加分类行 -->              <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
@@ -111,13 +88,11 @@
                       <div v-else>
                         <!-- 显示评委名称，使用judgeName而不是judgeCode查询用户映射 -->
                         {{ record.judgeName.replace(/（[^）]*）/g, '').trim() }}
-                        
                         <!-- 显示协商标签 -->
                         <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
-                        
-                        <!-- 显示重评、预备或大众评委标签 -->
+                        <!-- 只保留一个预备标签，优先重评，其次预备，其次大众 -->
                         <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
-                        <span v-else-if="isBackupJudge(record.judgeCode)" class="backup-tag">预备</span>
+                        <span v-else-if="record.isBackup" class="backup-tag">预备</span>
                         <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
                       </div>
                     </td>
@@ -152,7 +127,7 @@
                 <th>选手</th>
                 <th>有效评分次数</th>
                 <th v-if="scoreData.scoringScheme !== 'E'">总分之和</th>
-                <th>平均分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
+                <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
               </tr>
             </thead>
             <tbody>              <tr v-for="(player, index) in filteredPlayerScores" :key="player.playerCode">
@@ -257,16 +232,16 @@ const filteredDetailRecords = computed(() => {
   return records
 })
 
-// 按选手分组后的详细记录
+// groupedDetailRecords 直接基于 filteredDetailRecords
 const groupedDetailRecords = computed(() => {
   if (!filteredDetailRecords.value.length) return []
-  
+
   // 先按选手代码对记录进行分组
   const groups: { [key: string]: any } = {}
-  
-  // 分页之后的记录
-  const recordsToDisplay = paginatedDetailRecords.value
-  
+
+  // 直接用全部 filteredDetailRecords
+  const recordsToDisplay = filteredDetailRecords.value
+
   recordsToDisplay.forEach((record) => {
     const key = record.playerCode
     if (!groups[key]) {
@@ -278,33 +253,48 @@ const groupedDetailRecords = computed(() => {
     }
     groups[key].records.push(record)
   })
-  
+
+  // 合并内容完全相同的评分项（协商评分合并）
+  Object.values(groups).forEach((group: any) => {
+    const merged: any[] = []
+    const mergedMap: Record<string, any> = {}
+    group.records.forEach((rec: any) => {
+      // 生成评分内容指纹（不含评委信息）
+      const scoreFingerprint = JSON.stringify({
+        scores: rec.scores,
+        totalScore: rec.totalScore
+      })
+      if (!mergedMap[scoreFingerprint]) {
+        // 新分组
+        mergedMap[scoreFingerprint] = {
+          ...rec,
+          judgeName: rec.judgeName,
+          judgeCodes: [rec.judgeCode],
+          judgeNames: [rec.judgeName],
+          _mergeCount: 1
+        }
+      } else {
+        // 合并评委
+        mergedMap[scoreFingerprint].judgeCodes.push(rec.judgeCode)
+        mergedMap[scoreFingerprint].judgeNames.push(rec.judgeName)
+        mergedMap[scoreFingerprint]._mergeCount++
+      }
+    })
+    // 合并评委名显示
+    for (const item of Object.values(mergedMap)) {
+      if (item._mergeCount > 1) {
+        // 合并评委名（去重）
+        const judgeNames = Array.from(new Set(item.judgeNames.join(',').split(',').map((j: string) => j.trim()))).join(', ')
+        item.judgeName = judgeNames
+        item.isCollaborative = true
+      }
+      merged.push(item)
+    }
+    group.records = merged
+  })
+
   // 转换为数组格式
   return Object.values(groups)
-})
-
-// 分页功能
-const pageSize = ref(50)
-const currentPage = ref(1)
-
-const paginatedDetailRecords = computed(() => {
-  const startIndex = (currentPage.value - 1) * pageSize.value
-  const endIndex = startIndex + pageSize.value
-  return filteredDetailRecords.value.slice(startIndex, endIndex)
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredDetailRecords.value.length / pageSize.value)
-})
-
-// 重置分页当筛选条件改变时
-watch([filterJudgeType, searchPlayer], () => {
-  currentPage.value = 1
-})
-
-// 分页大小变化时重置到第一页
-watch(pageSize, () => {
-  currentPage.value = 1
 })
 
 // 筛选选手总分

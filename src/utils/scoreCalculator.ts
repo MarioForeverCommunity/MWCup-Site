@@ -177,10 +177,50 @@ export function parseCsvToScoreRecords(
       isCollaborative: judgeInfo.isCollaborative,
       collaborativeJudges: judgeInfo.collaborativeJudges
     });
-  }  // 现在填充评委名称（可以访问所有记录来判断重评）
+  }  // 检测协商评分（相同选手两个评委的所有评分子项均相同时视为协商评分）
+  const playerJudgeScores: { [key: string]: { [key: string]: ScoreRecord } } = {};
+  
+  // 先按选手和评分项组织数据
   for (const record of records) {
-    // 只对非协商评分的记录填充评委名称，协商评分保持原样
-    if (!record.isCollaborative) {
+    if (record.isRevoked) continue; // 跳过被作废的评分
+    
+    if (!playerJudgeScores[record.playerCode]) {
+      playerJudgeScores[record.playerCode] = {};
+    }
+    
+    // 生成评分指纹（所有分数项组合）
+    const scoreFingerprint = Object.entries(record.scores)
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .map(([key, value]) => `${key}:${value}`)
+      .join('|');
+      
+    // 记录该指纹对应的评委
+    if (!playerJudgeScores[record.playerCode][scoreFingerprint]) {
+      playerJudgeScores[record.playerCode][scoreFingerprint] = record;
+    } else {
+      // 如果找到相同指纹的评分，则这两个评委进行了协商评分
+      const existingRecord = playerJudgeScores[record.playerCode][scoreFingerprint];
+      // 标记两条记录都为协商评分
+      existingRecord.isCollaborative = true;
+      record.isCollaborative = true;
+      // 收集协商评委
+      existingRecord.collaborativeJudges = [existingRecord.judgeCode, record.judgeCode];
+      record.collaborativeJudges = [existingRecord.judgeCode, record.judgeCode];
+      // 修复：协商评分时，isBackup 只要有一个为 true，两个都设为 true
+      if (existingRecord.isBackup || record.isBackup) {
+        existingRecord.isBackup = true;
+        record.isBackup = true;
+      }
+    }
+  }
+  
+  // 现在填充评委名称（可以访问所有记录来判断重评）
+  for (const record of records) {
+    // 协商评分特殊处理
+    if (record.isCollaborative && record.collaborativeJudges && record.collaborativeJudges.length > 0) {
+      record.judgeName = record.collaborativeJudges.map(j => 
+        getJudgeName(j, playerMap, record.playerCode)).join(', ');
+    } else {
       record.judgeName = getJudgeName(record.judgeCode, playerMap, record.playerCode);
     }
   }
@@ -251,16 +291,6 @@ export function parseJudgeCode(judgeCode: string) {
   if (judgeCode.startsWith('~')) {
     isRevoked = true;
     originalCode = judgeCode.substring(1);
-  }
-
-  // 检查是否为协商评分（用引号包围）
-  if (originalCode.startsWith('"') && originalCode.endsWith('"')) {
-    isCollaborative = true;
-    const innerCode = originalCode.slice(1, -1);
-    collaborativeJudges = innerCode.split(',').map(j => j.trim());
-    // 在协商评分的情况下，评委码是逗号分隔的多个评委的组合
-    // 保持原始格式，不要修改，这样才能在YAML中正确查找评委名称
-    // originalCode = innerCode; 
   }
 
   // 检查是否为预备评委
@@ -417,7 +447,7 @@ function getJudgeName(judgeCode: string, playerMap: any, playerCode?: string): s
 function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
   const playerGroups: { [key: string]: ScoreRecord[] } = {};
   const scoringScheme = records.length > 0 ? records[0].scoringScheme : '';
-  
+
   // 按选手分组
   for (const record of records) {
     if (!playerGroups[record.playerCode]) {
@@ -429,21 +459,85 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
   for (const [playerCode, playerRecords] of Object.entries(playerGroups)) {
     // 过滤掉被作废的评分
     const validRecords = playerRecords.filter(r => !r.isRevoked);
-    
     if (validRecords.length === 0) continue;
 
-    const totalSum = validRecords.reduce((sum, record) => sum + record.totalScore, 0);
-    let averageScore;
-    if (scoringScheme === 'E') {
+    let totalSum = 0;
+    let averageScore = 0;
+    if (scoringScheme === 'D') {
+      // 方案D特殊处理
+      // 1. 评委评分员（J1/J2）每人一票按两票计入，大众评分员（JZx）一票计一票
+      // 2. 每个评分员的总分为其各项分数之和（含加分项、扣分项）
+      // 3. 所有分数（共7票）去掉一个最高分和一个最低分，剩下5票取平均
+      // 4. 评委的两票只去除一票
+      //
+      // 识别评委和大众评分员
+      const judgeRecords: ScoreRecord[] = [];
+      validRecords.forEach(r => {
+        // 只统计有效评分
+        judgeRecords.push(r);
+      });
+      // 票权展开
+      const weightedScores: {score: number, judgeType: 'judge'|'public', record: ScoreRecord}[] = [];
+      for (const rec of judgeRecords) {
+        // 评委评分员：J1/J2（或以J开头且不是JZ）
+        if (/^J\d+$/i.test(rec.judgeCode)) {
+          weightedScores.push({score: rec.totalScore, judgeType: 'judge', record: rec});
+          weightedScores.push({score: rec.totalScore, judgeType: 'judge', record: rec});
+        } else if (/^JZ\d+$/i.test(rec.judgeCode)) {
+          weightedScores.push({score: rec.totalScore, judgeType: 'public', record: rec});
+        } else {
+          // 其他类型（如协商、预备等）按大众票处理
+          weightedScores.push({score: rec.totalScore, judgeType: 'public', record: rec});
+        }
+      }
+      // 去除一个最高分和一个最低分（评委的两票只去除一票）
+      if (weightedScores.length >= 5) {
+        // 先排序
+        const sorted = [...weightedScores].sort((a, b) => a.score - b.score);
+        // 找到最高分和最低分的下标
+        let minIdx = 0;
+        let maxIdx = sorted.length - 1;
+        // 记录被去除的评委票数
+        let removedJudge = 0;
+        let removedPublic = 0;
+        // 去除最低分
+        if (sorted[minIdx].judgeType === 'judge') {
+          removedJudge++;
+        } else {
+          removedPublic++;
+        }
+        // 去除最高分
+        if (sorted[maxIdx].judgeType === 'judge' && removedJudge < 2) {
+          removedJudge++;
+        } else {
+          removedPublic++;
+        }
+        // 构建剩余分数
+        const remain: number[] = [];
+        for (let i = 0; i < sorted.length; i++) {
+          if (i === minIdx || i === maxIdx) continue;
+          remain.push(sorted[i].score);
+        }
+        // 取平均
+        averageScore = remain.length > 0 ? Math.round(remain.reduce((a, b) => a + b, 0) / remain.length * 10) / 10 : 0;
+        totalSum = remain.reduce((a, b) => a + b, 0);
+      } else {
+        // 票数不足，直接平均
+        averageScore = Math.round(weightedScores.reduce((a, b) => a + b.score, 0) / weightedScores.length * 10) / 10;
+        totalSum = weightedScores.reduce((a, b) => a + b.score, 0);
+      }
+    } else if (scoringScheme === 'E') {
       // 方案E：每个选手只有一条记录，直接用该行的totalScore和换算后大众评分加权
       const record = validRecords[0];
       const judgeScore = record.totalScore;
       const publicScore = record.scores['换算后大众评分'] || 0;
       let avg = judgeScore * 0.75 + publicScore * 0.25;
       averageScore = Number(Number(avg.toFixed(2)).toFixed(1));
+      totalSum = judgeScore;
     } else {
       // 其他评分方案的正常计算
-      averageScore = Number((totalSum / validRecords.length).toFixed(1));
+      totalSum = validRecords.reduce((sum, record) => sum + record.totalScore, 0);
+      averageScore = Math.round(totalSum / validRecords.length * 10) / 10;
     }
 
     playerScores.push({
