@@ -1,12 +1,14 @@
 <template>
-  <div class="round-selector">    <div class="selector-header">
+  <div class="round-selector">
+    <div class="selector-header">
       <h2>Mario Worker 杯评分查看器</h2>
       <p>选择比赛年份和轮次查看详细评分</p>
     </div>
     
     <div class="selector-controls">
       <div class="control-group">
-        <label for="year-select">年份:</label>        <select id="year-select" v-model="selectedYear" @change="onYearChange">
+        <label for="year-select">年份:</label>
+        <select id="year-select" v-model="selectedYear" @change="onYearChange">
           <option value="">请选择年份</option>
           <option v-for="year in availableYears" :key="year" :value="year">
             {{ year }}年第{{ getEditionNumber(year) }}届

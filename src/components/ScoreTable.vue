@@ -6,12 +6,15 @@
     
     <div v-else-if="error" class="error">
       {{ error }}
-    </div>      <div v-else-if="scoreData" class="score-content">      <div class="score-header">
+    </div>
+    <div v-else-if="scoreData" class="score-content">
+      <div class="score-header">
         <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届MW杯{{ roundDisplayName }}评分结果</h3>
         <p class="scheme-info">评分方案: {{ scoreData.scoringScheme }}</p>
       </div>
 
-      <!-- 控制面板 -->      <div class="controls-panel">
+      <!-- 控制面板 -->
+       <div class="controls-panel">
         <div class="filter-controls">
           <label>筛选评委类型:</label>
           <select v-model="filterJudgeType">
@@ -33,7 +36,8 @@
   
       </div>
 
-      <!-- 详细评分表 -->      <div class="detailed-scores">
+      <!-- 详细评分表 -->
+       <div class="detailed-scores">
         <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
         <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
         
@@ -41,7 +45,9 @@
         <!-- <div class="pagination-controls" v-if="totalPages > 1"> ... </div> -->
         <div class="table-wrapper">
           <table class="score-table">
-            <thead>              <!-- 评分方案为C或E时，添加分类行 -->              <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
+            <thead>
+              <!-- 评分方案为C或E时，添加分类行 -->
+               <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
                 <th :colspan="2" class="empty-header">人员</th>
                 <th colspan="2" class="category-header">欣赏性</th>
                 <th colspan="2" class="category-header">创新性</th>
@@ -49,7 +55,11 @@
                 <th colspan="3" class="category-header">游戏性</th>
                 <th :colspan="scoreData.columns.length - 10 + 2" class="empty-header">其他项</th>
               </tr>
-              <tr>
+              <tr v-if="scoreData.scoringScheme === 'S'">
+                <th>选手</th>
+                <th>最终得分</th>
+              </tr>
+              <tr v-else>
                 <th>选手</th>
                 <th>评委</th>
                 <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>
@@ -60,7 +70,18 @@
             <tbody>
               <template v-for="(playerGroup, playerIndex) in groupedDetailRecords" :key="playerGroup.playerCode">
                 <template v-for="(record, recordIndex) in playerGroup.records" :key="`${record.playerCode}-${record.judgeCode}`">
-                  <tr :class="{ 'revoked-score': record.isRevoked }">
+                  <!-- S方案的评分记录显示方式与其它评分方案不同 -->
+                  <tr v-if="scoreData.scoringScheme === 'S'" :class="{ 'revoked-score': record.isRevoked }">
+                    <!-- S方案只显示选手和最终得分 -->
+                    <td class="player-name">
+                      <span v-if="record.playerCode !== record.playerName && !record.playerCode.startsWith('~')" class="player-code">{{ record.playerCode }}</span>
+                      <span class="player-name-text">{{ record.playerName }}</span>
+                    </td>
+                    <td class="final-score">{{ record.totalScore }}</td>
+                  </tr>
+
+                  <!-- 非S方案的正常显示方式 -->
+                  <tr v-else :class="{ 'revoked-score': record.isRevoked }">
                     <!-- 只在该选手的第一行显示选手信息，并合并行 -->
                     <td v-if="recordIndex === 0" :rowspan="playerGroup.records.length" class="player-name player-cell-merged">
                       <span v-if="record.playerCode !== record.playerName && !record.playerCode.startsWith('~')" class="player-code">{{ record.playerCode }}</span>
@@ -88,7 +109,8 @@
                     <!-- 正常选手的评委和分数显示 -->
                     <template v-else>
                       <td class="judge-name">
-                        <!-- 手动处理协商评分的评委 -->                        <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
+                        <!-- 手动处理协商评分的评委 -->
+                         <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
                           <div 
                             v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())" 
                             :key="index"
@@ -132,7 +154,7 @@
                 </template>
                 <!-- 添加一个极细的分隔线作为选手间的分隔符 -->
                 <tr v-if="playerIndex < groupedDetailRecords.length - 1" class="player-separator">
-                  <td :colspan="scoreData.columns.length + 4" class="separator-cell"></td>
+                  <td :colspan="scoreData.scoringScheme === 'S' ? 2 : scoreData.columns.length + 4" class="separator-cell"></td>
                 </tr>
               </template>
             </tbody>
@@ -145,7 +167,12 @@
         <div class="table-wrapper">
           <table class="total-table">
             <thead>
-              <tr>
+              <tr v-if="scoreData.scoringScheme === 'S'">
+                <th>排名</th>
+                <th>选手</th>
+                <th>最终得分</th>
+              </tr>
+              <tr v-else>
                 <th>排名</th>
                 <th>选手</th>
                 <th>关卡名</th>
@@ -165,21 +192,26 @@
                   <span v-if="player.playerCode !== player.playerName && !player.playerCode.startsWith('~')" class="player-code">{{ player.playerCode }}</span>
                   <span class="player-name-text">{{ player.playerName }}</span>
                 </td>
-                <td class="level-file">
-                  <template v-if="player.playerCode.startsWith('~')">取消资格</template>
-                  <template v-else>
-                    <span 
-                      v-if="getPlayerLevelFile(player.playerCode)" 
-                      class="level-file-link" 
-                      @click="downloadLevelFile(player.playerCode)"
-                    >
-                      {{ getPlayerLevelFileName(player.playerCode) }}
-                    </span>
-                    <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
-                  </template>
-                </td>
-                <td class="count">{{ player.validRecordsCount }}</td>
-                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ player.totalSum }}</td>
+
+                <!-- S方案不显示关卡名和评分次数列 -->
+                <template v-if="scoreData.scoringScheme !== 'S'">
+                  <td class="level-file">
+                    <template v-if="player.playerCode.startsWith('~')">取消资格</template>
+                    <template v-else>
+                      <span 
+                        v-if="getPlayerLevelFile(player.playerCode)" 
+                        class="level-file-link" 
+                        @click="downloadLevelFile(player.playerCode)"
+                      >
+                        {{ getPlayerLevelFileName(player.playerCode) }}
+                      </span>
+                      <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
+                    </template>
+                  </td>
+                  <td class="count">{{ player.validRecordsCount }}</td>
+                  <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ player.totalSum }}</td>
+                </template>
+
                 <td class="average">{{ player.averageScore }}</td>
               </tr>
             </tbody>

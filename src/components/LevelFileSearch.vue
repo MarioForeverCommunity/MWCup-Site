@@ -72,7 +72,8 @@
 
     <div v-if="error" class="error">
       错误: {{ error }}
-    </div>    <!-- 结果表格 -->
+    </div>
+    <!-- 结果表格 -->
     <div v-if="searchResults && searchResults.length > 0" class="results-table">
       <div class="results-header">
         <h3>找到的关卡文件 ({{ searchResults.length }} 个):</h3>

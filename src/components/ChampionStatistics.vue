@@ -1,5 +1,6 @@
 <template>
-  <div class="statistics-container">    <div class="stats-header">
+  <div class="statistics-container">
+    <div class="stats-header">
       <h2>Mario Worker 杯历届冠军统计</h2>
       <p>从2013年到2025年的所有决赛冠军信息</p>
     </div>

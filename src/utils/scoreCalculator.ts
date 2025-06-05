@@ -726,7 +726,7 @@ function handleDirectScores(yamlData: any, year: string, round: string): RoundSc
           judgeCode: 'TOTAL',
           originalJudgeCode: 'TOTAL',
           playerName,
-          judgeName: '总评',
+          judgeName: 'MW杯组委会',
           scores: { '总分': score },
           totalScore: score,
           isRevoked: false,

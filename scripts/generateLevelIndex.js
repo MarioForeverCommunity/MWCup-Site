@@ -288,7 +288,7 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null) {
       }
     } else {
       // 只处理关卡文件，跳过说明文件等      
-      if (file.name.endsWith('.smwl') || file.name.endsWith('.smws') || file.name.endsWith('.mfl') || file.name.endsWith('.mfs')) {
+      if (file.name.endsWith('.smwl') || file.name.endsWith('.smws') || file.name.endsWith('.mfl') || file.name.endsWith('.MFL') || file.name.endsWith('.mfs')) {
         // 先提取年份和轮次信息，用于选手码识别
         const { year, roundType } = extractYearAndRound(fileRelativePath);
         
@@ -336,8 +336,14 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null) {
 }
 
 function extractPlayerCode(filename, year = null, roundType = null, mwcupData = null) {
+  // 查找第一个横杠的位置（支持英文-和中文—）
+  const dashIndex = Math.min(
+    ...['-', '—'].map(ch => {
+      const idx = filename.indexOf(ch);
+      return idx === -1 ? Infinity : idx;
+    })
+  );
   // 查找第一个横杠的位置
-  const dashIndex = filename.indexOf('-');
   if (dashIndex === -1) {
     // 没有横杠，尝试匹配决赛单字母格式：M, W, S, P
     const singleMatch = filename.match(/^([MWSP])[\s\.]|^([MWSP])$/i);
