@@ -1,6 +1,6 @@
 season:
   2012:
-    scoring_scheme: A # 第一套评分方案，csv 格式为“选手码,评委,欣赏性,娱乐性,挑战性,创新性,加分项,扣分项"“
+    scoring_scheme: A # 第一套评分方案，csv 格式为"选手码,评委,欣赏性,娱乐性,挑战性,创新性,加分项,扣分项"
     host: newlife2017 # 主办人
     chief_judge: false  # 本届无总评委
     rounds:

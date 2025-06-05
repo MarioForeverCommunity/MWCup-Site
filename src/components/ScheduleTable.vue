@@ -169,15 +169,32 @@ function getLinkText(link: string) {
   text-align: center;
 }
 
+.year-selector label {
+  font-weight: 500;
+  color: #34495e;
+  font-size: 14px;
+}
+
 .year-select {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  background-color: #fff;
-  font-size: 1rem;
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  background-color: white;
+  color: #2c3e50;
   margin-left: 0.5rem;
   cursor: pointer;
-  color: #495057;
+  transition: border-color 0.3s ease;
+}
+
+.year-select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.year-select:hover {
+  border-color: #3498db;
 }
 
 .schedule-table-container {

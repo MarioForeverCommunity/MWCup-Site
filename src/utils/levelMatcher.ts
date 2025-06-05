@@ -270,11 +270,11 @@ function extractRoundFromPath(path: string): { roundKey: string, roundName: stri
  */
 function getRoundDisplayName(roundKey: string): string {
   const roundNames: Record<string, string> = {
-    'P1': '第一次热身赛',
-    'P2': '第二次热身赛',
+    'P1': '预选赛',
+    'P2': '资格赛',
     'I1': '初赛第一题', 'I2': '初赛第二题', 'I3': '初赛第三题', 'I4': '初赛第四题',
-    'G1': '分组赛第一轮', 'G2': '分组赛第二轮', 'G3': '分组赛第三轮', 'G4': '分组赛第四轮',
-    'Q': '1/4决赛', 'Q1': '1/4决赛第一轮', 'Q2': '1/4决赛第二轮',
+    'G1': '小组赛第一轮', 'G2': '小组赛第二轮', 'G3': '小组赛第三轮', 'G4': '小组赛第四轮',
+    'Q': '四分之一决赛', 'Q1': '四分之一决赛第一轮', 'Q2': '四分之一决赛第二轮',
     'R': '复赛', 'R1': '复赛第一轮', 'R2': '复赛第二轮', 'R3': '复赛第三轮',
     'S': '半决赛', 'S1': '半决赛第一轮', 'S2': '半决赛第二轮',
     'F': '决赛'
@@ -286,22 +286,23 @@ function getRoundDisplayName(roundKey: string): string {
 /**
  * 获取分组的显示名称
  */
-function getGroupDisplayName(groupKey: string): string {
+export function getGroupDisplayName(groupKey: string): string {
   // 数字分组
   if (/^\d+$/.test(groupKey)) {
-    return `第${groupKey}组`
+    return `${groupKey}组`
   }
   
   // 字母分组
   if (/^[A-Z]$/i.test(groupKey)) {
-    return `${groupKey.toUpperCase()}组`
+    return `${groupKey}组`
   }
   
   // 特殊分组
   const specialGroups: Record<string, string> = {
-    'I': '第一组', 'II': '第二组', 'III': '第三组',
+    'II': 'II组', 'III': 'III组',
     'a': 'a组', 'b': 'b组', 'c': 'c组', 'd': 'd组',
-    'walk-in': '补签组'
+    '①': '①组', '②': '②组', '③': '③组',
+    'walk-in': '免报名'
   }
   
   return specialGroups[groupKey] || groupKey

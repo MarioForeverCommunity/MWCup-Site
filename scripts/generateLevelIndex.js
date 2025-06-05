@@ -89,10 +89,10 @@ function findPlayerInfo(year, roundType, playerCode, mwcupData, filePath) {
       });
       if (roundTypeMatches && specificRound) {
         let matchingKey = null;
-        if (specificRound === '第一轮') matchingKey = keyArray.find(key => key.endsWith('1'));
-        else if (specificRound === '第二轮') matchingKey = keyArray.find(key => key.endsWith('2'));
-        else if (specificRound === '第三轮') matchingKey = keyArray.find(key => key.endsWith('3'));
-        else if (specificRound === '第四轮') matchingKey = keyArray.find(key => key.endsWith('4'));
+        if (specificRound === '第一轮' || specificRound === '第一题') matchingKey = keyArray.find(key => key.endsWith('1'));
+        else if (specificRound === '第二轮' || specificRound === '第二题') matchingKey = keyArray.find(key => key.endsWith('2'));
+        else if (specificRound === '第三轮' || specificRound === '第三题') matchingKey = keyArray.find(key => key.endsWith('3'));
+        else if (specificRound === '第四轮' || specificRound === '第四题') matchingKey = keyArray.find(key => key.endsWith('4'));
         actualRoundKey = matchingKey || keyArray[0];
       } else {
         actualRoundKey = keyArray[0];
@@ -126,14 +126,13 @@ function findPlayerInfo(year, roundType, playerCode, mwcupData, filePath) {
       const playerInfo = findPlayerInRound(roundData.players, playerCode);
       if (playerInfo) {
         let finalRoundKey = roundKey;      // 如果是逗号分隔的多轮次 roundKey，尝试根据具体轮次匹配
-        const isArrayKey = roundKey.includes(',');
-        if (isArrayKey && specificRound) {
+        const isArrayKey = roundKey.includes(',');        if (isArrayKey && specificRound) {
           const keyArray = roundKey.split(',').map(k => k.trim());
           let matchingKey = null;
-          if (specificRound === '第一轮') matchingKey = keyArray.find(key => key.endsWith('1'));
-          else if (specificRound === '第二轮') matchingKey = keyArray.find(key => key.endsWith('2'));
-          else if (specificRound === '第三轮') matchingKey = keyArray.find(key => key.endsWith('3'));
-          else if (specificRound === '第四轮') matchingKey = keyArray.find(key => key.endsWith('4'));        finalRoundKey = matchingKey || keyArray[0];
+          if (specificRound === '第一轮' || specificRound === '第一题') matchingKey = keyArray.find(key => key.endsWith('1'));
+          else if (specificRound === '第二轮' || specificRound === '第二题') matchingKey = keyArray.find(key => key.endsWith('2'));
+          else if (specificRound === '第三轮' || specificRound === '第三题') matchingKey = keyArray.find(key => key.endsWith('3'));
+          else if (specificRound === '第四轮' || specificRound === '第四题') matchingKey = keyArray.find(key => key.endsWith('4'));        finalRoundKey = matchingKey || keyArray[0];
         } else if (isArrayKey) {
           const keyArray = roundKey.split(',').map(k => k.trim());
           finalRoundKey = keyArray[0];
@@ -163,18 +162,15 @@ function extractSpecificRound(filePath, roundType) {
   
   // 查找路径中的轮次标识
   const pathLower = filePath.toLowerCase();
-  
   // 优先匹配明确的轮次描述
-  if (pathLower.includes('第一轮')) {
+  if (pathLower.includes('第一轮') || pathLower.includes('第一题')) {
     return '第一轮';
-  } else if (pathLower.includes('第二轮')) {
+  } else if (pathLower.includes('第二轮') || pathLower.includes('第二题')) {
     return '第二轮';
-  } else if (pathLower.includes('第三轮')) {
+  } else if (pathLower.includes('第三轮') || pathLower.includes('第三题')) {
     return '第三轮';
-  } else if (pathLower.includes('第四轮')) {
+  } else if (pathLower.includes('第四轮') || pathLower.includes('第四题')) {
     return '第四轮';
-  } else if (pathLower.includes('第五轮')) {
-    return '第五轮';
   }
   
   // 如果没有明确的轮次描述，尝试从路径段落中提取数字
@@ -191,8 +187,19 @@ function extractSpecificRound(filePath, roundType) {
         return '第三轮';
       } else if (segLower.includes('4') || segLower.includes('四')) {
         return '第四轮';
-      } else if (segLower.includes('5') || segLower.includes('五')) {
-        return '第五轮';
+      }
+    }
+    
+    // 匹配"题"的相关描述
+    if (segLower.includes('题')) {
+      if (segLower.includes('1') || segLower.includes('一')) {
+        return '第一轮';
+      } else if (segLower.includes('2') || segLower.includes('二')) {
+        return '第二轮';
+      } else if (segLower.includes('3') || segLower.includes('三')) {
+        return '第三轮';
+      } else if (segLower.includes('4') || segLower.includes('四')) {
+        return '第四轮';
       }
     }
   }

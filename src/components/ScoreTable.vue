@@ -63,16 +63,22 @@
                   <tr :class="{ 'revoked-score': record.isRevoked }">
                     <!-- 只在该选手的第一行显示选手信息，并合并行 -->
                     <td v-if="recordIndex === 0" :rowspan="playerGroup.records.length" class="player-name player-cell-merged">
-                      <span v-if="record.playerCode !== record.playerName" class="player-code">{{ record.playerCode }}</span>
+                      <span v-if="record.playerCode !== record.playerName && !record.playerCode.startsWith('~')" class="player-code">{{ record.playerCode }}</span>
                       <span class="player-name-text">{{ record.playerName }}</span>
-                    </td>                      <!-- 处理未上传关卡的选手，将评委到总分的所有列合并为一个"未上传"单元格 -->
-                    <td v-if="record.isNoSubmission" 
+                    </td>
+                    <!-- 处理取消资格的选手（未上传关卡） -->
+                    <td v-if="record.isNoSubmission && record.playerCode.startsWith('~')"
+                        :colspan="scoreData.columns.length + 2"
+                        class="canceled-score-cell">
+                      取消资格
+                    </td>
+                    <!-- 处理未上传关卡的选手，将评委到总分的所有列合并为一个"未上传"单元格 -->
+                    <td v-else-if="record.isNoSubmission"
                         :colspan="scoreData.columns.length + 2"
                         class="no-submission-cell">
                       未上传
                     </td>
-                    
-                    <!-- 处理成绩无效的选手 -->
+                    <!-- 处理成绩无效的选手（已上传关卡） -->
                     <td v-else-if="record.isCanceled"
                         :colspan="scoreData.columns.length + 2"
                         class="canceled-score-cell">
@@ -122,7 +128,9 @@
                     <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
                       {{ getPlayerAverageScore(record.playerCode) }}
                     </td>
-                  </tr>                </template>                <!-- 添加一个极细的分隔线作为选手间的分隔符 -->
+                  </tr>
+                </template>
+                <!-- 添加一个极细的分隔线作为选手间的分隔符 -->
                 <tr v-if="playerIndex < groupedDetailRecords.length - 1" class="player-separator">
                   <td :colspan="scoreData.columns.length + 4" class="separator-cell"></td>
                 </tr>
@@ -140,6 +148,7 @@
               <tr>
                 <th>排名</th>
                 <th>选手</th>
+                <th>关卡名</th>
                 <th>有效评分次数</th>
                 <th v-if="scoreData.scoringScheme !== 'E'">总分之和</th>
                 <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
@@ -153,8 +162,21 @@
                   <template v-else>{{ index + 1 }}</template>
                 </td>
                 <td class="player-name">
-                  <span v-if="player.playerCode !== player.playerName" class="player-code">{{ player.playerCode }}</span>
+                  <span v-if="player.playerCode !== player.playerName && !player.playerCode.startsWith('~')" class="player-code">{{ player.playerCode }}</span>
                   <span class="player-name-text">{{ player.playerName }}</span>
+                </td>
+                <td class="level-file">
+                  <template v-if="player.playerCode.startsWith('~')">取消资格</template>
+                  <template v-else>
+                    <span 
+                      v-if="getPlayerLevelFile(player.playerCode)" 
+                      class="level-file-link" 
+                      @click="downloadLevelFile(player.playerCode)"
+                    >
+                      {{ getPlayerLevelFileName(player.playerCode) }}
+                    </span>
+                    <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
+                  </template>
                 </td>
                 <td class="count">{{ player.validRecordsCount }}</td>
                 <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ player.totalSum }}</td>
@@ -174,6 +196,7 @@ import { loadRoundScoreData, type RoundScoreData, type ScoreRecord, buildPlayerJ
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
+import { fetchLevelFilesFromLocal, type LevelFile } from '../utils/levelFileHelper'
 
 // 通过 NoSubmissionRecord.d.ts 扩展了 ScoreRecord 类型，添加了 isNoSubmission 属性
 import '../NoSubmissionRecord.d.ts'
@@ -193,22 +216,36 @@ const error = ref<string | null>(null)
 const roundDisplayName = ref<string>('')
 const userMapping = ref<UserMapping>({})
 const yamlData = ref<any>(null) // 存储原始YAML数据用于查找未上传选手
+const levelFiles = ref<LevelFile[]>([]) // 存储关卡文件数据
 
 // 计算未上传关卡的选手
 const noSubmissionPlayers = computed(() => {
   if (!scoreData.value || !yamlData.value) return [];
   
   try {
-    // 获取原始评分记录中的选手代码
-    const existingPlayerCodes = new Set(
-      scoreData.value.allRecords.map(record => record.playerCode)
-    );
+    // 检测是否为特殊格式：检查YAML中对应轮次的players是否为数组
+    const seasonData = yamlData.value.season[props.year];
+    const roundData = seasonData?.rounds?.[props.round];
+    const isSpecialFormat = Array.isArray(roundData?.players);
+    
+    // 获取原始评分记录中的选手信息
+    const existingPlayerSet = new Set();
+    
+    scoreData.value.allRecords.forEach(record => {
+      if (isSpecialFormat) {
+        // 对于特殊格式，使用playerName作为唯一标识
+        existingPlayerSet.add(record.playerName);
+      } else {
+        // 对于标准格式，使用playerCode作为唯一标识
+        existingPlayerSet.add(record.playerCode);
+      }
+    });
     
     // 获取成绩无效的选手代码
     const canceledPlayerCodes = new Set(
       scoreData.value.allRecords
         .filter(record => record.isCanceled)
-        .map(record => record.playerCode)
+        .map(record => isSpecialFormat ? record.playerName : record.playerCode)
     );
     
     // 从 YAML 获取全部选手信息
@@ -223,14 +260,19 @@ const noSubmissionPlayers = computed(() => {
     
     // 按照 YAML 文件中选手码的顺序创建未提交记录
     for (const [playerCode, playerNameValue] of Object.entries(playerMapResult.players)) {
+      const playerName = String(playerNameValue); // 确保转换为字符串
+      
+      // 根据格式确定要检查的key
+      const checkKey = isSpecialFormat ? playerName : playerCode;
+      
       // 排除已有记录和成绩无效的选手
-      if (!existingPlayerCodes.has(playerCode) && !canceledPlayerCodes.has(playerCode)) {
+      if (!existingPlayerSet.has(checkKey) && !canceledPlayerCodes.has(checkKey)) {
         // 为未提交关卡的选手创建一个记录
         const noSubmissionRecord: ScoreRecord = {
           playerCode,
           judgeCode: "no_submission",
           originalJudgeCode: "no_submission",
-          playerName: String(playerNameValue), // 确保转换为字符串
+          playerName,
           judgeName: "未上传",
           scores: {},
           totalScore: 0,
@@ -545,6 +587,14 @@ async function loadScoreData() {
     // 加载评分数据
     const data = await loadRoundScoreData(props.year, props.round, { season: seasonData })
     scoreData.value = data
+    
+    // 加载关卡文件数据
+    try {
+      levelFiles.value = await fetchLevelFilesFromLocal()
+    } catch (levelError) {
+      console.warn('加载关卡文件失败:', levelError)
+      levelFiles.value = []
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : '加载失败'
     console.error('加载评分数据失败:', err)
@@ -576,6 +626,69 @@ function getPlayerAverageScore(playerCode: string): string {
   
   // 返回四舍五入到小数点后1位的分数
   return playerScore.averageScore.toFixed(1);
+}
+
+// 获取选手的关卡文件名
+function getPlayerLevelFileName(playerCode: string): string {
+  if (!levelFiles.value.length) return '加载中...';
+  if (!scoreData.value) return '未上传';
+  
+  const currentYear = parseInt(scoreData.value.year);
+  const currentRound = scoreData.value.round;
+  
+  // 首先尝试精确匹配：选手码、年份、轮次都匹配
+  let exactMatch = levelFiles.value.find(file => {
+    return file.playerCode === playerCode &&
+           file.year === currentYear &&
+           file.roundKey === currentRound;
+  });
+  
+  if (exactMatch) {
+    return exactMatch.name;
+  }
+  
+  return '未上传';
+}
+
+// 获取选手的关卡文件对象
+function getPlayerLevelFile(playerCode: string): LevelFile | null {
+  if (!levelFiles.value.length || !scoreData.value) return null;
+  
+  const currentYear = parseInt(scoreData.value.year);
+  const currentRound = scoreData.value.round;
+  
+  // 首先尝试精确匹配：选手码、年份、轮次都匹配
+  let exactMatch = levelFiles.value.find(file => {
+    return file.playerCode === playerCode &&
+           file.year === currentYear &&
+           file.roundKey === currentRound;
+  });
+  
+  return exactMatch || null;
+}
+
+// 下载关卡文件
+function downloadLevelFile(playerCode: string): void {
+  const levelFile = getPlayerLevelFile(playerCode);
+  if (!levelFile) {
+    alert('未找到对应关卡文件');
+    return;
+  }
+  
+  const fileName = levelFile.name;
+  // 确认下载
+  if (confirm(`确认下载关卡文件: ${fileName}？`)) {
+    const baseUrl = 'https://levels.smwp.marioforever.net/MW杯关卡/';
+    const fileUrl = baseUrl + levelFile.path;
+    
+    // 创建下载链接并点击
+    const a = document.createElement('a');
+    a.href = fileUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 }
 
 // 监听props变化
@@ -975,6 +1088,27 @@ onMounted(() => {
   text-align: center;
   font-family: 'Courier New', monospace;
   font-size: 13px;
+}
+
+.level-file {
+  text-align: left;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #495057;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.level-file-link {
+  color: #3498db;
+  cursor: pointer;
+}
+
+.level-file-link:hover {
+  color: #2980b9;
+  text-decoration: underline;
 }
 
 .average {
