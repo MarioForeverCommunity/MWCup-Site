@@ -19,6 +19,8 @@ export interface ScoreRecord {
   isCollaborative?: boolean;
   collaborativeJudges?: string[];
   scoringScheme?: string; // 添加评分方案字段
+  isNoSubmission?: boolean; // 标识未上传关卡的选手
+  isCanceled?: boolean; // 标识成绩无效的选手
 }
 
 export interface PlayerScore {
@@ -101,7 +103,9 @@ export function parseCsvToScoreRecords(
     }  // 解析数据行
   const records: ScoreRecord[] = [];
   const playerMap = buildPlayerJudgeMap(yamlData, year, round);
-
+  // 用于跟踪成绩无效的选手
+  const canceledPlayers = new Set<string>();
+  
   // 先解析所有记录，但不处理评委名称
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);    if (values.length < 2) continue;
@@ -109,7 +113,13 @@ export function parseCsvToScoreRecords(
     const originalPlayerValue = values[playerCodeIndex]?.trim();
     const judgeCode = values[judgeCodeIndex]?.trim();
     
-    if (!originalPlayerValue || !judgeCode || judgeCode === 'CANCELED') continue;
+    // 标记成绩无效的选手
+    if (originalPlayerValue && judgeCode === 'CANCELED') {
+      canceledPlayers.add(originalPlayerValue);
+      continue;
+    }
+    
+    if (!originalPlayerValue || !judgeCode) continue;
 
     // 解析评委信息
     const judgeInfo = parseJudgeCode(judgeCode);
@@ -231,9 +241,50 @@ export function parseCsvToScoreRecords(
 
   // 计算选手总分
   const playerScores = calculatePlayerScores(records);
-
   // 确定要显示的列（排除全为空的列）
   const displayColumns = determineDisplayColumns(headers, records);
+  
+  // 为成绩无效的选手创建特殊记录
+  if (canceledPlayers.size > 0) {
+    for (const playerCode of canceledPlayers) {
+      // 根据CSV格式决定playerCode和playerName
+      let actualPlayerCode: string;
+      let playerName: string;
+      
+      if (isUsernameFormat) {
+        playerName = playerCode;
+        actualPlayerCode = playerCode;
+      } else {
+        actualPlayerCode = playerCode;
+        playerName = getPlayerName(actualPlayerCode, playerMap);
+      }
+      
+      // 创建一个成绩无效记录
+      const canceledRecord: ScoreRecord = {
+        playerCode: actualPlayerCode,
+        judgeCode: "canceled",
+        originalJudgeCode: "CANCELED",
+        playerName,
+        judgeName: "成绩无效",
+        scores: {},
+        totalScore: 0,
+        isCanceled: true
+      };
+      
+      records.push(canceledRecord);
+      
+      // 添加到playerScores中，但不计入排名
+      playerScores.push({
+        playerCode: actualPlayerCode,
+        playerName,
+        records: [canceledRecord],
+        totalSum: 0,
+        averageScore: 0,
+        validRecordsCount: 0
+      });
+    }
+  }
+  
   return {
     year,
     round,

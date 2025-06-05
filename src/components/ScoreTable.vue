@@ -7,7 +7,7 @@
     <div v-else-if="error" class="error">
       {{ error }}
     </div>      <div v-else-if="scoreData" class="score-content">      <div class="score-header">
-        <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届{{ roundDisplayName }}评分结果</h3>
+        <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届MW杯{{ roundDisplayName }}评分结果</h3>
         <p class="scheme-info">评分方案: {{ scoreData.scoringScheme }}</p>
       </div>
 
@@ -65,45 +65,60 @@
                     <td v-if="recordIndex === 0" :rowspan="playerGroup.records.length" class="player-name player-cell-merged">
                       <span v-if="record.playerCode !== record.playerName" class="player-code">{{ record.playerCode }}</span>
                       <span class="player-name-text">{{ record.playerName }}</span>
+                    </td>                      <!-- 处理未上传关卡的选手，将评委到总分的所有列合并为一个"未上传"单元格 -->
+                    <td v-if="record.isNoSubmission" 
+                        :colspan="scoreData.columns.length + 2"
+                        class="no-submission-cell">
+                      未上传
                     </td>
                     
-                    <td class="judge-name">
-                      <!-- 手动处理协商评分的评委 -->                      <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
-                        <div 
-                          v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())" 
-                          :key="index"
-                          class="collaborative-judge-item"
-                        >
-                          <!-- 显示评委名 -->
-                          {{ getUserDisplayName(judgeCode, userMapping) }}
-                          <span class="collaborative-tag">协商</span>
-                          
-                          <!-- 显示重评、预备或大众评委标签 -->
-                          <span v-if="isBackupJudge(judgeCode)" class="backup-tag">预备</span>
-                          <span v-else-if="isPublicJudge(judgeCode)" class="public-tag">大众</span>
+                    <!-- 处理成绩无效的选手 -->
+                    <td v-else-if="record.isCanceled"
+                        :colspan="scoreData.columns.length + 2"
+                        class="canceled-score-cell">
+                      成绩无效
+                    </td>
+                    
+                    <!-- 正常选手的评委和分数显示 -->
+                    <template v-else>
+                      <td class="judge-name">
+                        <!-- 手动处理协商评分的评委 -->                        <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
+                          <div 
+                            v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())" 
+                            :key="index"
+                            class="collaborative-judge-item"
+                          >
+                            <!-- 显示评委名 -->
+                            {{ getUserDisplayName(judgeCode, userMapping) }}
+                            <span class="collaborative-tag">协商</span>
+                            
+                            <!-- 显示重评、预备或大众评委标签 -->
+                            <span v-if="isBackupJudge(judgeCode)" class="backup-tag">预备</span>
+                            <span v-else-if="isPublicJudge(judgeCode)" class="public-tag">大众</span>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <!-- 处理正常评委 -->
-                      <div v-else>
-                        <!-- 显示评委名称，使用judgeName而不是judgeCode查询用户映射 -->
-                        {{ record.judgeName.replace(/（[^）]*）/g, '').trim() }}
-                        <!-- 显示协商标签 -->
-                        <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
-                        <!-- 只保留一个预备标签，优先重评，其次预备，其次大众 -->
-                        <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
-                        <span v-else-if="record.isBackup" class="backup-tag">预备</span>
-                        <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
-                      </div>
-                    </td>
+                        
+                        <!-- 处理正常评委 -->
+                        <div v-else>
+                          <!-- 显示评委名称，使用judgeName而不是judgeCode查询用户映射 -->
+                          {{ record.judgeName.replace(/（[^）]*）/g, '').trim() }}
+                          <!-- 显示协商标签 -->
+                          <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
+                          <!-- 只保留一个预备标签，优先重评，其次预备，其次大众 -->
+                          <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
+                          <span v-else-if="record.isBackup" class="backup-tag">预备</span>
+                          <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
+                        </div>
+                      </td>
                       <td 
-                      v-for="column in scoreData.columns" 
-                      :key="column"
-                      class="score-cell"
-                    >
-                      {{ formatScore(record.scores[column]) }}
-                    </td>
-                    <td class="total-score">{{ record.totalScore }}</td>
+                        v-for="column in scoreData.columns" 
+                        :key="column"
+                        class="score-cell"
+                      >
+                        {{ formatScore(record.scores[column]) }}
+                      </td>
+                      <td class="total-score">{{ record.totalScore }}</td>
+                    </template>
                     <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
                       {{ getPlayerAverageScore(record.playerCode) }}
                     </td>
@@ -115,9 +130,9 @@
             </tbody>
           </table>
         </div>
-      </div><!-- 选手总分表 -->
+      </div><!-- 总分排名表 -->
       <div class="player-totals">
-        <h4>选手总分 ({{ filteredPlayerScores.length }} 名选手)</h4>
+        <h4>总分排名 ({{ filteredPlayerScores.length }} 名选手)</h4>
         <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
         <div class="table-wrapper">
           <table class="total-table">
@@ -130,8 +145,13 @@
                 <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
               </tr>
             </thead>
-            <tbody>              <tr v-for="(player, index) in filteredPlayerScores" :key="player.playerCode">
-                <td class="rank">{{ index + 1 }}</td>
+            <tbody>
+              <tr v-for="(player, index) in filteredPlayerScores" :key="player.playerCode">
+                <!-- 成绩无效的选手，排名显示为横杠，但得分保持显示原始值 -->
+                <td class="rank">
+                  <template v-if="player.records.length > 0 && player.records[0].isCanceled">-</template>
+                  <template v-else>{{ index + 1 }}</template>
+                </td>
                 <td class="player-name">
                   <span v-if="player.playerCode !== player.playerName" class="player-code">{{ player.playerCode }}</span>
                   <span class="player-name-text">{{ player.playerName }}</span>
@@ -150,10 +170,13 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
-import { loadRoundScoreData, type RoundScoreData } from '../utils/scoreCalculator'
+import { loadRoundScoreData, type RoundScoreData, type ScoreRecord, buildPlayerJudgeMap } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
+
+// 通过 NoSubmissionRecord.d.ts 扩展了 ScoreRecord 类型，添加了 isNoSubmission 属性
+import '../NoSubmissionRecord.d.ts'
 
 const props = defineProps<{
   year: string
@@ -169,6 +192,60 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const roundDisplayName = ref<string>('')
 const userMapping = ref<UserMapping>({})
+const yamlData = ref<any>(null) // 存储原始YAML数据用于查找未上传选手
+
+// 计算未上传关卡的选手
+const noSubmissionPlayers = computed(() => {
+  if (!scoreData.value || !yamlData.value) return [];
+  
+  try {
+    // 获取原始评分记录中的选手代码
+    const existingPlayerCodes = new Set(
+      scoreData.value.allRecords.map(record => record.playerCode)
+    );
+    
+    // 获取成绩无效的选手代码
+    const canceledPlayerCodes = new Set(
+      scoreData.value.allRecords
+        .filter(record => record.isCanceled)
+        .map(record => record.playerCode)
+    );
+    
+    // 从 YAML 获取全部选手信息
+    const playerMapResult = buildPlayerJudgeMap(
+      yamlData.value, 
+      scoreData.value.year, 
+      scoreData.value.round
+    );
+    
+    // 找出未上传关卡的选手
+    const noSubmissionRecords: ScoreRecord[] = [];
+    
+    // 按照 YAML 文件中选手码的顺序创建未提交记录
+    for (const [playerCode, playerNameValue] of Object.entries(playerMapResult.players)) {
+      // 排除已有记录和成绩无效的选手
+      if (!existingPlayerCodes.has(playerCode) && !canceledPlayerCodes.has(playerCode)) {
+        // 为未提交关卡的选手创建一个记录
+        const noSubmissionRecord: ScoreRecord = {
+          playerCode,
+          judgeCode: "no_submission",
+          originalJudgeCode: "no_submission",
+          playerName: String(playerNameValue), // 确保转换为字符串
+          judgeName: "未上传",
+          scores: {},
+          totalScore: 0,
+          isNoSubmission: true
+        };
+        noSubmissionRecords.push(noSubmissionRecord);
+      }
+    }
+    
+    return noSubmissionRecords;
+  } catch (error) {
+    console.error('处理未上传关卡选手时出错:', error);
+    return [];
+  }
+});
 
 // 使用 userMapper.ts 中的 getUserDisplayName 函数来获取评委和选手的名称
 
@@ -196,13 +273,25 @@ function isReEvaluationJudge(judgeCode: string, record: any): boolean {
 
 // 筛选详细评分记录
 const filteredDetailRecords = computed(() => {
-  if (!scoreData.value) return []
+  if (!scoreData.value || !yamlData.value) return []
   
-  let records = scoreData.value.allRecords
+  // 合并原始评分记录和未提交关卡的选手记录
+  let records = [...scoreData.value.allRecords]
+  
+  // 根据筛选条件决定是否加入未提交记录
+  if (filterJudgeType.value === 'all' || filterJudgeType.value === 'normal') {
+    // 只有在显示全部或普通评分时才加入未提交记录
+    records = [...records, ...noSubmissionPlayers.value]
+  }
   
   // 按评委类型筛选
   if (filterJudgeType.value !== 'all') {
     records = records.filter(record => {
+      // 对未提交选手和成绩无效选手的特殊处理
+      if (record.isNoSubmission || record.isCanceled) {
+        return filterJudgeType.value === 'normal'
+      }
+      
       switch (filterJudgeType.value) {
         case 'normal':
           return !record.isRevoked && !record.isBackup && !record.isCollaborative
@@ -227,7 +316,40 @@ const filteredDetailRecords = computed(() => {
     )
   }
   
-  // 不再进行排序，保持原始顺序
+  // 按YAML中的选手顺序对所有记录进行排序
+  if (yamlData.value) {
+    try {
+      // 从YAML获取选手顺序
+      const playerMapResult = buildPlayerJudgeMap(
+        yamlData.value, 
+        scoreData.value.year, 
+        scoreData.value.round
+      );
+      
+      // 创建一个根据YAML中的选手码顺序排序的映射
+      const playerCodeOrderMap = new Map(
+        Object.keys(playerMapResult.players).map((code, index) => [code, index])
+      );
+      
+      // 按照YAML中的选手顺序排序
+      records.sort((a, b) => {
+        const orderA = playerCodeOrderMap.get(a.playerCode);
+        const orderB = playerCodeOrderMap.get(b.playerCode);
+        
+        // 如果都有序号，按序号排序
+        if (orderA !== undefined && orderB !== undefined) {
+          return orderA - orderB;
+        }
+        // 如果只有一方有序号，有序号的排前面
+        else if (orderA !== undefined) return -1;
+        else if (orderB !== undefined) return 1;
+        // 都没有序号，维持原来的顺序
+        else return 0;
+      });
+    } catch (error) {
+      console.error('按选手顺序排序时出错:', error);
+    }
+  }
   
   return records
 })
@@ -299,9 +421,25 @@ const groupedDetailRecords = computed(() => {
 
 // 筛选选手总分
 const filteredPlayerScores = computed(() => {
-  if (!scoreData.value) return []
+  if (!scoreData.value || !yamlData.value) return []
   
-  let players = scoreData.value.playerScores
+  // 基于现有的选手分数
+  let players = [...scoreData.value.playerScores]
+  
+  // 为未上传关卡的选手创建成绩记录
+  const noSubmissionPlayerScores = noSubmissionPlayers.value.map(record => {
+    return {
+      playerCode: record.playerCode,
+      playerName: record.playerName,
+      records: [record], // 只有一条"未上传"的记录
+      totalSum: 0,
+      averageScore: 0, // 未上传关卡选手的平均分为0
+      validRecordsCount: 0 // 有效记录数为0
+    }
+  });
+  
+  // 合并已有成绩和未上传关卡的选手
+  players = [...players, ...noSubmissionPlayerScores];
   
   // 按选手名称搜索
   if (searchPlayer.value.trim()) {
@@ -312,8 +450,47 @@ const filteredPlayerScores = computed(() => {
     )
   }
   
-  // 选手总分表仍然按平均分从高到低排序
+  // 首先按平均分从高到低排序
   players = [...players].sort((a, b) => b.averageScore - a.averageScore)
+  
+  // 然后，对于同分数的选手，按YAML中的选手顺序排序
+  try {
+    // 从YAML获取选手顺序
+    const playerMapResult = buildPlayerJudgeMap(
+      yamlData.value, 
+      scoreData.value.year, 
+      scoreData.value.round
+    );
+    
+    // 创建一个根据YAML中的选手码顺序排序的映射
+    const playerCodeOrderMap = new Map(
+      Object.keys(playerMapResult.players).map((code, index) => [code, index])
+    );
+    
+    // 二次排序：对于平均分相同的选手，按照YAML中的选手顺序排序
+    players = players.sort((a, b) => {
+      // 如果分数不同，保持原来的分数排序
+      if (a.averageScore !== b.averageScore) {
+        return b.averageScore - a.averageScore;
+      }
+      
+      // 如果分数相同，按照YAML中的选手顺序排序
+      const orderA = playerCodeOrderMap.get(a.playerCode);
+      const orderB = playerCodeOrderMap.get(b.playerCode);
+      
+      // 如果都有序号，按序号排序
+      if (orderA !== undefined && orderB !== undefined) {
+        return orderA - orderB;
+      }
+      // 如果只有一方有序号，有序号的排前面
+      else if (orderA !== undefined) return -1;
+      else if (orderB !== undefined) return 1;
+      // 都没有序号，维持原来的顺序
+      else return 0;
+    });
+  } catch (error) {
+    console.error('按选手顺序排序时出错:', error);
+  }
   
   return players
 })
@@ -329,6 +506,7 @@ async function loadScoreData() {
   try {
     // 加载YAML数据
     const yamlDoc = await fetchMarioWorkerYaml()
+    yamlData.value = yamlDoc // 保存原始的YAML数据，用于获取未上传选手
     const seasonData = extractSeasonData(yamlDoc)
     
     // 加载用户映射数据
@@ -817,5 +995,20 @@ onMounted(() => {
   .score-header h3 {
     font-size: 20px;
   }
+}
+
+.no-submission-cell {
+  font-style: italic;
+  color: #888;
+  text-align: center;
+  background-color: #f8f8f8;
+}
+
+.canceled-score-cell {
+  font-style: italic;
+  color: #d9534f;
+  text-align: center;
+  background-color: #f8f8f8;
+  font-weight: 500;
 }
 </style>
