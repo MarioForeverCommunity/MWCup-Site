@@ -66,15 +66,16 @@ function findPlayerInfo(year, roundType, playerCode, mwcupData, filePath) {
   const yearData = mwcupData.season[year];
   const rounds = yearData.rounds;
   if (!rounds) return null;
-  const specificRound = extractSpecificRound(filePath, roundType);
+  const specificRound = extractSpecificRound(filePath, roundType);  
   // 优先严格匹配轮次
   for (const [roundKey, roundData] of Object.entries(rounds)) {
     if (!roundData.players) continue;
     let roundTypeMatches = false;
-    let actualRoundKey = roundKey;
-    const isArrayKey = roundKey.includes('[') && roundKey.includes(']');
+    let actualRoundKey = roundKey;    
+    // 检查是否是逗号分隔的多轮次键，如 "G1,G2,G3,G4"
+    const isArrayKey = roundKey.includes(',');
     if (isArrayKey) {
-      const keyArray = roundKey.replace(/[\[\]]/g, '').split(',').map(k => k.trim());
+      const keyArray = roundKey.split(',').map(k => k.trim());
       roundTypeMatches = keyArray.some(key => {
         if (key.startsWith('P1')) return roundType === '热身赛' || roundType === '预赛';
         if (key.startsWith('P2')) return roundType === '资格赛';
@@ -124,9 +125,23 @@ function findPlayerInfo(year, roundType, playerCode, mwcupData, filePath) {
       if (!roundData.players) continue;
       const playerInfo = findPlayerInRound(roundData.players, playerCode);
       if (playerInfo) {
+        let finalRoundKey = roundKey;      // 如果是逗号分隔的多轮次 roundKey，尝试根据具体轮次匹配
+        const isArrayKey = roundKey.includes(',');
+        if (isArrayKey && specificRound) {
+          const keyArray = roundKey.split(',').map(k => k.trim());
+          let matchingKey = null;
+          if (specificRound === '第一轮') matchingKey = keyArray.find(key => key.endsWith('1'));
+          else if (specificRound === '第二轮') matchingKey = keyArray.find(key => key.endsWith('2'));
+          else if (specificRound === '第三轮') matchingKey = keyArray.find(key => key.endsWith('3'));
+          else if (specificRound === '第四轮') matchingKey = keyArray.find(key => key.endsWith('4'));        finalRoundKey = matchingKey || keyArray[0];
+        } else if (isArrayKey) {
+          const keyArray = roundKey.split(',').map(k => k.trim());
+          finalRoundKey = keyArray[0];
+        }
+        
         return {
           year: parseInt(year),
-          roundKey: roundKey,
+          roundKey: finalRoundKey,
           roundType: roundType,
           playerName: playerInfo.name,
           playerCode: playerInfo.matchedCode || playerCode,
@@ -148,17 +163,38 @@ function extractSpecificRound(filePath, roundType) {
   
   // 查找路径中的轮次标识
   const pathLower = filePath.toLowerCase();
-  // 检查具体的轮次编号
-  if (pathLower.includes('第一轮') || (pathLower.includes('1'))) {
+  
+  // 优先匹配明确的轮次描述
+  if (pathLower.includes('第一轮')) {
     return '第一轮';
-  } else if (pathLower.includes('第二轮') || (pathLower.includes('2'))) {
+  } else if (pathLower.includes('第二轮')) {
     return '第二轮';
-  } else if (pathLower.includes('第三轮') || (pathLower.includes('3'))) {
+  } else if (pathLower.includes('第三轮')) {
     return '第三轮';
-  } else if (pathLower.includes('第四轮') || (pathLower.includes('4'))) {
+  } else if (pathLower.includes('第四轮')) {
     return '第四轮';
-  } else if (pathLower.includes('第五轮') || (pathLower.includes('5'))) {
+  } else if (pathLower.includes('第五轮')) {
     return '第五轮';
+  }
+  
+  // 如果没有明确的轮次描述，尝试从路径段落中提取数字
+  const pathSegments = filePath.split(/[/\\]/).filter(seg => seg.length > 0);
+  for (const segment of pathSegments) {
+    const segLower = segment.toLowerCase();
+    // 匹配包含轮次信息的段落，如 "小组赛第一轮"、"初赛1"等
+    if (segLower.includes(roundType) || (roundType && segLower.includes('赛'))) {
+      if (segLower.includes('1') || segLower.includes('一')) {
+        return '第一轮';
+      } else if (segLower.includes('2') || segLower.includes('二')) {
+        return '第二轮';
+      } else if (segLower.includes('3') || segLower.includes('三')) {
+        return '第三轮';
+      } else if (segLower.includes('4') || segLower.includes('四')) {
+        return '第四轮';
+      } else if (segLower.includes('5') || segLower.includes('五')) {
+        return '第五轮';
+      }
+    }
   }
   
   return null;
@@ -221,7 +257,7 @@ function findPlayerInRound(playersData, playerCode) {
   return null;
 }
 
-function walk(dir, relativePath = '') {
+function walk(dir, relativePath = '', parentFolderPlayerCode = null) {
   const files = fs.readdirSync(dir, { withFileTypes: true });
   for (const file of files) {
     const fullPath = path.join(dir, file.name);
@@ -232,11 +268,22 @@ function walk(dir, relativePath = '') {
         console.log(`Skipping directory: ${file.name} (naming rules not standardized)`);
         continue;
       }
-      walk(fullPath, fileRelativePath);
+      
+      // 检查是否是多关卡题的选手文件夹（格式：选手码-名称）
+      const folderPlayerCode = extractPlayerCode(file.name);
+      const isPlayerFolder = folderPlayerCode && isMultiLevelRound(fileRelativePath);
+      
+      if (isPlayerFolder) {
+        console.log(`Detected multi-level player folder: ${file.name} (player code: ${folderPlayerCode})`);
+        walk(fullPath, fileRelativePath, folderPlayerCode);
+      } else {
+        walk(fullPath, fileRelativePath, parentFolderPlayerCode);
+      }
     } else {
       // 只处理关卡文件，跳过说明文件等      
-        if (file.name.endsWith('.smwl') || file.name.endsWith('.smws') || file.name.endsWith('.mfl') || file.name.endsWith('.mfs')) {
-        const playerCode = extractPlayerCode(file.name);
+      if (file.name.endsWith('.smwl') || file.name.endsWith('.smws') || file.name.endsWith('.mfl') || file.name.endsWith('.mfs')) {
+        // 优先使用父文件夹的选手码（多关卡题情况），否则从文件名提取
+        let playerCode = parentFolderPlayerCode || extractPlayerCode(file.name);
         
         // 只有能提取到有效选手码的文件才添加到索引中
         if (playerCode) {
@@ -257,15 +304,19 @@ function walk(dir, relativePath = '') {
             roundKey: playerInfo?.roundKey || null,
             groupCode: playerInfo?.groupCode || null,
             // 是否找到了完整的选手信息
-            hasPlayerInfo: !!playerInfo
+            hasPlayerInfo: !!playerInfo,
+            // 标记是否来自多关卡题文件夹
+            isMultiLevel: !!parentFolderPlayerCode
           };
           
           output.push(levelFile);
           
           if (playerInfo) {
-            console.log(`✓ ${playerCode} -> ${playerInfo.playerName} (${year} ${roundType})`);
+            const multiLevelFlag = parentFolderPlayerCode ? ' [Multi-Level]' : '';
+            console.log(`✓ ${playerCode} -> ${playerInfo.playerName} (${year} ${roundType})${multiLevelFlag}`);
           } else {
-            console.log(`? ${playerCode} -> Unknown player (${year} ${roundType})`);
+            const multiLevelFlag = parentFolderPlayerCode ? ' [Multi-Level]' : '';
+            console.log(`? ${playerCode} -> Unknown player (${year} ${roundType})${multiLevelFlag}`);
           }
         } else {
           console.log(`Skipping file with invalid naming: ${file.name}`);
@@ -294,12 +345,6 @@ function extractPlayerCode(filename) {
   const excludePatterns = [
     /^\d{4}$/, // 年份 (如 2019)
     /^模板关卡/,
-    /^BOSS$/i,
-    /^Hell and heaven$/i,
-    /^Decisive Battle$/i,
-    /^SMB\d+/i, // SMB1, SMB2 等
-    /^Super Mario/i, // Super Mario 开头的
-    /^复刻/i, // 复刻模板
     /^模板/i, // 模板关卡
   ];
   
@@ -309,13 +354,8 @@ function extractPlayerCode(filename) {
   
   // 特殊文件名检查：排除明显的模板或示例文件
   const excludeFullNames = [
-    /^SMB\d+\s+\d+/i, // SMB1 1-1 格式
     /模板/i,
     /复刻/i,
-    /示例/i,
-    /教程/i,
-    /^Test[\s-]/i,
-    /^Demo[\s-]/i,
   ];
   
   if (excludeFullNames.some(pattern => pattern.test(filename))) {
@@ -333,8 +373,8 @@ function extractPlayerCode(filename) {
   // 2. 匹配标准选手码格式：A1, B2, C3, M, W, S, P 等
   const standardMatch = prefix.match(/([A-Z]\d*)/gi);
   if (standardMatch) {
-    // 优先选择最后一个匹配项（通常是实际的选手码）
-    return standardMatch[standardMatch.length - 1];
+    // 取第一个完整匹配
+    return standardMatch[0];
   }
   
   // 3. 匹配纯数字格式：1, 2, 3 等（作为后备）
@@ -351,6 +391,29 @@ function extractPlayerCode(filename) {
     return prefix;
   }
   return null;
+}
+
+/**
+ * 判断文件路径是否属于多关卡题的轮次
+ * 目前已知的多关卡题轮次：2013小组赛第三轮、2016决赛、2020决赛
+ */
+function isMultiLevelRound(filePath) {
+  // 2013年第二届小组赛第三轮
+  if (filePath.includes('2013年第二届') && filePath.includes('小组赛第三轮')) {
+    return true;
+  }
+  
+  // 2016年第五届决赛
+  if (filePath.includes('2016年第五届') && filePath.includes('决赛')) {
+    return true;
+  }
+  
+  // 2020年第九届决赛
+  if (filePath.includes('2020年第九届') && filePath.includes('决赛')) {
+    return true;
+  }
+  
+  return false;
 }
 
 try {
