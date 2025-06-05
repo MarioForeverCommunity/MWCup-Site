@@ -1,4 +1,10 @@
 // 关卡文件信息类型定义
+export interface MultiLevelFolder {
+  folderName: string | null;   // 文件夹名称
+  folderPath: string | null;   // 文件夹路径
+  playerCode: string | null;   // 选手代码
+}
+
 export interface LevelFile {
   name: string;        // 文件名
   path: string;        // 相对路径
@@ -12,6 +18,8 @@ export interface LevelFile {
   roundKey: string | null;     // 轮次键
   groupCode: string | null;    // 分组码
   hasPlayerInfo: boolean;      // 是否有完整的选手信息
+  isMultiLevel?: boolean;      // 是否是多关卡文件的一部分
+  multiLevelFolder?: MultiLevelFolder | null; // 多关卡文件夹信息
 }
 
 let levelFilesCache: LevelFile[] | null = null;

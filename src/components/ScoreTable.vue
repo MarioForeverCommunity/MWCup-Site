@@ -668,8 +668,21 @@ function getPlayerLevelFileName(playerCode: string): string {
   const currentYear = parseInt(scoreData.value.year);
   const currentRound = scoreData.value.round;
   
-  // 首先尝试精确匹配：选手码、年份、轮次都匹配
-  let exactMatch = levelFiles.value.find(file => {
+  // 首先查找多关卡文件夹
+  const multiLevelFiles = levelFiles.value.filter(file => {
+    return file.playerCode === playerCode &&
+           file.year === currentYear &&
+           file.roundKey === currentRound &&
+           file.isMultiLevel === true;
+  });
+  
+  // 如果找到多关卡文件夹，返回文件夹名称
+  if (multiLevelFiles.length > 0 && multiLevelFiles[0].multiLevelFolder) {
+    return multiLevelFiles[0].multiLevelFolder.folderName || multiLevelFiles[0].name;
+  }
+  
+  // 如果没有多关卡文件夹，使用单个关卡文件
+  const exactMatch = levelFiles.value.find(file => {
     return file.playerCode === playerCode &&
            file.year === currentYear &&
            file.roundKey === currentRound;
@@ -689,8 +702,21 @@ function getPlayerLevelFile(playerCode: string): LevelFile | null {
   const currentYear = parseInt(scoreData.value.year);
   const currentRound = scoreData.value.round;
   
-  // 首先尝试精确匹配：选手码、年份、轮次都匹配
-  let exactMatch = levelFiles.value.find(file => {
+  // 首先查找多关卡文件夹
+  const multiLevelFiles = levelFiles.value.filter(file => {
+    return file.playerCode === playerCode &&
+           file.year === currentYear &&
+           file.roundKey === currentRound &&
+           file.isMultiLevel === true;
+  });
+  
+  // 如果找到多关卡文件，返回第一个作为代表（包含文件夹信息）
+  if (multiLevelFiles.length > 0) {
+    return multiLevelFiles[0];
+  }
+  
+  // 如果没有找到多关卡文件，尝试找单个关卡文件
+  const exactMatch = levelFiles.value.find(file => {
     return file.playerCode === playerCode &&
            file.year === currentYear &&
            file.roundKey === currentRound;
@@ -707,19 +733,34 @@ function downloadLevelFile(playerCode: string): void {
     return;
   }
   
-  const fileName = levelFile.name;
-  // 确认下载
-  if (confirm(`确认下载关卡文件: ${fileName}？`)) {
-    const baseUrl = 'https://levels.smwp.marioforever.net/MW杯关卡/';
-    const fileUrl = baseUrl + levelFile.path;
+  const baseUrl = 'https://levels.smwp.marioforever.net/MW杯关卡/';
+  
+  // 如果是多关卡文件夹
+  if (levelFile.isMultiLevel && levelFile.multiLevelFolder) {
+    const folderName = levelFile.multiLevelFolder.folderName;
+    const folderPath = levelFile.multiLevelFolder.folderPath;
     
-    // 创建下载链接并点击
-    const a = document.createElement('a');
-    a.href = fileUrl;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // 确认下载
+    if (confirm(`这是多关卡文件夹: ${folderName || '未命名文件夹'}\n是否打开在线查看？`)) {
+      // 对于多关卡，打开文件夹页面而不是直接下载
+      const folderUrl = baseUrl + (folderPath || levelFile.path.substring(0, levelFile.path.lastIndexOf('/')));
+      window.open(folderUrl, '_blank');
+    }
+  } else {
+    // 单个关卡文件正常下载
+    const fileName = levelFile.name;
+    // 确认下载
+    if (confirm(`确认下载关卡文件: ${fileName}？`)) {
+      const fileUrl = baseUrl + levelFile.path;
+      
+      // 创建下载链接并点击
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   }
 }
 

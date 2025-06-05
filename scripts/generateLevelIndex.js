@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const levelsDir = path.join(__dirname, '../public/data/levels');
 const yamlPath = path.join(__dirname, '../public/data/mwcup.yaml');
+const specialLevelsPath = path.join(__dirname, '../public/data/specialLevels.json');
 const output = [];
 
 // 加载 YAML 数据
@@ -18,6 +19,17 @@ try {
   console.log('Loaded YAML data successfully');
 } catch (error) {
   console.error('Failed to load YAML data:', error);
+  process.exit(1);
+}
+
+// 加载特殊关卡对应关系数据
+let specialLevelsData = null;
+try {
+  const specialLevelsContent = fs.readFileSync(specialLevelsPath, 'utf8');
+  specialLevelsData = JSON.parse(specialLevelsContent);
+  console.log('Loaded special levels data successfully');
+} catch (error) {
+  console.error('Failed to load special levels data:', error);
   process.exit(1);
 }
 
@@ -160,9 +172,25 @@ function extractSpecificRound(filePath, roundType) {
     return null;
   }
   
-  // 查找路径中的轮次标识
+  // 分析文件路径，重点关注路径目录部分而非文件名
+  const parts = filePath.split(/[/\\]/);
+  const fileDirs = parts.slice(0, -1); // 获取除文件名外的所有目录部分
+  const fileName = parts[parts.length - 1]; // 文件名部分
+  
+  // 先从目录路径中查找轮次信息（优先级更高）
+  const dirPath = fileDirs.join('/').toLowerCase();
+  if (dirPath.includes('第一轮') || dirPath.includes('第一题')) {
+    return '第一轮';
+  } else if (dirPath.includes('第二轮') || dirPath.includes('第二题')) {
+    return '第二轮';
+  } else if (dirPath.includes('第三轮') || dirPath.includes('第三题')) {
+    return '第三轮';
+  } else if (dirPath.includes('第四轮') || dirPath.includes('第四题')) {
+    return '第四轮';
+  }
+  
+  // 如果目录路径中没有找到，再从整个路径（包括文件名）中查找
   const pathLower = filePath.toLowerCase();
-  // 优先匹配明确的轮次描述
   if (pathLower.includes('第一轮') || pathLower.includes('第一题')) {
     return '第一轮';
   } else if (pathLower.includes('第二轮') || pathLower.includes('第二题')) {
@@ -193,13 +221,13 @@ function extractSpecificRound(filePath, roundType) {
     // 匹配"题"的相关描述
     if (segLower.includes('题')) {
       if (segLower.includes('1') || segLower.includes('一')) {
-        return '第一轮';
+        return '第一题';
       } else if (segLower.includes('2') || segLower.includes('二')) {
-        return '第二轮';
+        return '第二题';
       } else if (segLower.includes('3') || segLower.includes('三')) {
-        return '第三轮';
+        return '第三题';
       } else if (segLower.includes('4') || segLower.includes('四')) {
-        return '第四轮';
+        return '第四题';
       }
     }
   }
@@ -264,14 +292,14 @@ function findPlayerInRound(playersData, playerCode) {
   return null;
 }
 
-function walk(dir, relativePath = '', parentFolderPlayerCode = null) {
+function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolderInfo = null) {
   const files = fs.readdirSync(dir, { withFileTypes: true });
   for (const file of files) {
     const fullPath = path.join(dir, file.name);
     const fileRelativePath = path.join(relativePath, file.name).replace(/\\/g, '/');
     if (file.isDirectory()) {
-      // 忽略2012年和2025年的目录（命名不规范）
-      if (file.name.includes('2012') || file.name.includes('2025')) {
+      // 暂时忽略2012年的目录
+      if (file.name.includes('2012')) {
         console.log(`Skipping directory: ${file.name} (naming rules not standardized)`);
         continue;
       }
@@ -281,8 +309,14 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null) {
       const isPlayerFolder = folderPlayerCode && isMultiLevelRound(fileRelativePath);
       
       if (isPlayerFolder) {
-        console.log(`Detected multi-level player folder: ${file.name} (player code: ${folderPlayerCode})`);
-        walk(fullPath, fileRelativePath, folderPlayerCode);
+        console.log(`Detected multi-level player folder: ${file.name} (player code: ${folderPlayerCode}, path: ${fileRelativePath})`);
+        // 记录多关卡题文件夹信息
+        const folderInfo = {
+          folderName: file.name,
+          folderPath: fileRelativePath,
+          playerCode: folderPlayerCode
+        };
+        walk(fullPath, fileRelativePath, folderPlayerCode, folderInfo);
       } else {
         walk(fullPath, fileRelativePath, parentFolderPlayerCode);
       }
@@ -315,7 +349,13 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null) {
             // 是否找到了完整的选手信息
             hasPlayerInfo: !!playerInfo,
             // 标记是否来自多关卡题文件夹
-            isMultiLevel: !!parentFolderPlayerCode
+            isMultiLevel: !!parentFolderPlayerCode,
+            // 多关卡文件夹信息
+            multiLevelFolder: parentFolderPlayerCode ? {
+              folderName: parentFolderInfo?.folderName || null,
+              folderPath: parentFolderInfo?.folderPath || null,
+              playerCode: parentFolderInfo?.playerCode || parentFolderPlayerCode
+            } : null
           };
           
           output.push(levelFile);
@@ -355,10 +395,19 @@ function extractPlayerCode(filename, year = null, roundType = null, mwcupData = 
   
   // 获取第一个横杠前的字符串
   const prefix = filename.substring(0, dashIndex);
-
-  // 特殊情况硬编码处理
-  if (filename === "Happymario8-Mushroom Bridge.smwl" && String(year) === "2020" && roundType === "资格赛") {
-    return "4";
+  
+  // 检查是否是特殊文件（从特殊关卡数据中查找）
+  if (specialLevelsData && year && roundType) {
+    const yearData = specialLevelsData.specialLevels[String(year)];
+    if (yearData) {
+      const roundData = yearData[roundType];
+      if (roundData) {
+        const specialLevel = roundData.find(level => level.filename === filename);
+        if (specialLevel) {
+          return specialLevel.playerCode;
+        }
+      }
+    }
   }
   
   // 排除一些明显不是选手码的前缀
@@ -374,7 +423,6 @@ function extractPlayerCode(filename, year = null, roundType = null, mwcupData = 
   
   // 特殊文件名检查：排除明显的模板或示例文件
   const excludeFullNames = [
-    /模板/i,
     /复刻/i,
   ];
   

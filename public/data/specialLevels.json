@@ -1,0 +1,38 @@
+{
+  "specialLevels": {
+    "2020": {
+      "资格赛": [
+        {"filename": "mushroom realm in the sky.smwl", "playerCode": "2"},
+        {"filename": "Happymario8-Mushroom Bridge.smwl", "playerCode": "4"},
+        {"filename": "mutation.smwl", "playerCode": "6"}
+      ]
+    },
+    "2021": {
+      "资格赛": [
+        {"filename": "SFDS-EASTERN MW VILLAGE.smwl", "playerCode": "3"}
+      ]
+    },
+    "2022": {
+      "热身赛": [
+        {"filename": "7-Random.smwl", "playerCode": "7"},
+        {"filename": "7-3.smwl", "playerCode": "8"},
+        {"filename": "right to left again and again.smwl", "playerCode": "9"},
+        {"filename": "9-leisurely no seashore.smwl", "playerCode": "10"},
+        {"filename": "豆腐卷三号.smwl", "playerCode": "11"}
+      ]
+    },
+    "2025": {
+      "热身赛": [
+        {"filename": "塔卡拉花园.smwl", "playerCode": "1"},
+        {"filename": "Random System.smwl", "playerCode": "2"},
+        {"filename": "Untitled Level(original).smwl", "playerCode": "3"},
+        {"filename": "mario worker secret skills.smwl", "playerCode": "4"},
+        {"filename": "REdrosiD.smwl", "playerCode": "5"},
+        {"filename": "The Gear Factory.smwl", "playerCode": "6"},
+        {"filename": "1 World.smwl", "playerCode": "7"},
+        {"filename": "Mario Worker Odyssey 3-4.smwl", "playerCode": "8"},
+        {"filename": "8-level49.smwl", "playerCode": "9"}
+      ]
+    }
+  }
+}
