@@ -82,13 +82,15 @@ function getLinkText(link: string) {
 
 <template>
   <div class="schedule-container">
-    <h2>历届比赛日程表</h2>
-    
-    <div class="year-selector">
-      <label for="year-select">选择年份：</label>
-      <select id="year-select" v-model="selectedYear" class="year-select">
-        <option v-for="year in years" :key="year" :value="year">{{ year }} 年</option>
-      </select>
+    <div class="schedule-header">
+      <h3>比赛日程表</h3>
+      
+      <div class="year-selector">
+        <label for="year-select">选择年份：</label>
+        <select id="year-select" v-model="selectedYear" class="year-select">
+          <option v-for="year in years" :key="year" :value="year">{{ year }} 年</option>
+        </select>
+      </div>
     </div>
     
     <div v-if="scheduleWithRowspans" class="schedule-table-container">
@@ -151,6 +153,17 @@ function getLinkText(link: string) {
   padding: 1rem;
 }
 
+.schedule-header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.schedule-header h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
 .year-selector {
   margin: 1.5rem 0;
   text-align: center;
@@ -164,6 +177,7 @@ function getLinkText(link: string) {
   font-size: 1rem;
   margin-left: 0.5rem;
   cursor: pointer;
+  color: #495057;
 }
 
 .schedule-table-container {
@@ -180,22 +194,26 @@ function getLinkText(link: string) {
 }
 
 .schedule-table th {
-  background-color: #4CAF50;
-  color: white;
+  background-color: #f8f9fa;
+  color: #495057;
   text-align: center;
-  padding: 12px;
-  font-weight: bold;
-  border: none;
+  padding: 8px 10px;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
 }
 
 .schedule-table td {
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
   text-align: center;
 }
 
 .schedule-row:nth-child(odd) {
-  background-color: #f9f9f9;
+  background-color: #ffffff;
+}
+
+.schedule-row:nth-child(even) {
+  background-color: #f9fafb;
 }
 
 .schedule-row:hover {
@@ -203,16 +221,21 @@ function getLinkText(link: string) {
 }
 
 .stage-cell {
-  font-weight: bold;
-  background-color: #e8f5e9;
+  font-weight: 500;
+  background-color: #f8f9fa;
+  vertical-align: middle;
+  border-right: 2px solid #dee2e6;
+  color: #2c3e50;
 }
 
 .content-cell {
   text-align: left;
+  color: #34495e;
 }
 
 .time-cell {
-  font-family: monospace;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -224,23 +247,37 @@ function getLinkText(link: string) {
   display: inline-block;
   padding: 3px 8px;
   margin: 1px 0;
-  background-color: #1976D2;
+  background-color: #3498db;
   color: white;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: 3px;
   font-size: 0.9rem;
   transition: background-color 0.3s ease;
 }
 
 .link-btn:hover {
-  background-color: #1565C0;
+  background-color: #2980b9;
 }
 
 .multi-link-container {
   margin: 4px 0;
 }
 
-/* 移除多余的样式，统一使用链接按钮样式 */
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .schedule-container {
+    padding: 10px;
+  }
+  
+  .schedule-table th, .schedule-table td {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+  
+  .schedule-header h3 {
+    font-size: 20px;
+  }
+}
 </style>
 
 <!-- 移除重复的样式 -->

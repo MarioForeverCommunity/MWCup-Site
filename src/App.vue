@@ -10,7 +10,7 @@ const activeTab = ref<'schedule' | 'scores' | 'champions'>('schedule')
 <template>
   <div class="app-container">
     <header class="app-header">
-      <h1>Mario Worker 杯比赛系统</h1>
+      <h1>Mario Worker 杯官网</h1>
       <nav class="main-nav">
         <button 
           @click="activeTab = 'schedule'" 

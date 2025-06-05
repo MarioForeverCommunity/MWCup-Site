@@ -813,6 +813,11 @@ onMounted(() => {
   text-align: center;
 }
 
+.score-table tbody tr:not(.player-separator):hover,
+.total-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
 .category-header {
   background-color: #e9ecef;
   color: #343a40;
