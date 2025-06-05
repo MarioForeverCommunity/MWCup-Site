@@ -282,13 +282,15 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null) {
     } else {
       // 只处理关卡文件，跳过说明文件等      
       if (file.name.endsWith('.smwl') || file.name.endsWith('.smws') || file.name.endsWith('.mfl') || file.name.endsWith('.mfs')) {
+        // 先提取年份和轮次信息，用于选手码识别
+        const { year, roundType } = extractYearAndRound(fileRelativePath);
+        
         // 优先使用父文件夹的选手码（多关卡题情况），否则从文件名提取
-        let playerCode = parentFolderPlayerCode || extractPlayerCode(file.name);
+        let playerCode = parentFolderPlayerCode || extractPlayerCode(file.name, year, roundType, mwcupData);
         
         // 只有能提取到有效选手码的文件才添加到索引中
         if (playerCode) {
           const stat = fs.statSync(fullPath);
-          const { year, roundType } = extractYearAndRound(fileRelativePath);
           const playerInfo = findPlayerInfo(year, roundType, playerCode, mwcupData, fileRelativePath);
           
           const levelFile = {
@@ -326,7 +328,7 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null) {
   }
 }
 
-function extractPlayerCode(filename) {
+function extractPlayerCode(filename, year = null, roundType = null, mwcupData = null) {
   // 查找第一个横杠的位置
   const dashIndex = filename.indexOf('-');
   if (dashIndex === -1) {
@@ -340,6 +342,11 @@ function extractPlayerCode(filename) {
   
   // 获取第一个横杠前的字符串
   const prefix = filename.substring(0, dashIndex);
+
+  // 特殊情况硬编码处理
+  if (filename === "Happymario8-Mushroom Bridge.smwl" && String(year) === "2020" && roundType === "资格赛") {
+    return "4";
+  }
   
   // 排除一些明显不是选手码的前缀
   const excludePatterns = [
@@ -362,6 +369,15 @@ function extractPlayerCode(filename) {
     return null;
   }
   
+  // 优先策略：如果有YAML数据，先尝试用完整前缀作为用户名在当前年份和轮次中查找
+  if (mwcupData && year && roundType) {
+    const playerInfo = findPlayerInfo(year, roundType, prefix, mwcupData, '');
+    if (playerInfo) {
+      // 找到了完整用户名匹配，直接返回
+      return prefix;
+    }
+  }
+  
   // 在横杠前的字符串中按优先级寻找选手码模式
   
   // 1. 优先匹配数字前缀格式：1A, 2B, 3A 等（四分之一决赛等常用格式）
@@ -382,14 +398,7 @@ function extractPlayerCode(filename) {
   if (numOnlyMatch) {
     return numOnlyMatch[numOnlyMatch.length - 1];
   }
-  
-  // 4. 检查是否整个前缀就是用户名（用于用户名前缀的情况）
-  // 排除一些明显不是用户名的格式
-  if (prefix.length > 0 && prefix.length <= 30 && 
-      !/^\d+$/.test(prefix) && // 排除纯数字（已经在上面处理了）
-      !/^[a-z]\d+$/i.test(prefix)) { // 排除像 c1 这样应该被标准规则捕获的格式
-    return prefix;
-  }
+
   return null;
 }
 
