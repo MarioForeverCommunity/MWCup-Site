@@ -3,8 +3,9 @@ import { ref } from 'vue'
 import ScheduleTable from './components/ScheduleTable.vue'
 import RoundSelector from './components/RoundSelector.vue'
 import ChampionStatistics from './components/ChampionStatistics.vue'
+import LevelFileTest from './components/LevelFileTest.vue'
 
-const activeTab = ref<'schedule' | 'scores' | 'champions'>('schedule')
+const activeTab = ref<'schedule' | 'scores' | 'champions' | 'levels'>('schedule')
 </script>
 
 <template>
@@ -33,6 +34,13 @@ const activeTab = ref<'schedule' | 'scores' | 'champions'>('schedule')
         >
           冠军统计
         </button>
+        <button 
+          @click="activeTab = 'levels'" 
+          :class="{ active: activeTab === 'levels' }"
+          class="nav-btn"
+        >
+          关卡查询
+        </button>
       </nav>
     </header>
 
@@ -47,6 +55,10 @@ const activeTab = ref<'schedule' | 'scores' | 'champions'>('schedule')
       
       <div v-if="activeTab === 'champions'">
         <ChampionStatistics />
+      </div>
+      
+      <div v-if="activeTab === 'levels'">
+        <LevelFileTest />
       </div>
     </main>
   </div>
