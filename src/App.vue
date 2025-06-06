@@ -133,33 +133,35 @@ const openSidebar = () => {
 }
 
 /* 侧边栏动画 */
-.sidebar {
-  animation: slideInLeft 0.5s ease-out;
-}
+@media (min-width: 768px) {
+  .sidebar {
+    animation: slideInLeft 0.5s ease-out;
+  }
 
-.sidebar-nav .nav-btn:nth-child(1) {
-  animation: fadeInUp 0.4s ease-out 0.1s both;
-}
+  .sidebar-nav .nav-btn:nth-child(1) {
+    animation: fadeInUp 0.4s ease-out 0.1s both;
+  }
 
-.sidebar-nav .nav-btn:nth-child(2) {
-  animation: fadeInUp 0.4s ease-out 0.15s both;
-}
+  .sidebar-nav .nav-btn:nth-child(2) {
+    animation: fadeInUp 0.4s ease-out 0.15s both;
+  }
 
-.sidebar-nav .nav-btn:nth-child(3) {
-  animation: fadeInUp 0.4s ease-out 0.2s both;
-}
+  .sidebar-nav .nav-btn:nth-child(3) {
+    animation: fadeInUp 0.4s ease-out 0.2s both;
+  }
 
-.sidebar-nav .nav-btn:nth-child(4) {
-  animation: fadeInUp 0.4s ease-out 0.25s both;
-}
+  .sidebar-nav .nav-btn:nth-child(4) {
+    animation: fadeInUp 0.4s ease-out 0.25s both;
+  }
 
-.sidebar-mask {
-  display: none;
-}
+  .sidebar-mask {
+    display: none;
+  }
 
-/* 主内容区动画 */
-.main-content {
-  animation: slideInRight 0.5s ease-out 0.2s both;
+  /* 主内容区动画 */
+  .main-content {
+    animation: slideInRight 0.5s ease-out 0.2s both;
+  }
 }
 
 .content-panel {
@@ -193,10 +195,6 @@ const openSidebar = () => {
 @media (max-width: 768px) {
   .app-title {
     font-size: 18px;
-  }
-  
-  .main-content {
-    animation: slideInBottom 0.4s ease-out 0.2s both;
   }
   
   .nav-btn {
