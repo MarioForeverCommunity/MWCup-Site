@@ -353,10 +353,6 @@
   animation: rotate 1s linear infinite;
 }
 
-.loading-dots {
-  display: inline-block;
-}
-
 .loading-dots::after {
   content: '';
   animation: dots 1.5s linear infinite;
@@ -375,6 +371,10 @@
   80%, 100% {
     content: '...';
   }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ===== 闪烁光效 ===== */

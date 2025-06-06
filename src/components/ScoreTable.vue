@@ -1,8 +1,7 @@
-<template>
-  <div v-if="loading" class="content-panel">
+<template>  <div v-if="loading" class="content-panel">
     <div class="loading-state animate-fadeInUp">
       <div class="loading-spinner"></div>
-      <p class="loading-text">正在加载评分数据<span class="loading-dots"></span></p>
+      <div class="loading-text">正在加载数据<span class="loading-dots"></span></div>
     </div>
   </div>
   <div v-else-if="error" class="content-panel">

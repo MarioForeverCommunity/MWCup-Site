@@ -55,25 +55,25 @@
       </div>
     </div>
   </div>
-
   <!-- 按选手名/文件名搜索 -->
   <div v-if="searchMode === 'search'" class="content-panel animate-fadeInUp">
     <div class="form-group">
       <label class="form-label">搜索关键词:</label>
-      <input 
-        v-model="searchKeyword" 
-        type="text" 
-        placeholder="输入选手名或文件名关键词"
-        @keyup.enter="searchByKeyword"
-        class="form-control"
-      >
+      <div class="search-input-group">
+        <input 
+          v-model="searchKeyword" 
+          type="text" 
+          placeholder="输入选手名或文件名关键词"
+          @keyup.enter="searchByKeyword"
+          class="form-control"
+        >
+        <button @click="searchByKeyword" class="btn-primary hover-scale">搜索</button>
+      </div>
     </div>
-    <button @click="searchByKeyword" class="btn-primary hover-scale">搜索</button>
   </div>
-
   <div v-if="loading" class="loading-state animate-pulse">
     <div class="loading-spinner"></div>
-    <span class="loading-dots">加载中</span>
+    <div class="loading-text">加载中<span class="loading-dots"></span></div>
   </div>
 
   <div v-if="error" class="error-state animate-pulse">
@@ -582,6 +582,31 @@ function closeFileDetails() {
   flex-wrap: wrap;
   justify-content: center;
   margin-bottom: var(--spacing-lg);
+}
+
+.search-input-group {
+  display: flex;
+  width: 100%;
+  align-items: stretch; /* 确保高度一致 */
+}
+
+.search-input-group .form-control {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+  margin: 0;
+}
+
+.search-input-group .btn-primary {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 0 16px;
+  white-space: nowrap;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-buttons {

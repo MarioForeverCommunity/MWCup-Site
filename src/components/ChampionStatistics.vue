@@ -3,10 +3,9 @@
     <h2 class="animate-textGlow">Mario Worker 杯历届冠军统计</h2>
     <p>从2013年到2025年的所有决赛冠军信息</p>
   </div>
-
   <div v-if="loading" class="loading-state animate-pulse">
     <div class="loading-spinner"></div>
-    <span class="loading-dots">正在加载数据</span>
+    <div class="loading-text">正在加载数据<span class="loading-dots"></span></div>
   </div>
 
   <div v-else-if="error" class="error-state animate-pulse">
@@ -197,17 +196,6 @@ onMounted(() => {
 .judges {
   color: #e63fbc;
   font-size: 14px;
-}
-
-/* 加载状态样式 */
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-  font-size: 16px;
 }
 
 /* 表格行动画效果 */
