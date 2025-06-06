@@ -155,7 +155,8 @@ export async function matchLevelFiles(): Promise<LevelMatch[]> {
     let bestMatch: PlayerInfo | null = null
     let confidence: 'exact' | 'partial' | 'fuzzy' = 'fuzzy'
 
-    if (year && roundInfo) {      // 精确匹配：年份、轮次、选手码都匹配
+    if (year && roundInfo) {
+      // 精确匹配：年份、轮次、选手码都匹配
       bestMatch = players.find(p => 
         p.roundInfo.year === year &&
         p.roundInfo.roundKey === roundInfo.roundKey &&
@@ -164,7 +165,8 @@ export async function matchLevelFiles(): Promise<LevelMatch[]> {
 
       if (bestMatch) {
         confidence = 'exact'
-      } else {        // 部分匹配：年份和选手码匹配，但轮次可能不同
+      } else {
+        // 部分匹配：年份和选手码匹配，但轮次可能不同
         bestMatch = players.find(p => 
           p.roundInfo.year === year &&
           levelFile.playerCode && p.code.toUpperCase() === levelFile.playerCode.toUpperCase()

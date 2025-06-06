@@ -166,7 +166,7 @@ export function parseCsvToScoreRecords(
     }
 
     // 计算最终总分（四舍五入到一位小数）
-    const finalScore = Math.round((totalScore + bonusPoints - penaltyPoints) * 10) / 10;
+    const finalScore = Math.round((totalScore + bonusPoints + penaltyPoints) * 10) / 10;
     // 如果是协商评分，直接从YAML中查找评委名称而不是使用CSV中的judgeCode
     const judgeName = judgeInfo.isCollaborative 
       ? judgeInfo.collaborativeJudges?.map(j => getJudgeName(j, playerMap, playerCode)).join(', ') || ''
