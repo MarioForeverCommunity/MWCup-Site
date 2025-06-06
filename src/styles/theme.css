@@ -1,0 +1,131 @@
+/* 
+ * theme.css - 全局主题样式
+ * 定义了项目的橙色主题配色方案和通用样式变量
+ */
+
+:root {
+  /* 主色调 */
+  --primary-color: #ff6347;
+  --primary-hover: #ff8c69;
+  --primary-active: #e55347;
+  --primary-dark: #d45537;
+  
+  /* 背景色 */
+  --bg-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  --bg-container: rgba(255, 248, 240, 0.8);
+  --bg-content: rgba(255, 250, 245, 0.75);
+  --bg-panel: rgba(255, 245, 230, 0.8);
+  --bg-card: rgba(255, 250, 245, 0.9);
+  --bg-table: rgba(255, 252, 248, 0.9);
+  --bg-button: rgba(255, 245, 235, 0.7);
+  --bg-button-hover: rgba(255, 220, 200, 0.8);
+  --bg-input: rgba(255, 250, 245, 0.9);
+  --bg-error: rgba(255, 234, 234, 0.9);
+  --bg-success: rgba(240, 248, 255, 0.9);
+  
+  /* 边框色 */
+  --border-light: rgba(255, 210, 190, 0.6);
+  --border-medium: rgba(255, 180, 150, 0.5);
+  --border-strong: rgba(255, 140, 105, 0.3);
+  --border-accent: rgba(255, 140, 105, 0.2);
+  
+  /* 文字颜色 */
+  --text-primary: #2c3e50;
+  --text-secondary: #34495e;
+  --text-muted: #7f8c8d;
+  --text-link: #3498db;
+  --text-error: #e74c3c;
+  
+  /* 阴影 */
+  --shadow-light: 0 6px 20px rgba(255, 140, 105, 0.1);
+  --shadow-medium: 0 8px 25px rgba(255, 140, 105, 0.15);
+  --shadow-strong: 0 15px 40px rgba(255, 140, 105, 0.2);
+  --shadow-button: 0 6px 20px rgba(255, 99, 71, 0.25);
+  
+  /* 模糊效果 */
+  --blur-light: blur(8px);
+  --blur-medium: blur(12px);
+  --blur-strong: blur(18px);
+  
+  /* 圆角 */
+  --radius-small: 6px;
+  --radius-medium: 8px;
+  --radius-large: 12px;
+  --radius-xl: 15px;
+  --radius-xxl: 20px;
+  
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 20px;
+  --spacing-xl: 30px;
+  
+  /* 字体 */
+  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-mono: 'Courier New', monospace;
+  
+  /* 过渡动画 */
+  --transition-fast: all 0.2s ease;
+  --transition-normal: all 0.3s ease;
+  --transition-slow: all 0.6s ease-out;
+}
+
+/* 全局动画关键帧 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 通用工具类 */
+.fade-in {
+  animation: fadeInUp var(--transition-slow);
+}
+
+.glass-effect {
+  backdrop-filter: var(--blur-medium);
+  border: 1px solid var(--border-light);
+}
+
+.shadow-light {
+  box-shadow: var(--shadow-light);
+}
+
+.shadow-medium {
+  box-shadow: var(--shadow-medium);
+}
+
+.shadow-strong {
+  box-shadow: var(--shadow-strong);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.loading-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}

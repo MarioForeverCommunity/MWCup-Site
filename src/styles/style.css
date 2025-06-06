@@ -1,0 +1,99 @@
+/* 
+ * style.css - 主样式文件
+ * 引入所有模块化样式文件
+ */
+
+/* 引入模块化样式 */
+@import './theme.css';
+@import './components.css';
+@import './layout.css';
+@import './animations.css';
+
+:root {
+  font-family: var(--font-family);
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: var(--text-primary);
+  background: var(--bg-gradient);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: var(--primary-color);
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--bg-gradient);
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  font-weight: 600;
+}
+
+button {
+  border-radius: var(--radius-medium);
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background: var(--bg-button);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  backdrop-filter: var(--blur-light);
+  border: 1px solid var(--border-medium);
+}
+
+button:hover {
+  border-color: var(--primary-color);
+  background: var(--bg-button-hover);
+  transform: translateY(-1px);
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+.card {
+  padding: 2em;
+}
+
+#app {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  min-height: 100vh;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: var(--text-primary);
+    background: var(--bg-gradient);
+  }
+  a:hover {
+    color: var(--primary-hover);
+  }
+  button {
+    background: var(--bg-button);
+  }
+}

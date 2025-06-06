@@ -457,14 +457,14 @@ export function buildPlayerJudgeMap(yamlData: any, year: string, round: string) 
 }
 
 /**
- * 获取选手姓名
+ * 获取选手名
  */
 function getPlayerName(playerCode: string, playerMap: any): string {
   return playerMap.players[playerCode] || playerCode;
 }
 
 /**
- * 获取评委姓名
+ * 获取评委名
  */
 function getJudgeName(judgeCode: string, playerMap: any, playerCode?: string): string {
   // 优先分组查找

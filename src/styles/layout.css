@@ -1,0 +1,253 @@
+/* 
+ * layout.css - 布局相关样式
+ * 包含侧边栏、主布局、内容区域等布局样式
+ */
+
+/* === 主布局容器 === */
+.app-container {
+  --bg-line-trans: 0.1;
+  min-height: 100vh;
+  display: flex;
+  background: var(--bg-gradient);
+  position: relative;
+}
+
+/* 背景纹理层 */
+.app-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: repeating-linear-gradient(
+    135deg, 
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, var(--bg-line-trans)) 0, 
+    rgba(255, 255, 255, var(--bg-line-trans)) 1.5%, 
+    rgba(255, 255, 255, 0) 1.5%, 
+    rgba(255, 255, 255, 0) 2%,
+    rgba(255, 255, 255, var(--bg-line-trans)) 2%
+  );
+  z-index: -102;
+}
+
+/* === 侧边栏样式 === */
+.sidebar {
+  width: 280px;
+  background: rgba(255, 240, 230, 0.9);
+  border-right: 1px solid var(--border-medium);
+  box-shadow: 2px 0 25px rgba(255, 140, 105, 0.2);
+  backdrop-filter: var(--blur-strong);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 30px 20px 5px 20px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: 30px 20px;
+  flex: 1;
+}
+
+/* === 导航按钮样式 === */
+.nav-btn {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 16px var(--spacing-lg);
+  border: 2px solid var(--primary-hover);
+  background: var(--bg-button);
+  color: var(--primary-dark);
+  border-radius: var(--radius-large);
+  font-size: 16px;
+  font-weight: 500;
+  gap: 12px;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  backdrop-filter: var(--blur-light);
+}
+
+.nav-btn:hover {
+  background: var(--bg-button-hover);
+  box-shadow: var(--shadow-button);
+  border-color: var(--primary-active);
+}
+
+.nav-btn.active:hover {
+  color: var(--primary-dark);
+}
+
+.nav-btn.active {
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+  color: white;
+  box-shadow: 0 8px 25px rgba(255, 99, 71, 0.3);
+  border-color: var(--primary-color);
+  animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+/* === 主内容区域 === */
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  padding: 0;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+.content-container {
+  margin: 20px;
+  min-height: calc(100vh - 40px);
+}
+
+/* === 内容面板样式 === */
+.content-panel {
+  background: var(--bg-content);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--border-light);
+  backdrop-filter: var(--blur-medium);
+  animation: fadeInUp var(--transition-slow);
+}
+
+/* === 页面头部样式 === */
+.page-header {
+  text-align: center;
+  margin: 0 0 var(--spacing-xl) 0;
+}
+
+.page-header h2,
+.page-header h3 {
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+  font-size: 28px;
+}
+
+.page-header p {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 16px;
+}
+
+/* 页面头部标题动画 */
+h1, .page-header h2 {
+  background: linear-gradient(135deg, var(--primary-color), #ff8a65, #ffb74d);
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientMove 3s ease-in-out infinite;
+}
+
+/* === 内容区域通用样式 === */
+.section-header {
+  text-align: center;
+}
+
+.section-header h3 {
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--text-secondary);
+  font-size: 20px;
+  border-bottom: 2px solid var(--primary-active);
+  padding-bottom: var(--spacing-sm);
+}
+
+/* === 动画定义 === */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === 响应式设计 === */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 250px;
+  }
+  
+  .main-content {
+    margin-left: 250px;
+  }
+  
+  .content-container {
+    margin: 15px;
+    padding: 25px var(--spacing-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    gap: var(--spacing-sm);
+    padding: 15px;
+    overflow-x: auto;
+  }
+  
+  .nav-btn {
+    min-width: 120px;
+    padding: 12px 16px;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  
+  .content-container {
+    margin: 10px;
+    padding: 20px 15px;
+    min-height: auto;
+  }
+  
+  .content-panel {
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .content-container {
+    margin: 5px;
+    padding: 15px 10px;
+  }
+  
+  .content-panel {
+    padding: var(--spacing-lg);
+  }
+  
+  .nav-btn {
+    min-width: 100px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}

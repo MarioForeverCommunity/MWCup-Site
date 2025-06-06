@@ -1,181 +1,185 @@
 <template>
-  <div class="level-file-test">
-    <h2>关卡文件查询</h2>
+  <div class="page-header animate-fadeInUp">
+    <h2 class="animate-textGlow">关卡文件查询</h2>
     
     <!-- 搜索方式选择 -->
-    <div class="search-mode-selector">
-      <label>
+    <div class="control-panel">
+      <label class="form-label">
         <input type="radio" v-model="searchMode" value="selector">
         按年份-轮次-选手选择
       </label>
-      <label>
+      <label class="form-label">
         <input type="radio" v-model="searchMode" value="search">
         按选手名/文件名搜索
       </label>
     </div>
 
     <!-- 按年份-轮次-选手选择 -->
-    <div v-if="searchMode === 'selector'" class="selector-section">
-      <div class="selector-row">
-        <label>
-          年份:
-          <select v-model="selectedYear" @change="onYearChange">
+    <div v-if="searchMode === 'selector'" class="content-panel">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">年份:</label>
+          <select v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
             <option value="">请选择年份</option>
             <option v-for="year in availableYears" :key="year" :value="year">
               {{ year }}年第{{ getEditionNumber(year) }}届
             </option>
           </select>
-        </label>
+        </div>
         
-        <label v-if="selectedYear">
-          轮次:
-          <select v-model="selectedRound" @change="onRoundChange">
+        <div class="form-group animate-scaleIn" v-if="selectedYear">
+          <label class="form-label">轮次:</label>
+          <select v-model="selectedRound" @change="onRoundChange" class="form-control hover-scale">
             <option value="">请选择轮次</option>
             <option v-for="round in availableRounds" :key="round.key" :value="round.key">
               {{ round.name }}
             </option>
           </select>
-        </label>
-          <label v-if="selectedRound">
-          选手:
-          <select v-model="selectedPlayer">
+        </div>
+        
+        <div class="form-group animate-scaleIn" v-if="selectedRound">
+          <label class="form-label">选手:</label>
+          <select v-model="selectedPlayer" class="form-control hover-scale">
             <option value="">全部选手</option>
             <option v-for="player in availablePlayers" :key="player.code" :value="player.code">
               {{ player.code }} - {{ player.name }}
             </option>
           </select>
-        </label>
+        </div>
       </div>
       
-      <button @click="searchBySelector" :disabled="!selectedRound">
-        {{ selectedPlayer ? '查找该选手关卡文件' : '查找该轮次所有文件' }}
-      </button>
-    </div>
-
-    <!-- 按选手名/文件名搜索 -->
-    <div v-if="searchMode === 'search'" class="search-section">
-      <label>
-        搜索关键词:
-        <input 
-          v-model="searchKeyword" 
-          type="text" 
-          placeholder="输入选手名或文件名关键词"
-          @keyup.enter="searchByKeyword"
-        >
-      </label>
-      <button @click="searchByKeyword">搜索</button>
-    </div>
-
-    <div v-if="loading" class="loading">
-      加载中...
-    </div>
-
-    <div v-if="error" class="error">
-      错误: {{ error }}
-    </div>
-    <!-- 结果表格 -->
-    <div v-if="searchResults && searchResults.length > 0" class="results-table">
-      <div class="results-header">
-        <h3>找到的关卡文件 ({{ searchResults.length }} 个):</h3>
-        <div class="results-actions">
-          <button @click="clearResults" class="clear-btn">
-            清空结果
-          </button>
-        </div>
-      </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>文件名</th>
-              <th>选手码</th>
-              <th>选手姓名</th>
-              <th>年份</th>
-              <th>轮次</th>
-              <th>分组</th>
-              <th>文件大小</th>
-              <th>修改时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="file in searchResults" :key="file.path" @click="showFileDetails(file)" class="clickable-row">
-              <td class="filename">{{ file.name }}</td>
-              <td class="player-code">{{ file.playerCode || '-' }}</td>
-              <td>{{ file.playerName || '-' }}</td>
-              <td>{{ file.year || '-' }}</td>
-              <td>{{ file.roundType || '-' }}</td>
-              <td>{{ file.groupCode ? getGroupDisplayName(file.groupCode) : '-' }}</td>
-              <td class="file-size">{{ formatFileSize(file.size) }}</td>
-              <td>{{ formatDate(file.mtime) }}</td>
-              <td class="actions">
-                <button @click.stop="downloadLevel(file)" class="download-btn" title="下载关卡文件">
-                  下载
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="button-container">
+        <button @click="searchBySelector" :disabled="!selectedRound" class="btn-primary">
+          {{ selectedPlayer ? '查找该选手关卡文件' : '查找该轮次所有文件' }}
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- 文件详情弹窗 -->
-    <div v-if="showingFileDetails" class="modal-overlay" @click="closeFileDetails">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>文件详情</h3>
-          <button @click="closeFileDetails" class="close-btn">&times;</button>
+  <!-- 按选手名/文件名搜索 -->
+  <div v-if="searchMode === 'search'" class="content-panel animate-fadeInUp">
+    <div class="form-group">
+      <label class="form-label">搜索关键词:</label>
+      <input 
+        v-model="searchKeyword" 
+        type="text" 
+        placeholder="输入选手名或文件名关键词"
+        @keyup.enter="searchByKeyword"
+        class="form-control"
+      >
+    </div>
+    <button @click="searchByKeyword" class="btn-primary hover-scale">搜索</button>
+  </div>
+
+  <div v-if="loading" class="loading-state animate-pulse">
+    <div class="loading-spinner"></div>
+    <span class="loading-dots">加载中</span>
+  </div>
+
+  <div v-if="error" class="error-state animate-pulse">
+    错误: {{ error }}
+  </div>
+  <!-- 结果表格 -->
+    <div v-if="searchResults && searchResults.length > 0" class="content-panel animate-fadeInUp">
+    <div class="section-header">
+      <h3>找到的关卡文件 ({{ searchResults.length }} 个):</h3>
+    </div>
+    <div class="table-wrapper">
+      <table class="table-base file-table">
+        <thead>
+          <tr>
+            <th>文件名</th>
+            <th>选手码</th>
+            <th>选手名</th>
+            <th>年份</th>
+            <th>轮次</th>
+            <th>分组</th>
+            <th>文件大小</th>
+            <th>修改时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            v-for="(file) in searchResults" 
+            :key="file.path" 
+            @click="showFileDetails(file)" 
+            class="clickable-row"
+          >
+            <td class="filename">{{ file.name }}</td>
+            <td class="player-code">{{ file.playerCode || '-' }}</td>
+            <td>{{ file.playerName || '-' }}</td>
+            <td>{{ file.year || '-' }}</td>
+            <td>{{ file.roundType || '-' }}</td>
+            <td>{{ file.groupCode ? getGroupDisplayName(file.groupCode) : '-' }}</td>
+            <td class="file-size">{{ formatFileSize(file.size) }}</td>
+            <td>{{ formatDate(file.mtime) }}</td>
+            <td class="actions">
+              <button @click.stop="downloadLevel(file)" class="download-btn hover-scale" title="下载关卡文件">
+                下载
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 文件详情弹窗 -->
+  <div v-if="showingFileDetails" class="modal-overlay animate-fadeIn" @click="closeFileDetails">
+    <div class="modal-content animate-scaleIn" @click.stop>
+      <div class="modal-header">
+        <h3>文件详情</h3>
+      </div>
+      <div class="modal-body" v-if="selectedFileDetails">
+        <div class="detail-item">
+          <label>文件名：</label>
+          <span>{{ selectedFileDetails.name }}</span>
         </div>
-        <div class="modal-body" v-if="selectedFileDetails">
-          <div class="detail-item">
-            <label>文件名:</label>
-            <span>{{ selectedFileDetails.name }}</span>
-          </div>
-          <div class="detail-item">
-            <label>文件路径:</label>
-            <span>{{ selectedFileDetails.path }}</span>
-          </div>
-          <div class="detail-item">
-            <label>选手码:</label>
-            <span>{{ selectedFileDetails.playerCode || '未知' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>选手姓名:</label>
-            <span>{{ selectedFileDetails.playerName || '未知' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>年份:</label>
-            <span>{{ selectedFileDetails.year || '未知' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>轮次:</label>
-            <span>{{ selectedFileDetails.roundType || '未知' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>分组:</label>
-            <span>{{ selectedFileDetails.groupCode ? getGroupDisplayName(selectedFileDetails.groupCode) : '无' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>文件大小:</label>
-            <span>{{ formatFileSize(selectedFileDetails.size) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>修改时间:</label>
-            <span>{{ formatDate(selectedFileDetails.mtime) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>数据完整性:</label>
-            <span :class="{ 'complete': selectedFileDetails.hasPlayerInfo, 'incomplete': !selectedFileDetails.hasPlayerInfo }">
-              {{ selectedFileDetails.hasPlayerInfo ? '完整' : '不完整' }}
-            </span>
-          </div>
+        <div class="detail-item">
+          <label>文件路径：</label>
+          <span>{{ selectedFileDetails.path }}</span>
+        </div>
+        <div class="detail-item">
+          <label>选手码：</label>
+          <span>{{ selectedFileDetails.playerCode || '未知' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>选手名：</label>
+          <span>{{ selectedFileDetails.playerName || '未知' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>年份：</label>
+          <span>{{ selectedFileDetails.year || '未知' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>轮次：</label>
+          <span>{{ selectedFileDetails.roundType || '未知' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>分组：</label>
+          <span>{{ selectedFileDetails.groupCode ? getGroupDisplayName(selectedFileDetails.groupCode) : '无' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>文件大小：</label>
+          <span>{{ formatFileSize(selectedFileDetails.size) }}</span>
+        </div>
+        <div class="detail-item">
+          <label>修改时间：</label>
+          <span>{{ formatDate(selectedFileDetails.mtime) }}</span>
+        </div>
+        <div class="detail-item">
+          <label>数据完整性：</label>
+          <span :class="{ 'complete': selectedFileDetails.hasPlayerInfo, 'incomplete': !selectedFileDetails.hasPlayerInfo }">
+            {{ selectedFileDetails.hasPlayerInfo ? '完整' : '不完整' }}
+          </span>
         </div>
       </div>
     </div>
+  </div>
 
-    <div v-if="searched && (!searchResults || searchResults.length === 0)" class="no-result">
-      没有找到符合条件的关卡文件
-    </div>
+  <div v-if="searched && (!searchResults || searchResults.length === 0)" class="no-result">
+    没有找到符合条件的关卡文件
   </div>
 </template>
 
@@ -535,11 +539,6 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 
-function clearResults() {
-  searchResults.value = []
-  searched.value = false
-  error.value = ''
-}
 
 function showFileDetails(file: LevelFile) {
   selectedFileDetails.value = file
@@ -570,429 +569,113 @@ function closeFileDetails() {
 </script>
 
 <style scoped>
-.level-file-test {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.search-mode-selector {
-  margin-bottom: 20px;
+/* 组件特定样式 - 使用新的CSS类系统 */
+.button-container {
   display: flex;
-  gap: 20px;
   justify-content: center;
+  margin-top: var(--spacing-lg);
 }
 
-.search-mode-selector label {
+.form-grid {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: bold;
-}
-
-.selector-section {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.selector-row {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  margin-bottom: 15px;
+  gap: var(--spacing-lg);
   flex-wrap: wrap;
   justify-content: center;
+  margin-bottom: var(--spacing-lg);
 }
 
-.selector-row label {
+.action-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 200px;
+  gap: var(--spacing-sm);
+  margin-left: auto;
+}
+
+.filename {
   font-weight: 500;
-  color: #34495e;
-  font-size: 14px;
-}
-
-.selector-row select {
-  padding: 10px 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-  background-color: white;
-  color: #2c3e50;
-  transition: border-color 0.3s ease;
-}
-
-.selector-row select:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-.selector-row select:hover {
-  border-color: #3498db;
-}
-
-.search-section {
-  margin-bottom: 20px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-}
-
-.search-section input {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 250px;
-}
-
-.search-section button,
-.selector-section button {
-  padding: 8px 16px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.search-section button:hover,
-.selector-section button:hover {
-  background: #0056b3;
-}
-
-.search-section button:disabled,
-.selector-section button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.source-selector {
-  margin-bottom: 20px;
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-}
-
-.source-selector label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.loading {
-  text-align: center;
-  padding: 20px;
-  color: #666;
-}
-
-.error {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-}
-
-.results-table {
-  margin-top: 20px;
-}
-
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.results-header h3 {
-  margin: 0;
-  color: #34495e;
-  font-size: 18px;
-  border-bottom: 2px solid #3498db;
-  padding-bottom: 5px;
-}
-
-.results-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.clear-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  background: #dc3545;
-  color: white;
-}
-
-.clear-btn:hover {
-  background: #c82333;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-}
-
-.results-table table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  font-size: 14px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.results-table th,
-.results-table td {
-  padding: 8px 10px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-}
-
-.results-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  color: #495057;
-  border-bottom: 2px solid #dee2e6;
-  text-align: center;
-}
-
-.results-table tbody tr:not(.player-separator):hover {
-  background-color: #f1f1f1;
-}
-
-.results-table .clickable-row {
-  cursor: pointer;
-}
-
-.results-table .clickable-row:hover {
-  background-color: #e3f2fd;
-}
-
-.results-table .filename {
-  font-weight: 500;
-  color: #2c3e50;
+  color: var(--text-primary);
   text-align: left;
   font-family: 'Courier New', monospace;
 }
 
-.results-table .complete {
+.complete {
   color: #28a745;
   font-weight: 600;
 }
 
-.results-table .incomplete {
+.incomplete {
   color: #dc3545;
   font-weight: 600;
 }
 
-.results-table .file-size {
+.file-size {
   font-family: 'Courier New', monospace;
   font-size: 13px;
 }
 
-.results-table .player-code {
+.player-code {
   font-family: 'Courier New', monospace;
   font-weight: 600;
-  color: #495057;
-}
-
-.results-table .actions {
-  padding: 8px 10px;
-  text-align: center;
+  color: var(--text-secondary);
 }
 
 .download-btn {
   padding: 4px 8px;
-  background: #007bff;
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
   color: white;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--radius-medium);
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: var(--transition-normal);
   min-width: 50px;
   white-space: nowrap;
 }
 
 .download-btn:hover {
-  background: #0056b3;
+  background: linear-gradient(135deg, var(--primary-active), var(--primary-dark));
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+  box-shadow: var(--shadow-button);
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: rgba(255, 235, 220, 0.8);
+}
+
+.file-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 252, 248, 0.9);
+  font-size: 14px;
+  backdrop-filter: blur(8px);
 }
 
 .no-result {
   text-align: center;
-  padding: 20px;
-  color: #666;
-  background: #f8f9fa;
-  border-radius: 4px;
-  margin-top: 20px;
-}
-
-/* 弹窗样式 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: #333;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.close-btn:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 20px;
-}
-
-.detail-item {
-  display: flex;
-  margin-bottom: 15px;
-  align-items: flex-start;
-}
-
-.detail-item label {
+  margin: 32px 0;
+  color: var(--text-secondary);
   font-weight: 600;
-  width: 120px;
-  color: #495057;
-  flex-shrink: 0;
-  text-align: left;
+  font-size: 16px;
 }
 
-.detail-item span {
-  flex: 1;
-  word-break: break-all;
-  color: #2c3e50;
-  text-align: left;
-}
-
-@media (max-width: 768px) {
-  .selector-row {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .selector-row label {
-    min-width: auto;
-  }
-  
-  .search-section {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .search-section input {
-    width: 100%;
-    max-width: 300px;
-  }
-  
-  .search-mode-selector {
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
-  }
-  
-  .source-selector {
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
-  }  .results-table {
-    font-size: 14px;
-  }
-  
-  .results-table th,
-  .results-table td {
-    padding: 6px 4px;
-    font-size: 12px;
-  }
-  
-  .results-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 15px;
-  }
-  
-  .results-header h3 {
-    text-align: center;
-    font-size: 16px;
-  }
-  
-  .results-actions {
-    justify-content: center;
-  }
-  
+@media (min-width: 768px) {
   .table-wrapper {
-    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    width: 100%;
   }
-    .results-table table {
-    min-width: 1000px;
-    font-size: 12px;
-  }
-  
-  .download-btn {
-    padding: 3px 6px;
-    font-size: 10px;
-  }
-  
-  .results-table .actions {
-    padding: 4px 6px;
+}
+
+/* 移动端样式 */
+@media (max-width: 768px) {
+  .file-table {
+    font-size: 14px;
+    min-width: 800px; /* 确保表格有足够宽度触发横向滚动 */
+    table-layout: fixed; /* 防止单元格内容影响表格布局 */
   }
 }
 </style>

@@ -14,7 +14,7 @@ export interface LevelFile {
   // 新增的关联信息
   year: number | null;         // 年份
   roundType: string | null;    // 轮次类型
-  playerName: string | null;   // 选手姓名
+  playerName: string | null;   // 选手名
   roundKey: string | null;     // 轮次键
   groupCode: string | null;    // 分组码
   hasPlayerInfo: boolean;      // 是否有完整的选手信息

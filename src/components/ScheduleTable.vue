@@ -81,179 +81,126 @@ function getLinkText(link: string) {
 </script>
 
 <template>
-  <div class="schedule-container">
-    <div class="schedule-header">
-      <h3>比赛日程表</h3>
-      
-      <div class="year-selector">
-        <label for="year-select">选择年份：</label>
-        <select id="year-select" v-model="selectedYear" class="year-select">
+  <div class="page-header animate-fadeInUp">
+    <h2>比赛日程表</h2>
+    
+    <div class="control-panel">
+      <div class="form-group">
+        <label for="year-select" class="form-label">选择年份：</label>
+        <select id="year-select" v-model="selectedYear" class="form-control">
           <option v-for="year in years" :key="year" :value="year">{{ year }} 年</option>
         </select>
       </div>
     </div>
-    
-    <div v-if="scheduleWithRowspans" class="schedule-table-container">
-      <table class="schedule-table">
-        <thead>
-          <tr>
-            <th>比赛阶段</th>
-            <th>内容</th>
-            <th>开始时间</th>
-            <th>结束时间</th>
-            <th>链接</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="!scheduleWithRowspans.items || scheduleWithRowspans.items.length === 0">
-            <td colspan="5">无日程数据</td>
-          </tr>
-          <tr 
-            v-for="(item, index) in scheduleWithRowspans.items" 
-            :key="item.stage + item.content + (item.start||'') + index"
-            class="schedule-row"
+  </div>
+  
+  <div v-if="scheduleWithRowspans" class="content-panel animate-fadeInUp">
+    <div class="table-wrapper shimmer-effect">
+      <table class="table-base schedule-table">
+      <thead>
+        <tr>
+          <th>比赛阶段</th>
+          <th>内容</th>
+          <th>开始时间</th>
+          <th>结束时间</th>
+          <th>链接</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="!scheduleWithRowspans.items || scheduleWithRowspans.items.length === 0">
+          <td colspan="5">无日程数据</td>
+        </tr>
+        <tr 
+          v-for="(item, index) in scheduleWithRowspans.items" 
+          :key="item.stage + item.content + (item.start||'') + index"
+          class="schedule-row"
+        >
+          <td 
+            v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
+            :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
+            class="stage-cell"
           >
-            <td 
-              v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
-              :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
-              class="stage-cell"
-            >
-              {{ item.stage }}
-            </td>
-            <td class="content-cell">{{ item.content }}</td>
-            <template v-if="item.start === item.end">
-              <td colspan="2" class="time-cell">{{ formatTime(item.start) }}</td>
+            {{ item.stage }}
+          </td>
+          <td class="content-cell">{{ item.content }}</td>
+          <template v-if="item.start === item.end">
+            <td colspan="2" class="time-cell">{{ formatTime(item.start) }}</td>
+          </template>
+          <template v-else-if="item.start && item.end">
+            <td class="time-cell">{{ formatTime(item.start) }}</td>
+            <td class="time-cell">{{ formatTime(item.end) }}</td>
+          </template>
+          <template v-else>
+            <td colspan="2" class="time-cell">{{ formatTime(item.start) || formatTime(item.end) || '——' }}</td>
+          </template>
+          <td class="link-cell">
+            <template v-if="item.multipleLinks">
+              <div v-for="(link, idx) in item.multipleLinks" :key="link + idx" class="multi-link-container">
+                <a :href="getLinkHref(link)" target="_blank" class="link-btn" v-text="getLinkText(link)"></a>
+              </div>
             </template>
-            <template v-else-if="item.start && item.end">
-              <td class="time-cell">{{ formatTime(item.start) }}</td>
-              <td class="time-cell">{{ formatTime(item.end) }}</td>
-            </template>
-            <template v-else>
-              <td colspan="2" class="time-cell">{{ formatTime(item.start) || formatTime(item.end) || '——' }}</td>
-            </template>
-            <td class="link-cell">
-              <template v-if="item.multipleLinks">
-                <div v-for="(link, idx) in item.multipleLinks" :key="link + idx" class="multi-link-container">
-                  <a :href="getLinkHref(link)" target="_blank" class="link-btn" v-text="getLinkText(link)"></a>
-                </div>
-              </template>
-              <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn">链接</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn">链接</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
     </div>
   </div>
 </template>
 
 <style scoped>
-.schedule-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-.schedule-header {
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.schedule-header h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
-
-.year-selector {
-  margin: 1.5rem 0;
-  text-align: center;
-}
-
-.year-selector label {
-  font-weight: 500;
-  color: #34495e;
-  font-size: 14px;
-}
-
-.year-select {
-  padding: 10px 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-  background-color: white;
-  color: #2c3e50;
-  margin-left: 0.5rem;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-}
-
-.year-select:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-.year-select:hover {
-  border-color: #3498db;
-}
-
-.schedule-table-container {
-  overflow-x: auto;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+/* 组件特定样式 - 使用新的CSS类系统 */
+.content-panel {
+  display: flex;
 }
 
 .schedule-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
+  width: auto; /* 表格自适应宽度 */
+  table-layout: auto; /* 让表格根据内容调整列宽 */
 }
 
-.schedule-table th {
-  background-color: #f8f9fa;
-  color: #495057;
-  text-align: center;
+/* 优化各列的宽度 */
+.schedule-table th:nth-child(1), /* 比赛阶段 */
+.schedule-table td.stage-cell {
+  min-width: 50px;
+  padding: 8px 12px;
+}
+
+.schedule-table th:nth-child(2), /* 内容 */
+.schedule-table td.content-cell {
+  min-width: 100px;
+  padding: 8px 12px;
+}
+
+.schedule-table th:nth-child(3), /* 开始时间 */
+.schedule-table th:nth-child(4), /* 结束时间 */
+.schedule-table td.time-cell {
   padding: 8px 10px;
-  font-weight: 600;
-  border-bottom: 2px solid #dee2e6;
 }
 
-.schedule-table td {
+.schedule-table th:nth-child(5), /* 链接 */
+.schedule-table td.link-cell {
   padding: 8px 10px;
-  border-bottom: 1px solid #eee;
-  text-align: center;
-}
-
-.schedule-row:nth-child(odd) {
-  background-color: #ffffff;
-}
-
-.schedule-row:nth-child(even) {
-  background-color: #f9fafb;
-}
-
-.schedule-row:hover {
-  background-color: #f1f1f1;
 }
 
 .stage-cell {
   font-weight: 500;
-  background-color: #f8f9fa;
+  background: rgba(255, 240, 230, 0.9);
   vertical-align: middle;
-  border-right: 2px solid #dee2e6;
-  color: #2c3e50;
+  border-right: 2px solid var(--border-medium);
+  color: var(--text-primary);
 }
 
 .content-cell {
-  text-align: left;
-  color: #34495e;
+  text-align: center;
+  color: var(--text-secondary);
 }
 
 .time-cell {
   font-family: 'Courier New', monospace;
   font-size: 13px;
   white-space: nowrap;
+  text-align: center;
 }
 
 .link-cell {
@@ -264,37 +211,24 @@ function getLinkText(link: string) {
   display: inline-block;
   padding: 3px 8px;
   margin: 1px 0;
-  background-color: #3498db;
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
   color: white;
+  border: 2px solid var(--primary-hover);
   text-decoration: none;
-  border-radius: 3px;
+  border-radius: var(--radius-medium);
   font-size: 0.9rem;
-  transition: background-color 0.3s ease;
+  font-weight: 500;
+  transition: var(--transition-normal);
+  white-space: nowrap; /* 防止按钮文字换行 */
 }
 
 .link-btn:hover {
-  background-color: #2980b9;
+  background: linear-gradient(135deg, var(--primary-active), var(--primary-dark));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-button);
 }
 
 .multi-link-container {
   margin: 4px 0;
 }
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .schedule-container {
-    padding: 10px;
-  }
-  
-  .schedule-table th, .schedule-table td {
-    padding: 6px 4px;
-    font-size: 12px;
-  }
-  
-  .schedule-header h3 {
-    font-size: 20px;
-  }
-}
 </style>
-
-<!-- 移除重复的样式 -->

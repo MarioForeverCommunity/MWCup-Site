@@ -1,48 +1,51 @@
 <template>
-  <div class="statistics-container">
-    <div class="stats-header">
-      <h2>Mario Worker 杯历届冠军统计</h2>
-      <p>从2013年到2025年的所有决赛冠军信息</p>
-    </div>
+  <div class="page-header animate-fadeInUp">
+    <h2 class="animate-textGlow">Mario Worker 杯历届冠军统计</h2>
+    <p>从2013年到2025年的所有决赛冠军信息</p>
+  </div>
 
-    <div v-if="loading" class="loading">
-      正在加载数据...
-    </div>
+  <div v-if="loading" class="loading-state animate-pulse">
+    <div class="loading-spinner"></div>
+    <span class="loading-dots">正在加载数据</span>
+  </div>
 
-    <div v-else-if="error" class="error">
-      {{ error }}
-    </div>
+  <div v-else-if="error" class="error-state animate-pulse">
+    {{ error }}
+  </div>
 
-    <div v-else class="statistics-content">
-      <!-- 冠军列表 -->
-      <div class="champions-section">
-        <h3>历届决赛排名</h3>
-        <div class="table-wrapper">
-          <table class="champions-table">
-            <thead>
-              <tr>
-                <th>年份</th>
-                <th>冠军</th>
-                <th>亚军</th>
-                <th v-if="hasThirdPrize">季军</th>
-                <th v-if="hasFourthPrize">第四名</th>
-                <th>主办人</th>
-                <th>总评委</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="champion in champions" :key="champion.year">
-                <td class="year">{{ champion.year }}年第{{ getEditionNumber(champion.year) }}届</td>
-                <td class="champion">{{ champion.first || '-' }}</td>
-                <td>{{ champion.second || '-' }}</td>
-                <td v-if="hasThirdPrize">{{ champion.third || '-' }}</td>
-                <td v-if="hasFourthPrize">{{ champion.fourth || '-' }}</td>
-                <td class="host">{{ champion.host || '-' }}</td>
-                <td class="judges">{{ champion.chiefJudges?.join('、') || '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+  <div v-else class="content-panel animate-fadeInUp">
+    <!-- 冠军列表 -->
+    <div class="section-header">
+      <h3>历届决赛排名</h3>
+      <div class="table-wrapper">
+        <table class="table-base champions-table">
+          <thead>
+            <tr>
+              <th>年份</th>
+              <th>冠军</th>
+              <th>亚军</th>
+              <th v-if="hasThirdPrize">季军</th>
+              <th v-if="hasFourthPrize">第四名</th>
+              <th>主办人</th>
+              <th>总评委</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              v-for="(champion) in champions" 
+              :key="champion.year"
+              class="champion-row"
+            >
+              <td class="year">{{ champion.year }}年第{{ getEditionNumber(champion.year) }}届</td>
+              <td class="champion">{{ champion.first || '-' }}</td>
+              <td class="second">{{ champion.second || '-' }}</td>
+              <td v-if="hasThirdPrize" class="third">{{ champion.third || '-' }}</td>
+              <td v-if="hasFourthPrize" class="fourth">{{ champion.fourth || '-' }}</td>
+              <td class="host">{{ champion.host || '-' }}</td>
+              <td class="judges">{{ champion.chiefJudges?.join('、') || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -162,92 +165,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.statistics-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.stats-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.stats-header h2 {
-  color: #2c3e50;
-  margin: 0 0 10px 0;
-  font-size: 28px;
-}
-
-.stats-header p {
-  color: #7f8c8d;
-  margin: 0;
-  font-size: 16px;
-}
-
-.loading, .error {
-  text-align: center;
-  padding: 40px;
-  font-size: 16px;
-}
-
-.error {
-  color: #e74c3c;
-  background-color: #ffeaea;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
-}
-
-.champions-section, .stats-section {
-  margin-bottom: 40px;
-}
-
-.champions-section h3, .stats-section h3 {
-  margin: 0 0 20px 0;
-  color: #34495e;
-  font-size: 20px;
-  border-bottom: 2px solid #3498db;
-  padding-bottom: 8px;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-}
-
+/* 组件特定样式 - 使用新的CSS类系统 */
 .champions-table {
   width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-.champions-table th, .champions-table td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.champions-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  color: #495057;
-  border-bottom: 2px solid #dee2e6;
-}
-
-.champions-table tbody tr:hover {
-  background-color: #f1f1f1;
 }
 
 .year {
-  font-weight: 600;
-  color: #2c3e50;
-  text-align: center;
+  color: var(--text-primary);
 }
 
 .champion {
-  color: #3498db;
-  font-weight: 500;
+  color: #e67e22; /* 冠军：橙色 */
+}
+
+.second {
+  color: #3498db; /* 亚军：蓝色 */
+}
+
+.third {
+  color: #9b59b6; /* 季军：紫色 */
+}
+
+.fourth {
+  color: #6cc1c7; /* 第四名：灰蓝色 */
 }
 
 .host {
@@ -255,69 +195,75 @@ onMounted(() => {
 }
 
 .judges {
-  color: #8e44ad;
+  color: #e63fbc;
   font-size: 14px;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.stat-card {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.stat-card h4 {
-  margin: 0 0 15px 0;
-  color: #2c3e50;
+/* 加载状态样式 */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 60px 20px;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
-.stat-value {
-  font-size: 36px;
-  font-weight: bold;
-  color: #3498db;
-  margin: 0;
-  text-align: center;
+/* 表格行动画效果 */
+.champion-row {
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-.player {
-  font-weight: 500;
-  color: #2c3e50;
+.champion-row:hover {
+  background-color: rgba(255, 99, 71, 0.05);
 }
 
-.count {
-  background-color: #3498db;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
+/* 年份列特殊样式 */
+.year {
+  background: linear-gradient(135deg, var(--primary-color), #ff8a65);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* 渐变动画 */
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (min-width: 768px) {
+  .table-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .statistics-container {
-    padding: 15px;
-  }
-  
-  .champions-table th, .champions-table td {
-    padding: 8px 10px;
+  .champions-table {
     font-size: 14px;
+    min-width: 800px; /* 确保表格有足够宽度触发横向滚动 */
+    table-layout: fixed; /* 防止单元格内容影响表格布局 */
   }
   
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .year {
+    font-size: 13px;
   }
   
-  .stats-header h2 {
-    font-size: 24px;
+  .judges {
+    font-size: 12px;
   }
 }
 </style>

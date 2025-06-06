@@ -302,7 +302,7 @@ export function getGroupDisplayName(groupKey: string): string {
     'II': 'II组', 'III': 'III组',
     'a': 'a组', 'b': 'b组', 'c': 'c组', 'd': 'd组',
     '①': '①组', '②': '②组', '③': '③组',
-    'walk-in': '免报名'
+    'walk-in': '免报名组'
   }
   
   return specialGroups[groupKey] || groupKey

@@ -1,14 +1,10 @@
 <template>
-  <div class="round-selector">
-    <div class="selector-header">
-      <h2>Mario Worker 杯评分查看器</h2>
-      <p>选择比赛年份和轮次查看详细评分</p>
-    </div>
-    
-    <div class="selector-controls">
-      <div class="control-group">
-        <label for="year-select">年份:</label>
-        <select id="year-select" v-model="selectedYear" @change="onYearChange">
+  <div class="page-header animate-fadeInUp">
+    <h2 class="animate-textGlow">Mario Worker 杯评分查看器</h2>
+    <div class="control-panel">
+      <div class="form-group">
+        <label for="year-select" class="form-label">年份:</label>
+        <select id="year-select" v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
           <option value="">请选择年份</option>
           <option v-for="year in availableYears" :key="year" :value="year">
             {{ year }}年第{{ getEditionNumber(year) }}届
@@ -16,9 +12,9 @@
         </select>
       </div>
       
-      <div class="control-group" v-if="selectedYear">
-        <label for="round-select">轮次:</label>
-        <select id="round-select" v-model="selectedRound" @change="onRoundChange">
+      <div class="form-group animate-scaleIn" v-if="selectedYear">
+        <label for="round-select" class="form-label">轮次:</label>
+        <select id="round-select" v-model="selectedRound" @change="onRoundChange" class="form-control hover-scale">
           <option value="">请选择轮次</option>
           <option v-for="round in availableRounds" :key="round.code" :value="round.code">
             {{ round.name }}
@@ -26,14 +22,14 @@
         </select>
       </div>
     </div>
-
-    <!-- 显示评分表格 -->
-    <ScoreTable 
-      v-if="selectedYear && selectedRound" 
-      :year="selectedYear" 
-      :round="selectedRound"
-    />
   </div>
+
+  <!-- 显示评分表格 -->
+  <ScoreTable 
+    v-if="selectedYear && selectedRound" 
+    :year="selectedYear" 
+    :round="selectedRound"
+  />
 </template>
 
 <script setup lang="ts">
@@ -131,89 +127,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.round-selector {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.selector-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.selector-header h2 {
-  color: #2c3e50;
-  margin: 0 0 10px 0;
-  font-size: 28px;
-}
-
-.selector-header p {
-  color: #7f8c8d;
-  margin: 0;
-  font-size: 16px;
-}
-
-.selector-controls {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  align-items: end;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-}
-
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 200px;
-}
-
-.control-group label {
-  font-weight: 500;
-  color: #34495e;
-  font-size: 14px;
-}
-
-.control-group select {
-  padding: 10px 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-  background-color: white;
-  color: #2c3e50;
-  transition: border-color 0.3s ease;
-}
-
-.control-group select:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-.control-group select:hover {
-  border-color: #3498db;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .round-selector {
-    padding: 15px;
-  }
-  
-  .selector-controls {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .control-group {
-    width: 100%;
-    max-width: 300px;
-  }
-  
-  .selector-header h2 {
-    font-size: 24px;
-  }
-}
+/* 组件特定样式 - 使用新的CSS类系统 */
+/* 大部分样式现在使用全局CSS类，只保留必要的组件特定样式 */
 </style>
