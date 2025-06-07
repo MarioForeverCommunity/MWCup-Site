@@ -1,6 +1,6 @@
 <template>
   <div class="page-header animate-fadeInUp">
-    <h2 class="animate-textGlow">Mario Worker 杯评分查看器</h2>
+    <h2 class="animate-textGlow">Mario Worker 杯评分数据查看</h2>
     <div class="control-panel">
       <div class="form-group">
         <label for="year-select" class="form-label">年份:</label>

@@ -82,7 +82,7 @@ function getLinkText(link: string) {
 
 <template>
   <div class="page-header animate-fadeInUp">
-    <h2>比赛日程表</h2>
+    <h2>Mario Worker 杯比赛日程</h2>
     
     <div class="control-panel">
       <div class="form-group">

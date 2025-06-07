@@ -1,4 +1,5 @@
-<template>  <div v-if="loading" class="content-panel">
+<template>
+  <div v-if="loading" class="content-panel">
     <div class="loading-state animate-fadeInUp">
       <div class="loading-spinner"></div>
       <div class="loading-text">正在加载数据<span class="loading-dots"></span></div>
@@ -11,8 +12,7 @@
   </div>
   <div v-else-if="scoreData" class="content-panel animate-fadeInUp">
     <div class="score-header">
-      <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届MW杯{{ roundDisplayName }}评分结果</h3>
-      <p class="scheme-info">评分方案: {{ scoreData.scoringScheme }}</p>
+      <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届MW杯{{ roundDisplayName }}评分结果</h3>      <p class="scheme-info">评分标准: {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}</p>
     </div>
     <!-- 控制面板 -->
       <div class="control-panel">
@@ -636,6 +636,22 @@ async function loadScoreData() {
   }
 }
 
+// 将评分方案字母映射为对应的年份标准
+function getScoringSchemeDisplayName(scheme: string | undefined): string {
+  if (!scheme) return '未知标准'
+  
+  const schemeMap: { [key: string]: string } = {
+    'A': '2009 标准',
+    'B': '2014 标准',
+    'C': '2020 标准',
+    'D': '2023 大众评分标准',
+    'E': '2025 大众评分标准',
+    'S': '2015 半决赛'
+  }
+  
+  return schemeMap[scheme] || scheme
+}
+
 function formatScore(score: number | undefined): string {
   if (score === undefined || score === null) {
     return '-'
@@ -1158,7 +1174,13 @@ onMounted(() => {
   font-size: 14px;
 }
 
-/* 移除排名前三的特殊样式 */
+@media (min-width: 768px) {
+  .table-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+}
 
 /* 响应式设计 */
 @media (max-width: 768px) {

@@ -4,14 +4,36 @@ import ScheduleTable from './components/ScheduleTable.vue'
 import RoundSelector from './components/RoundSelector.vue'
 import ChampionStatistics from './components/ChampionStatistics.vue'
 import LevelFileTest from './components/LevelFileSearch.vue'
+import RankingModule from './components/RankingModule.vue'
+import UploadSystem from './components/UploadSystem.vue'
 
-const activeTab = ref<'schedule' | 'scores' | 'champions' | 'levels'>('schedule')
+type TabType = 'schedule' | 'upload' | 'scores' | 'levels' | 'ranking' | 'champions'
+
+// 从 sessionStorage 获取上次访问的标签页，如果不存在则默认为 'schedule'
+// sessionStorage 在浏览器关闭后会自动清除，重新打开时会使用默认的 'schedule'
+const getSavedTab = (): TabType => {
+  const savedTab = sessionStorage.getItem('mwcup-active-tab')
+  return (savedTab as TabType) || 'schedule'
+}
+
+const activeTab = ref<TabType>(getSavedTab())
 const isSidebarOpen = ref(true)
 const isMobileView = ref(false)
 
+// 监听标签页变化并保存到 sessionStorage
+const setActiveTab = (tab: TabType) => {
+  activeTab.value = tab
+  sessionStorage.setItem('mwcup-active-tab', tab)
+}
+
 // 检测当前视图是否为移动设备
 const checkMobileView = () => {
-  isMobileView.value = window.innerWidth < 768
+  const newIsMobileView = window.innerWidth < 768
+  // 如果从移动视图切换到桌面视图，确保侧边栏打开
+  if (isMobileView.value && !newIsMobileView) {
+    isSidebarOpen.value = true
+  }
+  isMobileView.value = newIsMobileView
 }
 
 // 当窗口尺寸改变时更新视图状态
@@ -40,7 +62,7 @@ const openSidebar = () => {
       </header>
       <nav class="sidebar-nav">
         <button 
-          @click="activeTab = 'schedule'" 
+          @click="setActiveTab('schedule')" 
           :class="{ active: activeTab === 'schedule' }"
           class="nav-btn hover-scale"
         >
@@ -48,7 +70,15 @@ const openSidebar = () => {
           <span class="nav-text">赛程安排</span>
         </button>
         <button 
-          @click="activeTab = 'scores'" 
+          @click="setActiveTab('upload')" 
+          :class="{ active: activeTab === 'upload' }"
+          class="nav-btn hover-scale"
+        >
+          <span class="nav-icon">📤</span>
+          <span class="nav-text">上传系统</span>
+        </button>
+        <button 
+          @click="setActiveTab('scores')" 
           :class="{ active: activeTab === 'scores' }"
           class="nav-btn hover-scale"
         >
@@ -56,7 +86,7 @@ const openSidebar = () => {
           <span class="nav-text">评分查询</span>
         </button>
         <button 
-          @click="activeTab = 'levels'" 
+          @click="setActiveTab('levels')" 
           :class="{ active: activeTab === 'levels' }"
           class="nav-btn hover-scale"
         >
@@ -64,7 +94,15 @@ const openSidebar = () => {
           <span class="nav-text">关卡查询</span>
         </button>
         <button 
-          @click="activeTab = 'champions'" 
+          @click="setActiveTab('ranking')" 
+          :class="{ active: activeTab === 'ranking' }"
+          class="nav-btn hover-scale"
+        >
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">关卡排名</span>
+        </button>
+        <button 
+          @click="setActiveTab('champions')" 
           :class="{ active: activeTab === 'champions' }"
           class="nav-btn hover-scale"
         >
@@ -85,6 +123,10 @@ const openSidebar = () => {
           <div v-if="activeTab === 'schedule'" class="content-panel animate-fadeInUp" key="schedule">
             <ScheduleTable />
           </div>
+
+          <div v-else-if="activeTab === 'upload'" class="content-panel animate-fadeInUp" key="upload">
+            <UploadSystem />
+          </div>
           
           <div v-else-if="activeTab === 'scores'" class="content-panel animate-fadeInUp" key="scores">
             <RoundSelector />
@@ -92,6 +134,10 @@ const openSidebar = () => {
           
           <div v-else-if="activeTab === 'levels'" class="content-panel animate-fadeInUp" key="levels">
             <LevelFileTest />
+          </div>
+          
+          <div v-else-if="activeTab === 'ranking'" class="content-panel animate-fadeInUp" key="ranking">
+            <RankingModule />
           </div>
           
           <div v-else-if="activeTab === 'champions'" class="content-panel animate-fadeInUp" key="champions">
@@ -136,22 +182,6 @@ const openSidebar = () => {
 @media (min-width: 768px) {
   .sidebar {
     animation: slideInLeft 0.5s ease-out;
-  }
-
-  .sidebar-nav .nav-btn:nth-child(1) {
-    animation: fadeInUp 0.4s ease-out 0.1s both;
-  }
-
-  .sidebar-nav .nav-btn:nth-child(2) {
-    animation: fadeInUp 0.4s ease-out 0.15s both;
-  }
-
-  .sidebar-nav .nav-btn:nth-child(3) {
-    animation: fadeInUp 0.4s ease-out 0.2s both;
-  }
-
-  .sidebar-nav .nav-btn:nth-child(4) {
-    animation: fadeInUp 0.4s ease-out 0.25s both;
   }
 
   .sidebar-mask {

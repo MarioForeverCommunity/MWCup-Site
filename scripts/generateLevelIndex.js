@@ -333,6 +333,8 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolde
         if (playerCode) {
           const stat = fs.statSync(fullPath);
           const playerInfo = findPlayerInfo(year, roundType, playerCode, mwcupData, fileRelativePath);
+            // 根据后缀名判断是否为多关卡文件
+          const isMultiLevelFile = file.name.endsWith('.mfs') || file.name.endsWith('.smws');
           
           const levelFile = {
             name: file.name,
@@ -348,8 +350,8 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolde
             groupCode: playerInfo?.groupCode || null,
             // 是否找到了完整的选手信息
             hasPlayerInfo: !!playerInfo,
-            // 标记是否来自多关卡题文件夹
-            isMultiLevel: !!parentFolderPlayerCode,
+            // 标记是否来自多关卡题文件夹或是多关卡文件类型
+            isMultiLevel: !!parentFolderPlayerCode || isMultiLevelFile,
             // 多关卡文件夹信息
             multiLevelFolder: parentFolderPlayerCode ? {
               folderName: parentFolderInfo?.folderName || null,
@@ -465,11 +467,15 @@ function extractPlayerCode(filename, year = null, roundType = null, mwcupData = 
 
 /**
  * 判断文件路径是否属于多关卡题的轮次
- * 目前已知的多关卡题轮次：2013小组赛第三轮、2016决赛、2020决赛
  */
 function isMultiLevelRound(filePath) {
   // 2013年第二届小组赛第三轮
   if (filePath.includes('2013年第二届') && filePath.includes('小组赛第三轮')) {
+    return true;
+  }
+  
+  // 2014年第三届决赛
+  if (filePath.includes('2014年第三届') && filePath.includes('决赛')) {
     return true;
   }
   
@@ -478,8 +484,18 @@ function isMultiLevelRound(filePath) {
     return true;
   }
   
+  // 2017年第六届半决赛
+  if (filePath.includes('2017年第六届') && filePath.includes('半决赛')) {
+    return true;
+  }
+  
   // 2020年第九届决赛
   if (filePath.includes('2020年第九届') && filePath.includes('决赛')) {
+    return true;
+  }
+  
+  // 根据文件后缀判断（.mfs 或 .smws 后缀的文件被认为是多关卡题）
+  if (filePath.toLowerCase().endsWith('.mfs') || filePath.toLowerCase().endsWith('.smws')) {
     return true;
   }
   

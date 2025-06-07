@@ -1,0 +1,134 @@
+{
+  "specialLevels": {
+    "2013": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "G1": {"base_score": 100, "bonus_score": 5},
+      "G2": {"base_score": 100, "bonus_score": 5},
+      "G3": {"base_score": 100, "bonus_score": 0},
+      "G4": {"base_score": 100, "bonus_score": 5},
+      "Q1": {"base_score": 100, "bonus_score": 5},
+      "Q2": {"base_score": 100, "bonus_score": 5},
+      "S1": {"base_score": 80, "bonus_score": 10},
+      "S2": {"base_score": 100, "bonus_score": 0},
+      "F": {"base_score": 100, "bonus_score": 0}
+    },
+    "2014": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "G1": {"base_score": 100, "bonus_score": 5},
+      "G2": {"base_score": 100, "bonus_score": 5},
+      "G3": {"base_score": 100, "bonus_score": 5},
+      "Q1": {"base_score": 100, "bonus_score": 8},
+      "Q2": {"base_score": 100, "bonus_score": 8},
+      "S": {"base_score": 100, "bonus_score": 8},
+      "F": {"base_score": 100, "bonus_score": 0}
+    },
+    "2015": {
+      "P1": {"base_score": 100, "bonus_score": 10},
+      "P2": {"base_score": 100, "bonus_score": 0},
+      "G1": {"base_score": 100, "bonus_score": 5},
+      "G2": {"base_score": 100, "bonus_score": 0},
+      "G3": {"base_score": 100, "bonus_score": 5},
+      "G4": {"base_score": 100, "bonus_score": 0},
+      "Q1": {"base_score": 100, "bonus_score": 0},
+      "Q2": {"base_score": 100, "bonus_score": 0},
+      "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2016": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 8},
+      "G1": {"base_score": 100, "bonus_score": 5},
+      "G2": {"base_score": 100, "bonus_score": 5},
+      "G3": {"base_score": 100, "bonus_score": 5},
+      "Q1": {"base_score": 100, "bonus_score": 8},
+      "Q2": {"base_score": 105, "bonus_score": 0},
+      "S1": {"base_score": 100, "bonus_score": 5},
+      "S2": {"base_score": 100, "bonus_score": 8},
+      "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2017": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 0},
+      "G1": {"base_score": 100, "bonus_score": 5},
+      "G2": {"base_score": 100, "bonus_score": 5},
+      "G3": {"base_score": 100, "bonus_score": 5},
+      "Q1": {"base_score": 100, "bonus_score": 8},
+      "Q2": {"base_score": 100, "bonus_score": 8},
+      "S": {"base_score": 100, "bonus_score": 5},
+      "F": {"base_score": 100, "bonus_score": 5}
+    },
+    "2018": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "G1": {"base_score": 100, "bonus_score": 5},
+      "G2": {"base_score": 100, "bonus_score": 0},
+      "G3": {"base_score": 100, "bonus_score": 0},
+      "Q1": {"base_score": 100, "bonus_score": 8},
+      "Q2": {"base_score": 100, "bonus_score": 8},
+      "S": {"base_score": 100, "bonus_score": 8},
+      "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2019": {
+      "P1": {"base_score": 100, "bonus_score": 0},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "G1": {"base_score": 100, "bonus_score": 5},
+      "G2": {"base_score": 100, "bonus_score": 5},
+      "G3": {"base_score": 100, "bonus_score": 5},
+      "G4": {"base_score": 100, "bonus_score": 5},
+      "Q": {"base_score": 100, "bonus_score": 8},
+      "S": {"base_score": 100, "bonus_score": 0},
+      "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2020": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "I1": {"base_score": 100, "bonus_score": 5},
+      "I2": {"base_score": 100, "bonus_score": 5},
+      "I3": {"base_score": 100, "bonus_score": 5},
+      "R": {"base_score": 100, "bonus_score": 8},
+      "F": {"base_score": 100, "bonus_score": 10}
+    },
+    "2021": {
+      "P1": {"base_score": 100, "bonus_score": 0},
+      "P2": {"base_score": 100, "bonus_score": 0},
+      "I1": {"base_score": 100, "bonus_score": 5},
+      "I2": {"base_score": 100, "bonus_score": 5},
+      "I3": {"base_score": 100, "bonus_score": 5},
+      "I4": {"base_score": 100, "bonus_score": 5},
+      "R1": {"base_score": 100, "bonus_score": 8},
+      "R2": {"base_score": 100, "bonus_score": 8},
+      "R3": {"base_score": 100, "bonus_score": 8},
+      "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2022": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "I1": {"base_score": 100, "bonus_score": 5},
+      "I2": {"base_score": 100, "bonus_score": 5},
+      "I3": {"base_score": 100, "bonus_score": 5},
+      "R": {"base_score": 100, "bonus_score": 8},
+      "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2023": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "I1": {"base_score": 100, "bonus_score": 5},
+      "I2": {"base_score": 100, "bonus_score": 5},
+      "I3": {"base_score": 100, "bonus_score": 5},
+      "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2024": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "I1": {"base_score": 100, "bonus_score": 5},
+      "I2": {"base_score": 100, "bonus_score": 5},
+      "I3": {"base_score": 100, "bonus_score": 5},
+      "R": {"base_score": 100, "bonus_score": 8},
+      "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2025": {
+      "P1": {"base_score": 100, "bonus_score": 5}
+    }
+  }
+}

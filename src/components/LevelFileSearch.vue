@@ -1,6 +1,6 @@
 <template>
   <div class="page-header animate-fadeInUp">
-    <h2 class="animate-textGlow">关卡文件查询</h2>
+    <h2 class="animate-textGlow">Mario Worker 杯关卡文件查询</h2>
     
     <!-- 搜索方式选择 -->
     <div class="control-panel">
