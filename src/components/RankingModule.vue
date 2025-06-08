@@ -462,8 +462,8 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
 
 function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: RankingFilters): OriginalScoreRankingItem[] {
   let filtered = items
-  // 剔除2012和2025年关卡
-  filtered = filtered.filter(item => item.year !== 2012 && item.year !== 2025)
+  // 剔除2012年关卡和评分方案为E的关卡
+  filtered = filtered.filter(item => item.year !== 2012 && item.scoringScheme !== 'E')
   
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.toLowerCase()
