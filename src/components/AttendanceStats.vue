@@ -290,6 +290,8 @@ onMounted(() => {
   font-weight: 500;
 }
 
+/* 统计卡片 */
+
 .trend-up {
   color: var(--success-color);
 }
@@ -452,30 +454,6 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filters {
-    justify-content: stretch;
-  }
-
-  .year-select, .sort-select, .refresh-btn {
-    flex: 1;
-    min-width: auto;
-  }
-
-  .summary-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .bar-label {
-    font-size: 8px;
-  }
-}
-
 /* 动画关键帧 */
 @keyframes spin {
   0% { transform: rotate(0deg); }
@@ -522,6 +500,15 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    justify-content: stretch;
+  }
+
   .attendance-stats {
     padding: var(--spacing-md);
   }
@@ -532,7 +519,7 @@ onMounted(() => {
   }
   
   .summary-cards {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
   
   .stat-card .stat-value {
@@ -547,15 +534,9 @@ onMounted(() => {
     flex-direction: column;
     gap: var(--spacing-md);
   }
-}
 
-@media (max-width: 480px) {
-  .attendance-stats {
-    padding: var(--spacing-sm);
-  }
-  
-  .summary-cards {
-    grid-template-columns: 1fr;
+  .bar-label {
+    font-size: 8px;
   }
 }
 </style>

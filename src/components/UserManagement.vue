@@ -126,25 +126,25 @@
           下一页 →
         </button>
       </div>
+    </div>
 
-      <div class="help-section">
-        <h3>说明</h3>
-        <div class="help-content">
-          <p><strong>用户名对应关系说明：</strong></p>
-          <ul>
-            <li>MW杯2012~2019年在百度贴吧举办，2020年之后在社区举办</li>
-            <li>部分百度用户没有注册社区账号，部分社区用户也没有百度账号</li>
-            <li>社区用户可以更改用户名，CSV中的"社区曾用名"与"社区用户名"对应同一用户</li>
-            <li>序号作为用户的唯一标识符，用于战绩统计等功能</li>
-            <li>社区UID是社区平台的唯一用户标识</li>
-          </ul>
-          <p><strong>平台状态：</strong></p>
-          <ul>
-            <li><span class="status-badge both">双平台</span> - 同时拥有百度和社区账号</li>
-            <li><span class="status-badge baidu-only">仅百度</span> - 只有百度账号</li>
-            <li><span class="status-badge community-only">仅社区</span> - 只有社区账号</li>
-          </ul>
-        </div>
+    <div class="help-section animate-fadeInUp">
+      <h3>说明</h3>
+      <div class="help-content">
+        <p><strong>用户名对应关系说明：</strong></p>
+        <ul>
+          <li>MW杯2012~2019年在百度Marioworker吧举办，2020年之后在Mario Forever社区举办</li>
+          <li>部分百度用户没有注册社区账号，部分社区用户也没有百度账号</li>
+          <li>社区用户可以更改用户名，CSV中的“社区曾用名”与“社区用户名”对应同一用户</li>
+          <li>序号作为用户在本站的标识符，用于战绩统计等功能</li>
+          <li>社区UID是社区平台的唯一用户标识</li>
+        </ul>
+        <p><strong>平台状态：</strong></p>
+        <ul>
+          <li><span class="status-badge both">双平台</span> - 同时拥有百度和社区账号</li>
+          <li><span class="status-badge baidu-only">仅百度</span> - 只有百度账号</li>
+          <li><span class="status-badge community-only">仅社区</span> - 只有社区账号</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -270,7 +270,6 @@ onMounted(() => {
 .user-management {
   padding: var(--spacing-lg);
   max-width: 1400px;
-  margin: 0 auto;
   background: var(--bg-primary);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-subtle);
@@ -283,17 +282,13 @@ onMounted(() => {
   align-items: end;
 }
 
-.form-group {
-  min-width: 200px;
-}
-
 .form-label {
-  display: block;
-  margin-bottom: var(--spacing-xs);
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   font-weight: 500;
-  font-size: 0.875rem;
 }
+
+/* 统计卡片 */
 
 /* 加载和错误状态 */
 
@@ -439,10 +434,13 @@ onMounted(() => {
 
 /* 帮助部分 */
 .help-section {
-  background: var(--bg-card);
+  background: var(--bg-content);
+  border-radius: var(--radius-xl);
   padding: var(--spacing-lg);
-  border-radius: var(--border-radius);
+  margin: var(--spacing-lg) 0;
+  box-shadow: var(--shadow-medium);
   border: 1px solid var(--border-primary);
+  backdrop-filter: var(--blur-medium);
   box-shadow: var(--shadow-card);
 }
 
@@ -506,20 +504,6 @@ onMounted(() => {
     width: 100%;
   }
 }
-@media (max-width: 1024px) {
-  .control-panel {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-  
-  .form-group {
-    min-width: 100%;
-  }
-  
-  .summary-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
 @media (max-width: 768px) {
   .user-management {
@@ -531,23 +515,14 @@ onMounted(() => {
     gap: var(--spacing-md);
   }
   
+  .control-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
   
   .pagination-controls {
     flex-direction: column;
     gap: var(--spacing-md);
-  }
-  
-  .help-section {
-    margin: 0 calc(-1 * var(--spacing-md));
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .identity-info {
-    max-width: 150px;
   }
 }
 </style>

@@ -229,12 +229,6 @@ onMounted(() => {
 }
 
 /* 统计卡片 */
-.summary-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-}
 
 /* 参赛信息 */
 .participation-display {
