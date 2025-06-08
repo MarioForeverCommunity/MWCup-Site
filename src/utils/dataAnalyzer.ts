@@ -557,9 +557,10 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           }
           
           // 统计冠亚季军
-          if (stageLevel === 5) {
+          if (stageLevel === 6) {
             if (rank === 1) record.championCount++;
             else if (rank === 2) record.runnerUpCount++;
+            // 季军仅统计2020年及之后
             else if (rank === 3) record.thirdPlaceCount++;
           }
         });
@@ -596,6 +597,61 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
   } catch (error) {
     console.warn('计算总分排行榜历届最佳排名失败:', error);
   }
+
+  // --- 修正最佳战绩为YAML中晋级的最高轮次 ---
+  if (yamlData && yamlData.season) {    const userBestStageLevel: { [unifiedUserId: string]: { stageLevel: number; stage: string } } = {};
+    for (const [_yearStr, yearData] of Object.entries(yamlData.season)) {
+      if (!yearData || typeof yearData !== 'object' || !('rounds' in yearData)) continue;
+      const roundsData = (yearData as any).rounds;
+      for (const [roundKey, roundDataRaw] of Object.entries(roundsData)) {
+        const roundData = roundDataRaw as any;
+        let roundList: string[] = [];
+        if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
+          try {
+            const parsedKey = JSON.parse(roundKey);
+            if (Array.isArray(parsedKey)) roundList = parsedKey;
+          } catch { roundList = [roundKey]; }
+        } else if (roundKey.includes(',')) {
+          roundList = roundKey.split(',').map(r => r.trim());
+        } else {
+          roundList = [roundKey];
+        }
+        for (const round of roundList) {
+          const stageLevel = getStageLevel(round);
+          if (!roundData.players) continue;
+          let playerNames: string[] = [];
+          if (Array.isArray(roundData.players)) {
+            playerNames = roundData.players.filter(Boolean);
+          } else if (typeof roundData.players === 'object') {
+            const firstValue = Object.values(roundData.players)[0];
+            if (typeof firstValue === 'string') {
+              playerNames = Object.values(roundData.players).filter(v => typeof v === 'string');
+            } else {
+              for (const groupData of Object.values(roundData.players)) {
+                if (typeof groupData === 'object' && groupData) {
+                  playerNames.push(...Object.values(groupData).filter(v => typeof v === 'string'));
+                }
+              }
+            }
+          }
+          for (const playerName of playerNames) {
+            const unifiedUserId = await getUnifiedUserId(playerName as string);
+            if (!userBestStageLevel[unifiedUserId] || stageLevel > userBestStageLevel[unifiedUserId].stageLevel) {
+              userBestStageLevel[unifiedUserId] = { stageLevel, stage: getStageName(stageLevel) };
+            }
+          }
+        }
+      }
+    }
+    // 用YAML晋级最高轮次覆盖playerRecords的bestStageLevel
+    for (const [unifiedUserId, best] of Object.entries(userBestStageLevel)) {
+      if (playerRecords[unifiedUserId]) {
+        playerRecords[unifiedUserId].bestStageLevel = best.stageLevel;
+        playerRecords[unifiedUserId].bestStage = best.stage;
+      }
+    }
+  }
+  // --- END 修正 ---
 
   return Object.values(playerRecords).filter(record => record.totalLevels > 0);
 }
