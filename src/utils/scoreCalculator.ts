@@ -598,6 +598,10 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
       averageScore = totalSum.div(validRecords.length).toDecimalPlaces(1);
     }
 
+    // 对最终总分和平均分进行非负处理，但保留原始评分项中的负分
+    totalSum = ensureNonNegativeScore(totalSum);
+    averageScore = ensureNonNegativeScore(averageScore);
+
     playerScores.push({
       playerCode,
       playerName: validRecords[0].playerName,
@@ -609,6 +613,13 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
   }
 
   return playerScores;
+}
+
+/**
+ * 确保分数不为负数
+ */
+function ensureNonNegativeScore(score: Decimal): Decimal {
+  return score.isNegative() ? new Decimal(0) : score;
 }
 
 /**
