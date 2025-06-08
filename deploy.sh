@@ -5,7 +5,7 @@ set -e
 
 # 设置工作目录和分支
 WORK_DIR=/data/MWCup-Site
-BRANCH=main # 根据需要修改分支名
+BRANCH=master # 根据需要修改分支名
 
 # 进入工作目录
 cd $WORK_DIR || exit
