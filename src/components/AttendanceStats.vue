@@ -1,13 +1,12 @@
 <template>
   <div class="attendance-stats animate-fadeInUp">
     <div class="page-header animate-fadeInDown">
-      <div class="control-panel">
-        <div class="form-group">
-          <label class="form-label">选择年份</label>
+      <div class="control-panel">        <div class="form-group">
+          <label class="form-label">选择届次</label>
           <select v-model="selectedYear" class="form-control hover-scale">
-            <option value="">全部年份</option>
-            <option v-for="year in availableYears" :key="year" :value="year">
-              {{ year }}年
+            <option value="">全部届次</option>
+            <option v-for="option in availableEditionOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
             </option>
           </select>
         </div>
@@ -141,6 +140,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { analyzeAttendanceData } from '../utils/dataAnalyzer'
 import { type AttendanceData } from '../utils/userDataProcessor'
+import { getEditionOptions } from '../utils/editionHelper'
 
 const attendanceData = ref<AttendanceData[]>([])
 const loading = ref(false)
@@ -154,6 +154,11 @@ const itemsPerPage = 20
 const availableYears = computed(() => {
   const years = [...new Set(attendanceData.value.map(item => item.year))]
   return years.sort((a, b) => b - a) // 新到旧
+})
+
+// 可用届次选项
+const availableEditionOptions = computed(() => {
+  return getEditionOptions(availableYears.value);
 })
 
 // 轮次排序顺序

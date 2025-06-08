@@ -232,7 +232,7 @@ const availableYears = ref<number[]>([])
 const filters = reactive<RankingFilters>({
   searchPlayer: '',
   searchLevel: '',
-  selectedYear: null,
+  selectedYear: '',
   scoringSchemes: {
     A: true,
     B: true,

@@ -32,3 +32,25 @@ export function getEditionNumber(year: string | number): string {
   // 对于更大的数字，返回阿拉伯数字
   return edition.toString();
 }
+
+/**
+ * 获取年份和届数的显示文本
+ */
+export function getEditionDisplayText(year: string | number): string {
+  const yearNum = typeof year === 'string' ? parseInt(year) : year;
+  const editionNumber = getEditionNumber(year);
+  return `${yearNum}年第${editionNumber}届`;
+}
+
+/**
+ * 从年份数组生成届次选项
+ */
+export function getEditionOptions(years: (string | number)[]): Array<{ value: string; label: string }> {
+  return years.map(year => {
+    const yearStr = year.toString();
+    return {
+      value: yearStr,
+      label: getEditionDisplayText(year)
+    };
+  });
+}

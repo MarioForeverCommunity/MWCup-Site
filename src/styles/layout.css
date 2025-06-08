@@ -133,8 +133,7 @@
   margin: 0 0 var(--spacing-xl) 0;
 }
 
-.page-header h2,
-.page-header h3 {
+.page-header h2 {
   color: var(--text-primary);
   margin: 0 0 20px 0;
   font-size: 28px;
@@ -232,6 +231,15 @@ h1, .page-header h2 {
   
   .content-panel {
     padding: var(--spacing-lg);
+  }
+
+  .page-header {
+    margin: 0 0 var(--spacing-md) 0;
+  }
+  
+  .page-header h2 {
+    color: var(--text-primary);
+    font-size: 20px;
   }
 }
 

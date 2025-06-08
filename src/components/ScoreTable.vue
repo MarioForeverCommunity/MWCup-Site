@@ -209,10 +209,9 @@
                     <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
                   </template>
                 </td>
-                <td class="count">{{ player.validRecordsCount }}</td>
-                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ player.totalSum instanceof Decimal ? player.totalSum.toFixed(2) : player.totalSum }}</td>
+                <td class="count">{{ player.validRecordsCount }}</td>                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ formatScore(player.totalSum) }}</td>
               </template>
-              <td class="average">{{ player.averageScore instanceof Decimal ? player.averageScore.toFixed(2) : player.averageScore }}</td>
+              <td class="average">{{ formatScore(player.averageScore) }}</td>
             </tr>
           </tbody>
         </table>
@@ -349,9 +348,9 @@ function isReEvaluationJudge(judgeCode: string, record: any): boolean {
 }
 
 // 格式化分数显示
-const formatScore = (score: number | null | undefined): string => {
+const formatScore = (score: number | Decimal | null | undefined): string => {
   if (score === null || score === undefined) return '-'
-  const decimal = new Decimal(score)
+  const decimal = score instanceof Decimal ? score : new Decimal(score)
   const formattedScore = decimal.toFixed(2)
   // 不显示 .00
   if (formattedScore.endsWith('.00')) {
@@ -837,10 +836,9 @@ onMounted(() => {
 }
 
 .scoring-note {
-  margin: 5px 0 10px;
-  color: var(--error-color);
+  color: #e74c3c;
   font-size: 13px;
-  font-style: italic;
+  text-align: center;
 }
 
 /* 控制面板样式 */
@@ -993,13 +991,6 @@ onMounted(() => {
   padding-bottom: 5px;
 }
 
-.scoring-note {
-  margin: 0 0 10px 0;
-  color: #e74c3c;
-  font-size: 14px;
-  font-style: italic;
-}
-
 .score-table, .total-table {
   width: 100%;
   border-collapse: collapse;
@@ -1064,11 +1055,11 @@ onMounted(() => {
   display: inline-block;
   background-color: var(--primary-color);
   color: white;
-  padding: 2px 5px;
-  border-radius: var(--radius-smallall);
-  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 10px;
   font-weight: bold;
-  margin-right: 6px;
+  margin-right: 4px;
 }
 
 .player-name-text {
@@ -1081,10 +1072,11 @@ onMounted(() => {
 .public-tag {
   display: inline-block;
   color: white;
-  font-size: 9px;
-  padding: 1px 3px;
-  border-radius: 2px;
-  margin-left: 4px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  margin-left: 2px;
 }
 
 .collaborative-tag {
@@ -1105,13 +1097,11 @@ onMounted(() => {
 
 .score-cell {
   text-align: center;
-  font-size: 13px;
 }
 
 .total-score {
   font-weight: 600;
   text-align: center;
-  font-size: 13px;
 }
 
 .final-score {
@@ -1119,7 +1109,6 @@ onMounted(() => {
   color: #e74c3c;
   text-align: center;
   background: rgba(255, 245, 240, 0.8);
-  font-size: 13px;
 }
 
 .special-scheme-indicator {
@@ -1156,12 +1145,10 @@ onMounted(() => {
 
 .count, .sum, .average {
   text-align: center;
-  font-size: 13px;
 }
 
 .level-file {
   text-align: left;
-  font-size: 13px;
   color: #495057;
   overflow: hidden;
   text-overflow: ellipsis;

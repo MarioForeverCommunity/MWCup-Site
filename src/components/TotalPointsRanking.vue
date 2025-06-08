@@ -1,12 +1,11 @@
 <template>
   <div class="total-points-ranking animate-fadeInUp">
     <div class="page-header animate-fadeInDown">
-      <div class="control-panel">
-        <div class="form-group">
-          <label for="year-select" class="form-label">选择年度：</label>
+      <div class="control-panel">        <div class="form-group">
+          <label for="year-select" class="form-label">选择届次：</label>
           <select id="year-select" v-model="selectedYear" @change="loadData" class="form-control hover-scale">
-            <option v-for="year in availableYears" :key="year" :value="year">
-              {{ year }}年
+            <option v-for="option in availableEditionOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
             </option>
           </select>
         </div>
@@ -103,10 +102,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, computed } from 'vue';
 import { loadTotalPointsData, type TotalPointsData } from '../utils/totalPointsCalculator';
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader';
 import { getRoundChineseName } from '../utils/roundNames';
+import { getEditionOptions } from '../utils/editionHelper';
 
 export default defineComponent({
   name: 'TotalPointsRanking',
@@ -120,9 +120,7 @@ export default defineComponent({
     });
     const isLoading = ref(false);
     const availableYears = ref<string[]>([]);
-    const yamlData = ref<any>(null);
-
-    // 获取可用年度列表
+    const yamlData = ref<any>(null);    // 获取可用年度列表
     const getAvailableYears = () => {
       const currentYear = new Date().getFullYear();
       const years: string[] = [];
@@ -131,6 +129,11 @@ export default defineComponent({
       }
       return years.reverse(); // 最新年份在前
     };
+
+    // 可用届次选项
+    const availableEditionOptions = computed(() => {
+      return getEditionOptions(availableYears.value);
+    });
 
     // 加载数据
     const loadData = async () => {
@@ -359,12 +362,12 @@ export default defineComponent({
         await loadData();
       } catch (error) {
       }
-    });
-    return {
+    });    return {
       selectedYear,
       data,
       isLoading,
       availableYears,
+      availableEditionOptions,
       loadData,
       getRankingClass,
       getMedalIcon,

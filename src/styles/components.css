@@ -263,7 +263,7 @@ button:hover:not(:disabled) {
   justify-content: center;
   gap: 15px;
   margin-bottom: 15px;
-  padding: 15px;
+  padding: var(--spacing-lg);
   background: var(--bg-panel);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-medium);

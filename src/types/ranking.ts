@@ -45,7 +45,7 @@ export interface OriginalScoreRankingItem extends LevelRankingItem {
 export interface RankingFilters {
   searchPlayer: string;
   searchLevel: string;
-  selectedYear: string | null;
+  selectedYear: string;
   scoringSchemes: {
     A: boolean;
     B: boolean;
