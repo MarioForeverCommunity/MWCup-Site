@@ -187,6 +187,7 @@
               <!-- 成绩无效的选手，排名显示为横杠，但得分保持显示原始值 -->
               <td class="rank">
                 <template v-if="player.records.length > 0 && player.records[0].isCanceled">-</template>
+                <template v-else-if="player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传'">-</template>
                 <template v-else>{{ index + 1 }}</template>
               </td>
               <td class="player-name">
@@ -542,8 +543,13 @@ const filteredPlayerScores = computed(() => {
     )
   }
   
-  // 首先按平均分从高到低排序（Decimal）
+  // 首先把未上传的选手排到最后，其余按平均分从高到低排序
   players = [...players].sort((a, b) => {
+    const aNoSubmission = a.validRecordsCount === 0 && getPlayerLevelFileName(a.playerCode) === '未上传';
+    const bNoSubmission = b.validRecordsCount === 0 && getPlayerLevelFileName(b.playerCode) === '未上传';
+    if (aNoSubmission && !bNoSubmission) return 1;
+    if (!aNoSubmission && bNoSubmission) return -1;
+    // 其余正常排序
     // 兼容Decimal和number
     const aScore = a.averageScore instanceof Decimal ? a.averageScore : new Decimal(a.averageScore)
     const bScore = b.averageScore instanceof Decimal ? b.averageScore : new Decimal(b.averageScore)
@@ -564,8 +570,12 @@ const filteredPlayerScores = computed(() => {
       Object.keys(playerMapResult.players).map((code, index) => [code, index])
     )
     
-    // 二次排序：对于平均分相同的选手，按照YAML中的选手顺序排序
+    // 二次排序：对于平均分相同的选手，按照YAML中的选手顺序排序，未上传始终排最后
     players = players.sort((a, b) => {
+      const aNoSubmission = a.validRecordsCount === 0 && getPlayerLevelFileName(a.playerCode) === '未上传';
+      const bNoSubmission = b.validRecordsCount === 0 && getPlayerLevelFileName(b.playerCode) === '未上传';
+      if (aNoSubmission && !bNoSubmission) return 1;
+      if (!aNoSubmission && bNoSubmission) return -1;
       const aScore = a.averageScore instanceof Decimal ? a.averageScore : new Decimal(a.averageScore)
       const bScore = b.averageScore instanceof Decimal ? b.averageScore : new Decimal(b.averageScore)
       if (!aScore.equals(bScore)) {

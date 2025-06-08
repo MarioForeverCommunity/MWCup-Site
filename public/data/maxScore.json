@@ -4,7 +4,7 @@
       "P1": {"base_score": 100, "bonus_score": 5},
       "P2": {"base_score": 100, "bonus_score": 5},
       "G1": {"base_score": 100, "bonus_score": 5},
-      "G2": {"base_score": 100, "bonus_score": 5},
+      "G2": {"base_score": 100, "bonus_score": 0},
       "G3": {"base_score": 100, "bonus_score": 0},
       "G4": {"base_score": 100, "bonus_score": 5},
       "Q1": {"base_score": 100, "bonus_score": 5},
@@ -42,7 +42,7 @@
       "G2": {"base_score": 100, "bonus_score": 5},
       "G3": {"base_score": 100, "bonus_score": 5},
       "Q1": {"base_score": 100, "bonus_score": 8},
-      "Q2": {"base_score": 105, "bonus_score": 0},
+      "Q2": {"base_score": 105, "bonus_score": 0, "appreciation_score": 15},
       "S1": {"base_score": 100, "bonus_score": 5},
       "S2": {"base_score": 100, "bonus_score": 8},
       "F": {"base_score": 100, "bonus_score": 8}

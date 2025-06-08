@@ -78,7 +78,30 @@ function findPlayerInfo(year, roundType, playerCode, mwcupData, filePath) {
   const yearData = mwcupData.season[year];
   const rounds = yearData.rounds;
   if (!rounds) return null;
-  const specificRound = extractSpecificRound(filePath, roundType);  
+  const specificRound = extractSpecificRound(filePath, roundType);
+  // 2012年特殊处理：优先根据文件路径中的轮次信息匹配
+  if (parseInt(year) === 2012 && roundType === '初赛' && specificRound) {
+    let targetRoundKey = null;
+    if (specificRound === '第一轮') {
+      targetRoundKey = 'I1';
+    } else if (specificRound === '第二轮') {
+      targetRoundKey = 'I2';
+    }
+    if (targetRoundKey && rounds[targetRoundKey]) {
+      const playerInfo = findPlayerInRound(rounds[targetRoundKey].players, playerCode);
+      if (playerInfo) {
+        return {
+          year: parseInt(year),
+          roundKey: targetRoundKey,
+          roundType: roundType,
+          playerName: playerInfo.name,
+          playerCode: playerInfo.matchedCode || playerCode,
+          matchedCode: playerInfo.matchedCode || playerCode,
+          groupCode: playerInfo.group
+        };
+      }
+    }
+  }
   // 优先严格匹配轮次
   for (const [roundKey, roundData] of Object.entries(rounds)) {
     if (!roundData.players) continue;
@@ -298,11 +321,6 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolde
     const fullPath = path.join(dir, file.name);
     const fileRelativePath = path.join(relativePath, file.name).replace(/\\/g, '/');
     if (file.isDirectory()) {
-      // 暂时忽略2012年的目录
-      if (file.name.includes('2012')) {
-        console.log(`Skipping directory: ${file.name} (naming rules not standardized)`);
-        continue;
-      }
       
       // 检查是否是多关卡题的选手文件夹（格式：选手码-名称）
       const folderPlayerCode = extractPlayerCode(file.name);
@@ -400,11 +418,22 @@ function extractPlayerCode(filename, year = null, roundType = null, mwcupData = 
   if (specialLevelsData && year && roundType) {
     const yearData = specialLevelsData.specialLevels[String(year)];
     if (yearData) {
-      const roundData = yearData[roundType];
+      // 先尝试精确匹配roundType
+      let roundData = yearData[roundType];
       if (roundData) {
         const specialLevel = roundData.find(level => level.filename === filename);
         if (specialLevel) {
           return specialLevel.playerCode;
+        }
+      }
+      
+      // 如果精确匹配失败，尝试包含匹配（用于2012年等特殊情况）
+      for (const [key, data] of Object.entries(yearData)) {
+        if (key.includes(roundType)) {
+          const specialLevel = data.find(level => level.filename === filename);
+          if (specialLevel) {
+            return specialLevel.playerCode;
+          }
         }
       }
     }
@@ -521,6 +550,10 @@ function refineRoundType(roundType, roundKey, year) {
   if (roundKey.startsWith('I')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
+      // 2012年的初赛使用"轮"而不是"题"
+      if (year === 2012) {
+        return `初赛第${['一','二','三','四'][idx-1]||idx}轮`;
+      }
       return `初赛第${['一','二','三','四'][idx-1]||idx}题`;
     }
   }

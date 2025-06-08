@@ -4,6 +4,7 @@
 
 import { loadRoundScoreData, type PlayerScore } from './scoreCalculator';
 import * as YAML from 'js-yaml';
+import { Decimal } from 'decimal.js';
 import type { 
   LevelRankingItem, 
   MultiLevelRankingItem, 
@@ -358,26 +359,44 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
           // 计算原始分（基础分的平均值，不包括加分项和扣分项）
           let originalScoreSum = 0;
           let validCount = 0;
-          
+          // 2016Q2特殊：用于换算后的原始分
+          let calculatedOriginalScoreSum = new Decimal(0);
+          let calculatedValidCount = 0;
           for (const record of playerScore.records) {
             if (!record.isRevoked) {
               // 计算基础分总和（排除加分项和扣分项）
               let baseScore = 0;
+              let calculatedBaseScore = new Decimal(0);
               for (const [key, value] of Object.entries(record.scores)) {
                 if (key !== '加分项' && key !== '扣分项' && key !== '换算后大众评分') {
-                  baseScore += typeof value === 'number' ? value : Number(value);
+                  let score = typeof value === 'number' ? value : Number(value);
+                  let calculatedScore = new Decimal(score);
+                  // 2016年Q2轮次的欣赏性得分需要乘以10/15
+                  if (year === '2016' && round === 'Q2' && key === '欣赏性') {
+                    calculatedScore = new Decimal(score).times(10).div(15);
+                  }
+                  baseScore += score;
+                  calculatedBaseScore = calculatedBaseScore.plus(calculatedScore);
                 }
               }
               originalScoreSum += baseScore;
               validCount++;
+              calculatedOriginalScoreSum = calculatedOriginalScoreSum.plus(calculatedBaseScore);
+              calculatedValidCount++;
             }
           }
-          const originalScore = validCount > 0 ? Math.round(originalScoreSum / validCount * 10) / 10 : 0;
+          // 计算未换算和换算后的原始分，使用decimal.js保证精度
+          const originalScore = validCount > 0 ? new Decimal(originalScoreSum).div(validCount).toDecimalPlaces(1, Decimal.ROUND_HALF_UP).toNumber() : 0;
+          const calculatedOriginalScore = calculatedValidCount > 0 ? new Decimal(calculatedOriginalScoreSum).div(calculatedValidCount).toDecimalPlaces(1, Decimal.ROUND_HALF_UP).toNumber() : 0;
           const finalScore = Number(playerScore.averageScore);
-          
           const originalScoreRate = (originalScore / maxScore.baseScore) * 100;
           const finalScoreRate = (finalScore / maxScore.totalScore) * 100;
-          const scoreChange = originalScoreRate - finalScoreRate;
+          let scoreChange: number;
+          if (year === '2016' && round === 'Q2') {
+            scoreChange = finalScoreRate - calculatedOriginalScore;
+          } else {
+            scoreChange = finalScoreRate - originalScoreRate;
+          }
           // 获取评分方案
           const scoringScheme = getScoringScheme(level.year, level.roundKey);
           
@@ -401,11 +420,11 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
             originalRank: 0, // 将在后面设置
             scoreRateRank: 0, // 将在后面设置
             rankChange: 0, // 将在后面设置
-            originalScore,
-            originalScoreRate,
+            originalScore: year === '2016' && round === 'Q2' ? calculatedOriginalScore : originalScore, // 2016Q2显示换算后的分数
+            originalScoreRate, // 排名用未换算分
             scoreChange: Math.abs(scoreChange),
             changeType: scoreChange > 0 ? 'down' : scoreChange < 0 ? 'up' : 'same'
-          });
+          } as any);
           
           finalItems.push(baseItem);
         }

@@ -70,6 +70,7 @@ export function parseCsvToScoreRecords(
     if (lines.length === 0) {
       throw new Error('CSV文件为空');
     }
+
     // 解析表头
     const headers = lines[0].split(',').map(h => h.trim());
     let playerCodeIndex = headers.findIndex(h => h === '选手码');
@@ -92,108 +93,107 @@ export function parseCsvToScoreRecords(
 
     // 获取当前轮次的评分方案
     const seasonData = yamlData.season[year];
-    let scoringScheme = seasonData?.scoring_scheme || 'A';
+    let scoringScheme: keyof typeof SCORING_SCHEMES = (seasonData?.scoring_scheme as keyof typeof SCORING_SCHEMES) || 'A';
     
     // 检查轮次特定的评分方案
     const roundData = seasonData?.rounds?.[round];
     if (roundData?.scoring_scheme) {
-      scoringScheme = roundData.scoring_scheme;
+      scoringScheme = roundData.scoring_scheme as keyof typeof SCORING_SCHEMES;
     }
 
     // 验证评分方案
-    const expectedColumns = SCORING_SCHEMES[scoringScheme as keyof typeof SCORING_SCHEMES];
-    if (!expectedColumns) {
+    if (!SCORING_SCHEMES[scoringScheme]) {
       throw new Error(`未知的评分方案: ${scoringScheme}`);
     }
-    // 解析数据行
-  const records: ScoreRecord[] = [];
-  const playerMap = buildPlayerJudgeMap(yamlData, year, round);
-  // 用于跟踪成绩无效的选手
-  const canceledPlayers = new Set<string>();
-  
-  // 先解析所有记录，但不处理评委名称
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
-    if (values.length < 2) continue;
 
-    const originalPlayerValue = values[playerCodeIndex]?.trim();
-    const judgeCode = values[judgeCodeIndex]?.trim();
+    const playerMap = buildPlayerJudgeMap(yamlData, year, round);
+    const records: ScoreRecord[] = [];
+    const canceledPlayers: Set<string> = new Set();
     
-    // 标记成绩无效的选手
-    if (originalPlayerValue && judgeCode === 'CANCELED') {
-      canceledPlayers.add(originalPlayerValue);
-      continue;
-    }
-    
-    if (!originalPlayerValue || !judgeCode) continue;
-
-    // 解析评委信息
-    const judgeInfo = parseJudgeCode(judgeCode);
-    
-    // 处理选手信息：根据CSV格式决定playerCode和playerName
-    let playerCode: string;
-    let playerName: string;
-    
-    if (isUsernameFormat) {
-      // "选手用户名"格式：原值是用户名，需要生成或查找对应的代码
-      playerName = originalPlayerValue;
-      // 在这种情况下，我们使用用户名作为代码（因为没有单独的代码列）
-      playerCode = originalPlayerValue;
-    } else {
-      // "选手码"格式：原值是代码，需要查找对应的用户名
-      playerCode = originalPlayerValue;
-      playerName = getPlayerName(playerCode, playerMap);
-    }
-
-    // 解析分数
-    const scores: { [key: string]: Decimal } = {};
-    let totalScore = new Decimal(0);
-    let bonusPoints = new Decimal(0);
-    let penaltyPoints = new Decimal(0);
-
-    for (let j = 2; j < headers.length && j < values.length; j++) {
-      const header = headers[j].trim();
-      const value = values[j]?.trim();
+    // 解析每一行
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length < headers.length) continue;
       
-      if (value && value !== '') {
-        const numValue = new Decimal(value);
-        if (!numValue.isNaN()) {
-          scores[header] = numValue;
-          
-          if (header === '加分项') {
-            bonusPoints = numValue;
-          } else if (header === '扣分项') {
-            penaltyPoints = numValue;
-          } else if (header !== '换算后大众评分') {
-            totalScore = totalScore.plus(numValue);
+      const originalPlayerValue = values[playerCodeIndex]?.trim();
+      const judgeCode = values[judgeCodeIndex]?.trim();
+      
+      // 标记成绩无效的选手
+      if (originalPlayerValue && judgeCode === 'CANCELED') {
+        canceledPlayers.add(originalPlayerValue);
+        continue;
+      }
+      
+      if (!originalPlayerValue || !judgeCode) continue;
+
+      // 解析评委信息
+      const judgeInfo = parseJudgeCode(judgeCode);
+      
+      // 处理选手信息：根据CSV格式决定playerCode和playerName
+      let playerCode: string;
+      let playerName: string;
+      
+      if (isUsernameFormat) {
+        // "选手用户名"格式：原值是用户名，需要生成或查找对应的代码
+        playerName = originalPlayerValue;
+        // 在这种情况下，我们使用用户名作为代码（因为没有单独的代码列）
+        playerCode = originalPlayerValue;
+      } else {
+        // "选手码"格式：原值是代码，需要查找对应的用户名
+        playerCode = originalPlayerValue;
+        playerName = getPlayerName(playerCode, playerMap);
+      }
+
+      // 解析分数
+      const scores: { [key: string]: Decimal } = {};
+      let totalScore = new Decimal(0);
+      let bonusPoints = new Decimal(0);
+      let penaltyPoints = new Decimal(0);
+
+      for (let j = 2; j < headers.length && j < values.length; j++) {
+        const header = headers[j].trim();
+        const value = values[j]?.trim();
+        
+        if (value && value !== '') {
+          const numValue = new Decimal(value);
+          if (!numValue.isNaN()) {
+            scores[header] = numValue;
+            
+            if (header === '加分项') {
+              bonusPoints = numValue;
+            } else if (header === '扣分项') {
+              penaltyPoints = numValue;
+            } else if (header !== '换算后大众评分') {
+              totalScore = totalScore.plus(numValue);
+            }
           }
         }
       }
-    }
 
-    // 计算最终总分（四舍五入到一位小数）
-    const finalScore = totalScore.plus(bonusPoints).plus(penaltyPoints).toDecimalPlaces(1);
-    // 如果是协商评分，直接从YAML中查找评委名称而不是使用CSV中的judgeCode
-    const judgeName = judgeInfo.isCollaborative 
-      ? judgeInfo.collaborativeJudges?.map(j => getJudgeName(j, playerMap, playerCode)).join(', ') || ''
-      : '';
+      // 计算最终总分（四舍五入到一位小数）
+      const finalScore = totalScore.plus(bonusPoints).plus(penaltyPoints).toDecimalPlaces(1);
       
-    records.push({
-      playerCode,
-      judgeCode: judgeInfo.originalCode,
-      originalJudgeCode: judgeCode, // 保存原始的judge code
-      playerName,
-      judgeName: judgeName, // 协商评分的名称会在这里填充，其他评委稍后填充
-      scores,
-      bonusPoints: bonusPoints.isZero() ? undefined : bonusPoints,
-      penaltyPoints: penaltyPoints.isZero() ? undefined : penaltyPoints,
-      totalScore: finalScore,
-      isRevoked: judgeInfo.isRevoked,
-      isBackup: judgeInfo.isBackup,
-      isCollaborative: judgeInfo.isCollaborative,
-      collaborativeJudges: judgeInfo.collaborativeJudges
-    });
-  }
+      // 如果是协商评分，直接从YAML中查找评委名称而不是使用CSV中的judgeCode
+      const judgeName = judgeInfo.isCollaborative 
+        ? judgeInfo.collaborativeJudges?.map(j => getJudgeName(j, playerMap, playerCode)).join(', ') || ''
+        : '';
+        
+      records.push({
+        playerCode,
+        judgeCode: judgeInfo.originalCode,
+        originalJudgeCode: judgeCode, // 保存原始的judge code
+        playerName,
+        judgeName: judgeName, // 协商评分的名称会在这里填充，其他评委稍后填充
+        scores,
+        bonusPoints: bonusPoints.isZero() ? undefined : bonusPoints,
+        penaltyPoints: penaltyPoints.isZero() ? undefined : penaltyPoints,
+        totalScore: finalScore,
+        isRevoked: judgeInfo.isRevoked,
+        isBackup: judgeInfo.isBackup,
+        isCollaborative: judgeInfo.isCollaborative,
+        collaborativeJudges: judgeInfo.collaborativeJudges
+      });
+    }
   // 检测协商评分（相同选手两个评委的所有评分子项均相同时视为协商评分）
   const playerJudgeScores: { [key: string]: { [key: string]: ScoreRecord } } = {};
   
@@ -312,7 +312,6 @@ export function parseCsvToScoreRecords(
 
 /**
  * 解析CSV行，处理引号包围的内容
- */
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
@@ -334,6 +333,7 @@ function parseCSVLine(line: string): string[] {
   result.push(current);
   return result;
 }
+*/
 
 /**
  * 解析评委代码

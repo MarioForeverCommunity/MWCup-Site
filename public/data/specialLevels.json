@@ -1,5 +1,29 @@
 {
   "specialLevels": {
+    "2012": {
+      "初赛第一轮": [
+        {"filename": "funny case.mfl", "playerCode": "A1"},
+        {"filename": "MW Cup - lahztc1 (A).mfl", "playerCode": "A2"},
+        {"filename": "go up to the sky.mfl", "playerCode": "B2"},
+        {"filename": "Flying in the sky.mfl", "playerCode": "B3"},
+        {"filename": "MW杯第一轮C组newlife2017参赛关卡.mfl", "playerCode": "C2"},
+        {"filename": "underwater.mfl", "playerCode": "C3"},
+        {"filename": "fish pond.mfl", "playerCode": "C4"},
+        {"filename": "Volcano.mfl", "playerCode": "D1"},
+        {"filename": "MW杯D组选手 马里奥奥里马.mfl", "playerCode": "D2"},
+        {"filename": "For MWcup by Nm.mfl", "playerCode": "D3"},
+        {"filename": "Volcano Nightmare.mfl", "playerCode": "D4"}
+      ],
+      "初赛第二轮": [
+        {"filename": "Night Beach.mfl", "playerCode": "A2"},
+        {"filename": "a special night by mlaalm.mfl", "playerCode": "A4"},
+        {"filename": "MW CUP.mfl", "playerCode": "A5"},
+        {"filename": "MW杯第一轮C组newlife2017参赛关卡.mfl", "playerCode": "C2"},
+        {"filename": "on water.mfl", "playerCode": "B1"},
+        {"filename": "For Mwcup By Nm Round2.mfl", "playerCode": "B2"},
+        {"filename": "Serenade.mfl", "playerCode": "B4"}
+      ]
+    },
     "2020": {
       "资格赛": [
         {"filename": "mushroom realm in the sky.smwl", "playerCode": "2"},
