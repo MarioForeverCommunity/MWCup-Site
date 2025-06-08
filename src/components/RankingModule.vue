@@ -109,7 +109,7 @@
                 <td :class="getRankClass(item.rank)">{{ item.rank }}</td>
                 <td>{{ item.levelName }}</td>
                 <td>{{ item.author }}</td>
-                <td>{{ item.finalScore.toFixed(1) }}</td>
+                <td>{{ formatScore(item.finalScore) }}</td>
                 <td>{{ item.edition }}</td>
                 <td>{{ item.round }}</td>
                 <td>{{ item.maxScore }}</td>
@@ -143,7 +143,7 @@
                 <td :class="getRankClass(item.rank)">{{ item.rank }}</td>
                 <td>{{ item.levelName }}</td>
                 <td>{{ item.author }}</td>
-                <td>{{ item.finalScore.toFixed(1) }}</td>
+                <td>{{ formatScore(item.finalScore) }}</td>
                 <td>{{ item.edition }}</td>
                 <td>{{ item.round }}</td>
                 <td>{{ item.maxScore }}</td>
@@ -185,12 +185,12 @@
                 </td>
                 <td>{{ item.levelName }}</td>
                 <td>{{ item.author }}</td>
-                <td>{{ item.finalScore.toFixed(1) }}</td>
+                <td>{{ formatScore(item.finalScore) }}</td>
                 <td>{{ item.edition }}</td>
                 <td>{{ item.round }}</td>
                 <td>{{ item.maxScore }}</td>
                 <td class="score-rate">{{ item.scoreRate.toFixed(3) }}%</td>
-                <td>{{ item.originalScore.toFixed(1) }}</td>
+                <td>{{ formatScore(item.originalScore) }}</td>
                 <td :class="getScoreChangeClass(item.changeType)">
                   {{ formatScoreChange(item.scoreChange, item.changeType) }}
                 </td>
@@ -211,6 +211,7 @@ import type {
   OriginalScoreRankingItem,
   RankingFilters 
 } from '../types/ranking'
+import { Decimal } from 'decimal.js'
 import { 
   calculateSingleLevelRanking,
   calculateMultiLevelRanking,
@@ -474,6 +475,16 @@ function getRankClass(rank: number): string {
   if (rank === 2) return 'rank-second'
   if (rank === 3) return 'rank-third'
   return ''
+}
+
+// 格式化最终得分和原始分，整数则不显示小数点后部分
+function formatScore(score: number): string {
+  const decimal = new Decimal(score)
+  const formattedScore = decimal.toFixed(1)
+  if (formattedScore.endsWith('.0')) {
+    return decimal.toFixed(0)
+  }
+  return formattedScore
 }
 </script>
 
