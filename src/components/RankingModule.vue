@@ -1,9 +1,5 @@
 <!-- 排名模块主组件 -->
 <template>
-  <div class="page-header animate-fadeInUp">
-    <h2>关卡排名</h2>
-  </div>
-
   <div class="content-panel animate-fadeInUp">
     <div class="ranking-tabs">
       <button 
@@ -503,7 +499,6 @@ function getRankClass(rank: number): string {
 /* 使用components.css中定义的全局按钮样式，只添加一些额外的特定调整 */
 .ranking-tab-btn {
   min-width: 100px;
-  margin: 2px;
 }
 
 .filters {
@@ -554,29 +549,6 @@ function getRankClass(rank: number): string {
 .filter-group input:hover:not(:focus),
 .filter-group select:hover:not(:focus) {
   border-color: var(--primary-hover);
-}
-
-.loading-state,
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  justify-content: center;
-  padding: 40px 20px;
-  font-size: 16px;
-}
-
-.loading-state {
-  color: var(--text-muted);
-}
-
-.error-state {
-  color: var(--text-error);
-  background: var(--bg-error);
-  border: 1px solid rgba(245, 198, 203, 0.8);
-  border-radius: var(--radius-medium);
-  backdrop-filter: var(--blur-light);
 }
 
 thead {
@@ -691,7 +663,7 @@ td:first-child {
   align-items: center;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: var(--radius-small);
+  border-radius: var(--radius-smallall);
   background: var(--bg-panel-light);
   border: 1px solid var(--border-light);
   transition: var(--transition-fast);

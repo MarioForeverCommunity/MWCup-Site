@@ -47,10 +47,9 @@
           </select>
         </div>
       </div>
-      
-      <div class="button-container">
-        <button @click="searchBySelector" :disabled="!selectedRound" class="btn-primary">
-          {{ selectedPlayer ? '查找该选手关卡文件' : '查找该轮次所有文件' }}
+        <div class="button-container">
+        <button @click="searchBySelector" :disabled="!selectedYear" class="btn-primary">
+          {{ getSearchButtonText() }}
         </button>
       </div>
     </div>
@@ -103,14 +102,13 @@
           <tr 
             v-for="(file) in searchResults" 
             :key="file.path" 
-            @click="showFileDetails(file)" 
-            class="clickable-row"
+            class="table-row"
           >
             <td class="filename">{{ file.name }}</td>
             <td class="player-code">{{ file.playerCode || '-' }}</td>
             <td>{{ file.playerName || '-' }}</td>
             <td>{{ file.year || '-' }}</td>
-            <td>{{ file.roundType || '-' }}</td>
+            <td>{{ getRefinedRoundType(file) }}</td>
             <td>{{ file.groupCode ? getGroupDisplayName(file.groupCode) : '-' }}</td>
             <td class="file-size">{{ formatFileSize(file.size) }}</td>
             <td>{{ formatDate(file.mtime) }}</td>
@@ -125,58 +123,6 @@
     </div>
   </div>
 
-  <!-- 文件详情弹窗 -->
-  <div v-if="showingFileDetails" class="modal-overlay animate-fadeIn" @click="closeFileDetails">
-    <div class="modal-content animate-scaleIn" @click.stop>
-      <div class="modal-header">
-        <h3>文件详情</h3>
-      </div>
-      <div class="modal-body" v-if="selectedFileDetails">
-        <div class="detail-item">
-          <label>文件名：</label>
-          <span>{{ selectedFileDetails.name }}</span>
-        </div>
-        <div class="detail-item">
-          <label>文件路径：</label>
-          <span>{{ selectedFileDetails.path }}</span>
-        </div>
-        <div class="detail-item">
-          <label>选手码：</label>
-          <span>{{ selectedFileDetails.playerCode || '未知' }}</span>
-        </div>
-        <div class="detail-item">
-          <label>选手名：</label>
-          <span>{{ selectedFileDetails.playerName || '未知' }}</span>
-        </div>
-        <div class="detail-item">
-          <label>年份：</label>
-          <span>{{ selectedFileDetails.year || '未知' }}</span>
-        </div>
-        <div class="detail-item">
-          <label>轮次：</label>
-          <span>{{ selectedFileDetails.roundType || '未知' }}</span>
-        </div>
-        <div class="detail-item">
-          <label>分组：</label>
-          <span>{{ selectedFileDetails.groupCode ? getGroupDisplayName(selectedFileDetails.groupCode) : '无' }}</span>
-        </div>
-        <div class="detail-item">
-          <label>文件大小：</label>
-          <span>{{ formatFileSize(selectedFileDetails.size) }}</span>
-        </div>
-        <div class="detail-item">
-          <label>修改时间：</label>
-          <span>{{ formatDate(selectedFileDetails.mtime) }}</span>
-        </div>
-        <div class="detail-item">
-          <label>数据完整性：</label>
-          <span :class="{ 'complete': selectedFileDetails.hasPlayerInfo, 'incomplete': !selectedFileDetails.hasPlayerInfo }">
-            {{ selectedFileDetails.hasPlayerInfo ? '完整' : '不完整' }}
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div v-if="searched && (!searchResults || searchResults.length === 0)" class="no-result">
     没有找到符合条件的关卡文件
@@ -217,9 +163,7 @@ const error = ref('')
 const searchResults = ref<LevelFile[]>([])
 const searched = ref(false)
 
-// 文件详情弹窗
-const showingFileDetails = ref(false)
-const selectedFileDetails = ref<LevelFile | null>(null)
+
 
 // 缓存的 YAML 数据
 let yamlData: any = null
@@ -382,151 +326,6 @@ function onRoundChange() {
   }
 }
 
-async function searchBySelector() {
-  if (!selectedRound.value) {
-    error.value = '请选择轮次'
-    return
-  }
-
-  loading.value = true
-  error.value = ''
-  searchResults.value = []
-  searched.value = false
-
-  try {
-    const files = await fetchLevelFiles()
-    const results = files.filter(file => {
-      // 匹配年份
-      if (selectedYear.value && file.year !== parseInt(selectedYear.value)) {
-        return false
-      }
-      
-      // 匹配轮次
-      if (selectedRound.value && file.roundKey !== selectedRound.value) {
-        return false
-      }
-      
-      // 如果选择了选手，则匹配选手码；否则显示所有选手
-      if (selectedPlayer.value && file.playerCode !== selectedPlayer.value) {
-        return false
-      }
-      
-      return true
-    })
-      // 按YAML中的选手顺序排序，然后按文件名排序
-    if (yamlData && selectedYear.value && selectedRound.value) {
-      try {
-        // 从YAML获取选手顺序
-        const { buildPlayerJudgeMap } = await import('../utils/scoreCalculator')
-        const playerMapResult = buildPlayerJudgeMap(
-          yamlData, 
-          selectedYear.value, 
-          selectedRound.value
-        );
-        
-        // 创建一个根据YAML中的选手码顺序排序的映射
-        const playerCodeOrderMap = new Map(
-          Object.keys(playerMapResult.players).map((code, index) => [code, index])
-        );
-        
-        // 按照YAML中的选手顺序排序
-        results.sort((a, b) => {
-          const orderA = playerCodeOrderMap.get(a.playerCode || '');
-          const orderB = playerCodeOrderMap.get(b.playerCode || '');
-          
-          // 如果都有序号，按序号排序
-          if (orderA !== undefined && orderB !== undefined) {
-            if (orderA !== orderB) return orderA - orderB;
-          }
-          // 如果只有一方有序号，有序号的排前面
-          else if (orderA !== undefined) return -1;
-          else if (orderB !== undefined) return 1;
-          
-          // 如果都没有序号或序号相同，按文件名排序
-          return a.name.localeCompare(b.name)
-        })
-      } catch (error) {
-        console.error('按选手顺序排序时出错:', error);
-        // 降级到按选手码字母顺序排序
-        results.sort((a, b) => {
-          const playerCompare = (a.playerCode || '').localeCompare(b.playerCode || '')
-          if (playerCompare !== 0) return playerCompare
-          return a.name.localeCompare(b.name)
-        })
-      }
-    } else {
-      // 如果没有YAML数据，按选手码字母顺序排序
-      results.sort((a, b) => {
-        const playerCompare = (a.playerCode || '').localeCompare(b.playerCode || '')
-        if (playerCompare !== 0) return playerCompare
-        return a.name.localeCompare(b.name)
-      })
-    }
-    
-    searchResults.value = results
-    searched.value = true
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '未知错误'
-  } finally {
-    loading.value = false
-  }
-}
-
-async function searchByKeyword() {
-  if (!searchKeyword.value.trim()) {
-    error.value = '请输入搜索关键词'
-    return
-  }
-
-  loading.value = true
-  error.value = ''
-  searchResults.value = []
-  searched.value = false
-
-  try {
-    const files = await fetchLevelFiles()
-    const keyword = searchKeyword.value.trim().toLowerCase()
-    
-    const results = files.filter(file => {
-      return (
-        file.name.toLowerCase().includes(keyword) ||
-        (file.playerName && file.playerName.toLowerCase().includes(keyword)) ||
-        (file.playerCode && file.playerCode.toLowerCase().includes(keyword))
-      )
-    })
-    
-    // 按相关性排序：优先显示选手名完全匹配的，然后是选手码匹配的，最后是文件名匹配的
-    results.sort((a, b) => {
-      const aPlayerNameMatch = a.playerName && a.playerName.toLowerCase().includes(keyword)
-      const bPlayerNameMatch = b.playerName && b.playerName.toLowerCase().includes(keyword)
-      const aPlayerCodeMatch = a.playerCode && a.playerCode.toLowerCase().includes(keyword)
-      const bPlayerCodeMatch = b.playerCode && b.playerCode.toLowerCase().includes(keyword)
-      
-      if (aPlayerNameMatch && !bPlayerNameMatch) return -1
-      if (!aPlayerNameMatch && bPlayerNameMatch) return 1
-      if (aPlayerCodeMatch && !bPlayerCodeMatch) return -1
-      if (!aPlayerCodeMatch && bPlayerCodeMatch) return 1
-      
-      // 如果相关性相同，按年份降序，然后按文件名升序
-      if (a.year !== b.year) {
-        return (b.year || 0) - (a.year || 0)
-      }
-      return a.name.localeCompare(b.name)
-    })
-    
-    searchResults.value = results
-    searched.value = true
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '未知错误'
-  } finally {
-    loading.value = false
-  }
-}
-
-async function fetchLevelFiles(): Promise<LevelFile[]> {
-  return await fetchLevelFilesFromLocal()
-}
-
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B'
   const k = 1024
@@ -539,33 +338,303 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 
-
-function showFileDetails(file: LevelFile) {
-  selectedFileDetails.value = file
-  showingFileDetails.value = true
+function getSearchButtonText(): string {
+  if (selectedPlayer.value) {
+    return '查找该选手关卡文件'
+  }
+  if (selectedRound.value) {
+    return '查找该轮次所有文件'
+  }
+  if (selectedYear.value) {
+    return `查找${selectedYear.value}年全部关卡`
+  }
+  return '查找关卡文件'
 }
 
-function downloadLevel(file: LevelFile) {
+async function searchBySelector() {
+  if (!selectedYear.value) {
+    error.value = '请选择年份'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+  searchResults.value = []
+  searched.value = false
+
   try {
-    const downloadUrl = LEVELS_BASE_URL + file.path
-    // 使用 window.open 在新标签页中打开下载链接
-    const newWindow = window.open(downloadUrl, '_blank')
+    const files = await fetchLevelFilesFromLocal();
+    let results = files.filter(file => {
+      // 匹配年份
+      if (file.year !== parseInt(selectedYear.value)) {
+        return false
+      }
+      
+      // 如果选择了轮次，则匹配轮次
+      if (selectedRound.value && file.roundKey !== selectedRound.value) {
+        return false
+      }
+      
+      // 如果选择了选手，则匹配选手码
+      if (selectedPlayer.value && file.playerCode !== selectedPlayer.value) {
+        return false
+      }
+      
+      return true
+    })
     
-    // 检查是否被弹窗拦截
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      // 如果被拦截，提示用户
-      alert('下载可能被浏览器拦截，请允许弹窗或手动复制链接：\n' + downloadUrl)
+    // 对结果进行排序
+    const roundOrder = ['P1', 'P2', 'I1', 'I2', 'I3', 'I4', 'G1', 'G2', 'G3', 'G4', 'Q1', 'Q2', 'Q', 'R1', 'R2', 'R3', 'R', 'S1', 'S2', 'S', 'F']
+    
+    if (selectedRound.value) {
+      // 如果选择了轮次，优先按照选手顺序排序
+      try {
+        const { buildPlayerJudgeMap } = await import('../utils/scoreCalculator')
+        const playerMapResult = buildPlayerJudgeMap(
+          yamlData, 
+          selectedYear.value, 
+          selectedRound.value
+        )
+        
+        // 创建选手顺序映射
+        const playerCodeOrderMap = new Map(
+          Object.keys(playerMapResult.players || {}).map((code, index) => [code, index])
+        )
+        
+        results.sort((a, b) => {
+          const orderA = playerCodeOrderMap.get(a.playerCode || '')
+          const orderB = playerCodeOrderMap.get(b.playerCode || '')
+          
+          // 如果都有顺序，按顺序排序
+          if (orderA !== undefined && orderB !== undefined && orderA !== orderB) {
+            return orderA - orderB
+          }
+          
+          return a.name.localeCompare(b.name)
+        })
+      } catch (error) {
+        console.error('排序时出错:', error)
+        results.sort((a, b) => a.name.localeCompare(b.name))
+      }
+    } else {      // 如果只选择了年份，先按轮次排序，同轮次内按 YAML 中的选手顺序排序
+      try {
+        // 首先按轮次分组
+        const roundGroups = new Map<string, LevelFile[]>()
+        results.forEach(file => {
+          const round = file.roundKey || ''
+          if (!roundGroups.has(round)) {
+            roundGroups.set(round, [])
+          }
+          roundGroups.get(round)?.push(file)
+        })
+
+        // 对每个轮次组应用 YAML 中的选手顺序
+        const { buildPlayerJudgeMap } = await import('../utils/scoreCalculator')
+        for (const [round, files] of roundGroups) {
+          if (!round) continue
+          try {
+            const playerMapResult = buildPlayerJudgeMap(
+              yamlData,
+              selectedYear.value,
+              round
+            )
+            const playerCodeOrderMap = new Map(
+              Object.keys(playerMapResult.players || {}).map((code, index) => [code, index])
+            )
+            files.sort((a, b) => {
+              const orderA = playerCodeOrderMap.get(a.playerCode || '')
+              const orderB = playerCodeOrderMap.get(b.playerCode || '')
+              if (orderA !== undefined && orderB !== undefined && orderA !== orderB) {
+                return orderA - orderB
+              }
+              return a.name.localeCompare(b.name)
+            })
+          } catch (error) {
+            console.error(`排序轮次 ${round} 时出错:`, error)
+            files.sort((a, b) => (a.playerCode || '').localeCompare(b.playerCode || ''))
+          }
+        }
+
+        // 按轮次顺序重新组合结果
+        results = []
+        for (const round of roundOrder) {
+          if (roundGroups.has(round)) {
+            results.push(...(roundGroups.get(round) || []))
+          }
+        }
+        // 添加未知轮次的文件
+        const unknownRoundFiles = roundGroups.get('') || []
+        if (unknownRoundFiles.length > 0) {
+          unknownRoundFiles.sort((a, b) => a.name.localeCompare(b.name))
+          results.push(...unknownRoundFiles)
+        }
+      } catch (error) {
+        console.error('按轮次和选手顺序排序时出错:', error)
+        // 降级到基础排序
+        results.sort((a, b) => {
+          const aIndex = roundOrder.indexOf(a.roundKey || '')
+          const bIndex = roundOrder.indexOf(b.roundKey || '')
+          if (aIndex !== bIndex) {
+            if (aIndex === -1) return 1
+            if (bIndex === -1) return -1
+            return aIndex - bIndex
+          }
+          return (a.playerCode || '').localeCompare(b.playerCode || '')
+        })
+      }
     }
+    
+    searchResults.value = results
+    searched.value = true
   } catch (err) {
-    console.error('下载失败:', err)
-    alert('下载失败，请稍后重试')
+    error.value = err instanceof Error ? err.message : '未知错误'
+  } finally {
+    loading.value = false
   }
 }
 
-function closeFileDetails() {
-  showingFileDetails.value = false
-  selectedFileDetails.value = null
+function searchByKeyword() {
+  if (!searchKeyword.value.trim()) {
+    error.value = '请输入搜索关键词'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+  searchResults.value = []
+  searched.value = false
+
+  // 关键词处理：支持精确查找和模糊查找
+  const keyword = searchKeyword.value.trim()
+  const isExact = keyword.startsWith('"') && keyword.endsWith('"')
+  const processedKeyword = isExact ? keyword.slice(1, -1) : keyword
+
+  try {
+    // 从本地加载文件
+    fetchLevelFilesFromLocal().then(async files => {
+      let results = files.filter(file => {
+        // 精确查找
+        if (isExact) {
+          return file.name === processedKeyword || file.playerCode === processedKeyword
+        } else {
+          // 模糊查找
+          return (
+            (file.name && file.name.includes(processedKeyword)) ||
+            (file.playerCode && file.playerCode.includes(processedKeyword)) ||
+            (file.playerName && file.playerName.includes(processedKeyword))
+          )
+        }
+      })
+
+      // 按照选手顺序排序
+      if (yamlData) {
+        try {
+          const { buildPlayerJudgeMap } = await import('../utils/scoreCalculator')
+          const playerMapResult = buildPlayerJudgeMap(yamlData, selectedYear.value, selectedRound.value)
+          const playerCodeOrderMap = new Map(Object.keys(playerMapResult.players).map((code, index) => [code, index]))
+
+          results.sort((a, b) => {
+            const orderA = playerCodeOrderMap.get(a.playerCode || '')
+            const orderB = playerCodeOrderMap.get(b.playerCode || '')
+            
+            if (orderA !== undefined && orderB !== undefined) {
+              if (orderA !== orderB) return orderA - orderB
+            }
+            else if (orderA !== undefined) return -1
+            else if (orderB !== undefined) return 1
+            
+            return a.name.localeCompare(b.name)
+          })
+        } catch (error) {
+          console.error('排序时出错:', error)
+          // 降级到基本排序
+          results.sort((a, b) => a.name.localeCompare(b.name))
+        }
+      } else {
+        results.sort((a, b) => a.name.localeCompare(b.name))
+      }
+      
+      searchResults.value = results
+      searched.value = true
+    })
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '未知错误'
+  } finally {
+    loading.value = false
+  }
 }
+
+function downloadLevel(file: LevelFile) {
+  const url = `${LEVELS_BASE_URL}${file.path}`
+  const a = document.createElement('a')
+  a.href = url
+  a.download = file.name
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
+/**
+ * 判断某年P1是否为热身赛
+ * 2013-2015、2017、2018、2020-2025年P1为热身赛，其余为预选赛
+ */
+function isWarmupRound(year: number, roundKey: string): boolean {
+  const warmupYears = [2013, 2014, 2015, 2017, 2018, 2020, 2021, 2022, 2023, 2024, 2025];
+  return roundKey === 'P1' && warmupYears.includes(year);
+}
+
+function getRefinedRoundType(file: LevelFile): string {
+  if (!file.roundKey) return file.roundType || '-';
+  const year = file.year;
+  const roundKey = file.roundKey;
+  // 2019年小组赛特殊处理
+  if (year === 2019 && roundKey.startsWith('G')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `小组赛第${['一','二','三','四'][idx-1]||idx}题`;
+    }
+  }
+  if (roundKey.startsWith('G')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `小组赛第${['一','二','三','四'][idx-1]||idx}轮`;
+    }
+  }
+  if (roundKey.startsWith('I')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `初赛第${['一','二','三','四'][idx-1]||idx}题`;
+    }
+  }
+  if (roundKey.startsWith('R')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `复赛第${['一','二','三'][idx-1]||idx}题`;
+    }
+  }
+  if (roundKey.startsWith('Q')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `四分之一决赛第${['一','二'][idx-1]||idx}轮`;
+    }
+  }
+  if (roundKey.startsWith('S')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `半决赛第${['一','二'][idx-1]||idx}轮`;
+    }
+  }
+  // 预赛/热身赛/资格赛判断
+  if (roundKey === 'P1') {
+    if (typeof year === 'number' && isWarmupRound(year, roundKey)) {
+      return '热身赛';
+    } else {
+      return '预选赛';
+    }
+  }
+  return file.roundType || '-';
+}
+
 </script>
 
 <style scoped>
@@ -618,8 +687,6 @@ function closeFileDetails() {
 .filename {
   font-weight: 500;
   color: var(--text-primary);
-  text-align: left;
-  font-family: 'Courier New', monospace;
 }
 
 .complete {
@@ -632,13 +699,7 @@ function closeFileDetails() {
   font-weight: 600;
 }
 
-.file-size {
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-}
-
 .player-code {
-  font-family: 'Courier New', monospace;
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -663,13 +724,7 @@ function closeFileDetails() {
   box-shadow: var(--shadow-button);
 }
 
-.clickable-row {
-  cursor: pointer;
-}
 
-.clickable-row:hover {
-  background: rgba(255, 235, 220, 0.8);
-}
 
 .file-table {
   width: 100%;

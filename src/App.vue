@@ -2,12 +2,12 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import ScheduleTable from './components/ScheduleTable.vue'
 import RoundSelector from './components/RoundSelector.vue'
-import ChampionStatistics from './components/ChampionStatistics.vue'
 import LevelFileTest from './components/LevelFileSearch.vue'
-import RankingModule from './components/RankingModule.vue'
 import UploadSystem from './components/UploadSystem.vue'
+import UserManagement from './components/UserManagement.vue'
+import StatsAnalysis from './components/StatsAnalysis.vue'
 
-type TabType = 'schedule' | 'upload' | 'scores' | 'levels' | 'ranking' | 'champions'
+type TabType = 'schedule' | 'upload' | 'scores' | 'levels' | 'users' | 'stats'
 
 // 从 sessionStorage 获取上次访问的标签页，如果不存在则默认为 'schedule'
 // sessionStorage 在浏览器关闭后会自动清除，重新打开时会使用默认的 'schedule'
@@ -94,20 +94,20 @@ const openSidebar = () => {
           <span class="nav-text">关卡查询</span>
         </button>
         <button 
-          @click="setActiveTab('ranking')" 
-          :class="{ active: activeTab === 'ranking' }"
+          @click="setActiveTab('stats')" 
+          :class="{ active: activeTab === 'stats' }"
           class="nav-btn hover-scale"
         >
           <span class="nav-icon">📊</span>
-          <span class="nav-text">关卡排名</span>
+          <span class="nav-text">数据统计</span>
         </button>
         <button 
-          @click="setActiveTab('champions')" 
-          :class="{ active: activeTab === 'champions' }"
+          @click="setActiveTab('users')" 
+          :class="{ active: activeTab === 'users' }"
           class="nav-btn hover-scale"
         >
-          <span class="nav-icon">👑</span>
-          <span class="nav-text">冠军统计</span>
+          <span class="nav-icon">👥</span>
+          <span class="nav-text">用户管理</span>
         </button>
       </nav>
     </aside>
@@ -136,12 +136,11 @@ const openSidebar = () => {
             <LevelFileTest />
           </div>
           
-          <div v-else-if="activeTab === 'ranking'" class="content-panel animate-fadeInUp" key="ranking">
-            <RankingModule />
+          <div v-else-if="activeTab === 'stats'" class="content-panel animate-fadeInUp" key="stats-main">
+            <StatsAnalysis />
           </div>
-          
-          <div v-else-if="activeTab === 'champions'" class="content-panel animate-fadeInUp" key="champions">
-            <ChampionStatistics />
+          <div v-else-if="activeTab === 'users'" class="content-panel animate-fadeInUp" key="users">
+            <UserManagement />
           </div>
         </Transition>
       </div>

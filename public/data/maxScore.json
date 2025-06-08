@@ -1,5 +1,5 @@
 {
-  "specialLevels": {
+  "maxScore": {
     "2013": {
       "P1": {"base_score": 100, "bonus_score": 5},
       "P2": {"base_score": 100, "bonus_score": 5},

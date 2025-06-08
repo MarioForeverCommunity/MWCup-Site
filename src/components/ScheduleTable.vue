@@ -82,7 +82,7 @@ function getLinkText(link: string) {
 
 <template>
   <div class="page-header animate-fadeInUp">
-    <h2>Mario Worker 杯比赛日程</h2>
+    <h2>Mario Worker 杯赛程表</h2>
     
     <div class="control-panel">
       <div class="form-group">
@@ -197,7 +197,6 @@ function getLinkText(link: string) {
 }
 
 .time-cell {
-  font-family: 'Courier New', monospace;
   font-size: 13px;
   white-space: nowrap;
   text-align: center;

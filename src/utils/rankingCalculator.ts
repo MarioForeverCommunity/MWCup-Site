@@ -106,7 +106,7 @@ function getRoundName(roundKey: string, roundType: string): string {
  * 获取满分信息
  */
 function getMaxScore(year: number, roundKey: string): { baseScore: number; bonusScore: number; totalScore: number } {
-  const yearData = maxScoreData?.specialLevels?.[year.toString()];
+  const yearData = maxScoreData?.maxScore?.[year.toString()];
   if (!yearData || !yearData[roundKey]) {
     return { baseScore: 100, bonusScore: 0, totalScore: 100 };
   }
@@ -176,7 +176,7 @@ export async function calculateSingleLevelRanking(filters?: RankingFilters): Pro
         );
         
         if (playerScore && playerScore.validRecordsCount > 0) {
-          const finalScore = playerScore.averageScore;
+          const finalScore = Number(playerScore.averageScore);
           const scoreRate = (finalScore / maxScore.totalScore) * 100;
           // 获取评分方案
           const scoringScheme = getScoringScheme(level.year, level.roundKey);
@@ -282,7 +282,7 @@ export async function calculateMultiLevelRanking(filters?: RankingFilters): Prom
         );
         
         if (playerScore && playerScore.validRecordsCount > 0) {
-          const finalScore = playerScore.averageScore;
+          const finalScore = Number(playerScore.averageScore);
           const scoreRate = (finalScore / maxScore.totalScore) * 100;
           // 获取评分方案
           const scoringScheme = getScoringScheme(item.year, item.roundKey);
@@ -365,16 +365,15 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
               let baseScore = 0;
               for (const [key, value] of Object.entries(record.scores)) {
                 if (key !== '加分项' && key !== '扣分项' && key !== '换算后大众评分') {
-                  baseScore += value;
+                  baseScore += typeof value === 'number' ? value : Number(value);
                 }
               }
               originalScoreSum += baseScore;
               validCount++;
             }
           }
-          
           const originalScore = validCount > 0 ? Math.round(originalScoreSum / validCount * 10) / 10 : 0;
-          const finalScore = playerScore.averageScore;
+          const finalScore = Number(playerScore.averageScore);
           
           const originalScoreRate = (originalScore / maxScore.baseScore) * 100;
           const finalScoreRate = (finalScore / maxScore.totalScore) * 100;
@@ -415,16 +414,14 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
       console.warn(`Failed to load score data for ${year}${round}:`, error);
     }
   }
-  
   // 计算最终得分排名
-  finalItems.sort((a, b) => b.scoreRate - a.scoreRate);
+  finalItems.sort((a, b) => Number(b.scoreRate) - Number(a.scoreRate));
   const scoreRateRankMap = new Map<string, number>();
   finalItems.forEach((item, index) => {
     scoreRateRankMap.set(`${item.year}-${item.roundKey}-${item.playerCode}`, index + 1);
   });
-  
-  // 按原始得分率排序并设置排名
-  originalItems.sort((a, b) => b.originalScoreRate - a.originalScoreRate);
+    // 按原始得分率排序并设置排名
+  originalItems.sort((a, b) => Number(b.originalScoreRate) - Number(a.originalScoreRate));
   originalItems.forEach((item, index) => {
     item.originalRank = index + 1;
     item.scoreRateRank = scoreRateRankMap.get(`${item.year}-${item.roundKey}-${item.playerCode}`) || 0;

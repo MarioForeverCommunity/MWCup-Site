@@ -1,6 +1,6 @@
 <template>
   <div v-if="loading" class="content-panel">
-    <div class="loading-state animate-fadeInUp">
+    <div class="loading-state animate-pulse">
       <div class="loading-spinner"></div>
       <div class="loading-text">正在加载数据<span class="loading-dots"></span></div>
     </div>
@@ -12,7 +12,8 @@
   </div>
   <div v-else-if="scoreData" class="content-panel animate-fadeInUp">
     <div class="score-header">
-      <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届MW杯{{ roundDisplayName }}评分结果</h3>      <p class="scheme-info">评分标准: {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}</p>
+      <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届MW杯{{ roundDisplayName }}评分结果</h3>
+      <p class="scheme-info">评分标准: {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}</p>
     </div>
     <!-- 控制面板 -->
       <div class="control-panel">
@@ -140,14 +141,12 @@
                         <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
                       </div>
                     </td>
-                    <td 
-                      v-for="column in scoreData.columns" 
-                      :key="column"
-                      class="score-cell"
-                    >
+                    <td v-for="column in scoreData.columns" 
+                        :key="column" 
+                        class="score-cell">
                       {{ formatScore(record.scores[column]) }}
                     </td>
-                    <td class="total-score">{{ record.totalScore }}</td>
+                    <td class="judge-total">{{ formatScore(record.totalScore) }}</td>
                   </template>
                   <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
                     {{ getPlayerAverageScore(record.playerCode) }}
@@ -211,10 +210,9 @@
                   </template>
                 </td>
                 <td class="count">{{ player.validRecordsCount }}</td>
-                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ player.totalSum }}</td>
+                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ player.totalSum instanceof Decimal ? player.totalSum.toFixed(2) : player.totalSum }}</td>
               </template>
-
-              <td class="average">{{ player.averageScore }}</td>
+              <td class="average">{{ player.averageScore instanceof Decimal ? player.averageScore.toFixed(2) : player.averageScore }}</td>
             </tr>
           </tbody>
         </table>
@@ -230,9 +228,13 @@ import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
 import { fetchLevelFilesFromLocal, type LevelFile } from '../utils/levelFileHelper'
+import { Decimal } from 'decimal.js'
 
 // 通过 NoSubmissionRecord.d.ts 扩展了 ScoreRecord 类型，添加了 isNoSubmission 属性
 import '../NoSubmissionRecord.d.ts'
+
+// 设置Decimal的精度和舍入模式
+Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP })
 
 const props = defineProps<{
   year: string
@@ -308,7 +310,7 @@ const noSubmissionPlayers = computed(() => {
           playerName,
           judgeName: "未上传",
           scores: {},
-          totalScore: 0,
+          totalScore: new Decimal(0),
           isNoSubmission: true
         };
         noSubmissionRecords.push(noSubmissionRecord);
@@ -344,6 +346,22 @@ function isReEvaluationJudge(judgeCode: string, record: any): boolean {
     r.isRevoked && 
     r.judgeCode.replace(/^~/, '') === baseJudgeCode
   );
+}
+
+// 格式化分数显示
+const formatScore = (score: number | null | undefined): string => {
+  if (score === null || score === undefined) return '-'
+  const decimal = new Decimal(score)
+  const formattedScore = decimal.toFixed(2)
+  // 不显示 .00
+  if (formattedScore.endsWith('.00')) {
+    return decimal.toFixed(0)
+  }
+  // 如果以0结尾，只显示一位小数
+  if (formattedScore.endsWith('0')) {
+    return decimal.toFixed(1)
+  }
+  return formattedScore
 }
 
 // 筛选详细评分记录
@@ -507,14 +525,14 @@ const filteredPlayerScores = computed(() => {
       playerCode: record.playerCode,
       playerName: record.playerName,
       records: [record], // 只有一条"未上传"的记录
-      totalSum: 0,
-      averageScore: 0, // 未上传关卡选手的平均分为0
+      totalSum: new Decimal(0),
+      averageScore: new Decimal(0), // 未上传关卡选手的平均分为0
       validRecordsCount: 0 // 有效记录数为0
     }
-  });
+  })
   
   // 合并已有成绩和未上传关卡的选手
-  players = [...players, ...noSubmissionPlayerScores];
+  players = [...players, ...noSubmissionPlayerScores]
   
   // 按选手名称搜索
   if (searchPlayer.value.trim()) {
@@ -525,8 +543,13 @@ const filteredPlayerScores = computed(() => {
     )
   }
   
-  // 首先按平均分从高到低排序
-  players = [...players].sort((a, b) => b.averageScore - a.averageScore)
+  // 首先按平均分从高到低排序（Decimal）
+  players = [...players].sort((a, b) => {
+    // 兼容Decimal和number
+    const aScore = a.averageScore instanceof Decimal ? a.averageScore : new Decimal(a.averageScore)
+    const bScore = b.averageScore instanceof Decimal ? b.averageScore : new Decimal(b.averageScore)
+    return bScore.comparedTo(aScore)
+  })
   
   // 然后，对于同分数的选手，按YAML中的选手顺序排序
   try {
@@ -535,34 +558,28 @@ const filteredPlayerScores = computed(() => {
       yamlData.value, 
       scoreData.value.year, 
       scoreData.value.round
-    );
+    )
     
     // 创建一个根据YAML中的选手码顺序排序的映射
     const playerCodeOrderMap = new Map(
       Object.keys(playerMapResult.players).map((code, index) => [code, index])
-    );
+    )
     
     // 二次排序：对于平均分相同的选手，按照YAML中的选手顺序排序
     players = players.sort((a, b) => {
-      // 如果分数不同，保持原来的分数排序
-      if (a.averageScore !== b.averageScore) {
-        return b.averageScore - a.averageScore;
+      const aScore = a.averageScore instanceof Decimal ? a.averageScore : new Decimal(a.averageScore)
+      const bScore = b.averageScore instanceof Decimal ? b.averageScore : new Decimal(b.averageScore)
+      if (!aScore.equals(bScore)) {
+        return bScore.comparedTo(aScore)
       }
-      
-      // 如果分数相同，按照YAML中的选手顺序排序
-      const orderA = playerCodeOrderMap.get(a.playerCode);
-      const orderB = playerCodeOrderMap.get(b.playerCode);
-      
-      // 如果都有序号，按序号排序
+      const orderA = playerCodeOrderMap.get(a.playerCode)
+      const orderB = playerCodeOrderMap.get(b.playerCode)
       if (orderA !== undefined && orderB !== undefined) {
-        return orderA - orderB;
-      }
-      // 如果只有一方有序号，有序号的排前面
-      else if (orderA !== undefined) return -1;
-      else if (orderB !== undefined) return 1;
-      // 都没有序号，维持原来的顺序
-      else return 0;
-    });
+        return orderA - orderB
+      } else if (orderA !== undefined) return -1
+      else if (orderB !== undefined) return 1
+      else return 0
+    })
   } catch (error) {
     console.error('按选手顺序排序时出错:', error);
   }
@@ -652,29 +669,26 @@ function getScoringSchemeDisplayName(scheme: string | undefined): string {
   return schemeMap[scheme] || scheme
 }
 
-function formatScore(score: number | undefined): string {
-  if (score === undefined || score === null) {
-    return '-'
-  }
-  // 对数字类型进行格式化，保留一位小数
-  if (typeof score === 'number') {
-    return score.toFixed(1)
-  } else if (typeof score === 'string') {
-    return score
-  } else {
-    return '-'
-  }
-}
-
 // 获取选手的平均分
 function getPlayerAverageScore(playerCode: string): string {
   if (!scoreData.value) return '-';
-  
   const playerScore = scoreData.value.playerScores.find(p => p.playerCode === playerCode);
   if (!playerScore) return '-';
   
-  // 返回四舍五入到小数点后1位的分数
-  return playerScore.averageScore.toFixed(1);
+  // 创建Decimal对象，兼容两种类型
+  const decimal = typeof playerScore.averageScore === 'object' && 'toFixed' in playerScore.averageScore 
+    ? playerScore.averageScore
+    : new Decimal(playerScore.averageScore);
+    
+  // 规范化显示格式
+  const formattedScore = decimal.toFixed(2)
+  if (formattedScore.endsWith('.00')) {
+    return decimal.toFixed(0)
+  }
+  if (formattedScore.endsWith('0')) {
+    return decimal.toFixed(1)
+  }
+  return formattedScore
 }
 
 // 获取选手的关卡文件名
@@ -1051,11 +1065,10 @@ onMounted(() => {
   background-color: var(--primary-color);
   color: white;
   padding: 2px 5px;
-  border-radius: var(--radius-small);
+  border-radius: var(--radius-smallall);
   font-size: 11px;
   font-weight: bold;
   margin-right: 6px;
-  font-family: 'Courier New', monospace;
 }
 
 .player-name-text {
@@ -1092,7 +1105,6 @@ onMounted(() => {
 
 .score-cell {
   text-align: center;
-  font-family: 'Courier New', monospace;
   font-size: 13px;
 }
 
@@ -1144,13 +1156,11 @@ onMounted(() => {
 
 .count, .sum, .average {
   text-align: center;
-  font-family: 'Courier New', monospace;
   font-size: 13px;
 }
 
 .level-file {
   text-align: left;
-  font-family: 'Courier New', monospace;
   font-size: 13px;
   color: #495057;
   overflow: hidden;
@@ -1184,10 +1194,6 @@ onMounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .score-table-container {
-    padding: 10px;
-  }
-  
   .score-table th, .score-table td,
   .total-table th, .total-table td {
     padding: 6px 4px;

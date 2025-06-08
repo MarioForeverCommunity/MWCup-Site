@@ -176,7 +176,8 @@ export async function matchLevelFiles(): Promise<LevelMatch[]> {
           confidence = 'partial'
         }
       }
-    }    if (!bestMatch) {
+    }
+    if (!bestMatch) {
       // 模糊匹配：只根据选手码匹配
       bestMatch = players.find(p => 
         levelFile.playerCode && p.code.toUpperCase() === levelFile.playerCode.toUpperCase()

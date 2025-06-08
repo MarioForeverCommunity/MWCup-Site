@@ -1,8 +1,4 @@
 <template>
-  <div class="page-header animate-fadeInUp">
-    <h2 class="animate-textGlow">Mario Worker 杯历届冠军统计</h2>
-    <p>从2013年到2025年的所有决赛冠军信息</p>
-  </div>
   <div v-if="loading" class="loading-state animate-pulse">
     <div class="loading-spinner"></div>
     <div class="loading-text">正在加载数据<span class="loading-dots"></span></div>
@@ -55,6 +51,7 @@ import { ref, onMounted, computed } from 'vue'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
 import { loadRoundScoreData } from '../utils/scoreCalculator'
+import { Decimal } from 'decimal.js'
 
 interface ChampionInfo {
   year: string
@@ -95,11 +92,14 @@ async function loadChampions() {
           // 尝试加载并使用决赛评分数据
           const scoreData = await loadRoundScoreData(year, 'F', yamlDoc)
           if (scoreData?.playerScores?.length > 0) {
-            // 按平均分排序
+            // 按平均分排序，兼容Decimal
             const sortedPlayers = [...scoreData.playerScores].sort(
-              (a, b) => (b.averageScore ?? 0) - (a.averageScore ?? 0)
+              (a, b) => {
+                const aScore = a.averageScore instanceof Decimal ? a.averageScore : new Decimal(a.averageScore ?? 0)
+                const bScore = b.averageScore instanceof Decimal ? b.averageScore : new Decimal(b.averageScore ?? 0)
+                return bScore.comparedTo(aScore)
+              }
             )
-            
             // 分配名次
             championInfo.first = sortedPlayers[0].playerName
             if (sortedPlayers.length > 1) championInfo.second = sortedPlayers[1].playerName
@@ -162,8 +162,8 @@ async function loadChampions() {
                     if (s1Data?.playerScores) {
                       s1Data.playerScores.forEach(p => {
                         if (p.averageScore !== undefined) {
-                          playerScores[p.playerName] = { 
-                            total: p.averageScore,
+                          playerScores[p.playerName] = {
+                            total: Number(p.averageScore),
                             count: 1
                           }
                         }
@@ -174,12 +174,13 @@ async function loadChampions() {
                     if (s2Data?.playerScores) {
                       s2Data.playerScores.forEach(p => {
                         if (p.averageScore !== undefined) {
+                          // S1/S2合并分数
                           if (playerScores[p.playerName]) {
-                            playerScores[p.playerName].total += p.averageScore
+                            playerScores[p.playerName].total = Number(playerScores[p.playerName].total) + Number(p.averageScore)
                             playerScores[p.playerName].count += 1
                           } else {
                             playerScores[p.playerName] = {
-                              total: p.averageScore,
+                              total: Number(p.averageScore),
                               count: 1
                             }
                           }
@@ -199,7 +200,7 @@ async function loadChampions() {
                     if (semifinalData?.playerScores) {
                       semifinalPlayers = semifinalData.playerScores.map(p => ({
                         playerName: p.playerName,
-                        averageScore: p.averageScore ?? 0
+                        averageScore: typeof p.averageScore === 'object' && 'toNumber' in p.averageScore ? p.averageScore.toNumber() : Number(p.averageScore)
                       }))
                     }
                   }
@@ -226,7 +227,7 @@ async function loadChampions() {
                   if (semifinalData?.playerScores) {
                     semifinalPlayers = semifinalData.playerScores.map(p => ({
                       playerName: p.playerName,
-                      averageScore: p.averageScore ?? 0
+                      averageScore: Number(p.averageScore)
                     }))
                     
                     // 查找在YAML中有但评分数据中没有的选手（未上传）
@@ -245,7 +246,7 @@ async function loadChampions() {
                   if (semifinalData?.playerScores) {
                     semifinalPlayers = semifinalData.playerScores.map(p => ({
                       playerName: p.playerName,
-                      averageScore: p.averageScore ?? 0
+                      averageScore: Number(p.averageScore)
                     }))
                   }
                 }
@@ -257,7 +258,7 @@ async function loadChampions() {
                   // 找出半决赛中未进入决赛的选手
                   const eliminatedPlayers = semifinalPlayers
                     .filter(p => !finalistNames.includes(p.playerName))
-                    .sort((a, b) => b.averageScore - a.averageScore)
+                    .sort((a, b) => Number(b.averageScore) - Number(a.averageScore))
                   
                   if (eliminatedPlayers.length > 0) championInfo.third = eliminatedPlayers[0].playerName
                   if (eliminatedPlayers.length > 1) championInfo.fourth = eliminatedPlayers[1].playerName
@@ -330,7 +331,7 @@ async function loadChampions() {
                   })
                 }
               }
-              // 处理有S1、S2两轮的半决赛（2013、2016年）
+              // 处理有S1、S2两轮的半决赛（2013、2016）
               else if (['2013', '2016'].includes(year)) {
                 try {
                   const s1Data = await loadRoundScoreData(year, 'S1', yamlDoc)
@@ -341,8 +342,8 @@ async function loadChampions() {
                   if (s1Data?.playerScores) {
                     s1Data.playerScores.forEach(p => {
                       if (p.averageScore !== undefined) {
-                        playerScores[p.playerName] = { 
-                          total: p.averageScore,
+                        playerScores[p.playerName] = {
+                          total: Number(p.averageScore),
                           count: 1
                         }
                       }
@@ -352,12 +353,13 @@ async function loadChampions() {
                   if (s2Data?.playerScores) {
                     s2Data.playerScores.forEach(p => {
                       if (p.averageScore !== undefined) {
+                        // S1/S2合并分数
                         if (playerScores[p.playerName]) {
-                          playerScores[p.playerName].total += p.averageScore
+                          playerScores[p.playerName].total = Number(playerScores[p.playerName].total) + Number(p.averageScore)
                           playerScores[p.playerName].count += 1
                         } else {
                           playerScores[p.playerName] = {
-                            total: p.averageScore,
+                            total: Number(p.averageScore),
                             count: 1
                           }
                         }
@@ -376,7 +378,7 @@ async function loadChampions() {
                   if (semifinalData?.playerScores) {
                     semifinalPlayers = semifinalData.playerScores.map(p => ({
                       playerName: p.playerName,
-                      averageScore: p.averageScore ?? 0
+                      averageScore: typeof p.averageScore === 'object' && 'toNumber' in p.averageScore ? p.averageScore.toNumber() : Number(p.averageScore)
                     }))
                   }
                 }
@@ -403,7 +405,7 @@ async function loadChampions() {
                 if (semifinalData?.playerScores) {
                   semifinalPlayers = semifinalData.playerScores.map(p => ({
                     playerName: p.playerName,
-                    averageScore: p.averageScore ?? 0
+                    averageScore: Number(p.averageScore)
                   }))
                   
                   // 查找在YAML中有但评分数据中没有的选手（未上传）
@@ -422,7 +424,7 @@ async function loadChampions() {
                 if (semifinalData?.playerScores) {
                   semifinalPlayers = semifinalData.playerScores.map(p => ({
                     playerName: p.playerName,
-                    averageScore: p.averageScore ?? 0
+                    averageScore: Number(p.averageScore)
                   }))
                 }
               }
@@ -434,7 +436,7 @@ async function loadChampions() {
                 // 找出半决赛中未进入决赛的选手
                 const eliminatedPlayers = semifinalPlayers
                   .filter(p => !finalistNames.includes(p.playerName))
-                  .sort((a, b) => b.averageScore - a.averageScore)
+                  .sort((a, b) => Number(b.averageScore) - Number(a.averageScore))
                 
                 if (eliminatedPlayers.length > 0) championInfo.third = eliminatedPlayers[0].playerName
                 if (eliminatedPlayers.length > 1) championInfo.fourth = eliminatedPlayers[1].playerName

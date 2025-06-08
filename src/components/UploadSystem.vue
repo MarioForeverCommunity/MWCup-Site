@@ -69,8 +69,8 @@ const changeYear = (year: string) => {
 
 .year-selector {
   display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
   justify-content: center;
 }
 

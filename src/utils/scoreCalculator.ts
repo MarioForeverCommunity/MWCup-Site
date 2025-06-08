@@ -2,33 +2,36 @@
  * 比赛评分计算工具类
  */
 
-// import { loadUserMapping } from './userMapper'
+import { Decimal } from 'decimal.js';
+
+// 设置Decimal的精度和舍入模式
+Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
 
 export interface ScoreRecord {
   playerCode: string;
   judgeCode: string;
-  originalJudgeCode: string; // 添加原始judge code
+  originalJudgeCode: string;
   playerName: string;
   judgeName: string;
-  scores: { [key: string]: number };
-  bonusPoints?: number;
-  penaltyPoints?: number;
-  totalScore: number;
+  scores: { [key: string]: Decimal };  // 修改为Decimal类型
+  bonusPoints?: Decimal;  // 修改为Decimal类型
+  penaltyPoints?: Decimal;  // 修改为Decimal类型
+  totalScore: Decimal;  // 修改为Decimal类型
   isRevoked?: boolean;
   isBackup?: boolean;
   isCollaborative?: boolean;
   collaborativeJudges?: string[];
-  scoringScheme?: string; // 添加评分方案字段
-  isNoSubmission?: boolean; // 标识未上传关卡的选手
-  isCanceled?: boolean; // 标识成绩无效的选手
+  scoringScheme?: string;
+  isNoSubmission?: boolean;
+  isCanceled?: boolean;
 }
 
 export interface PlayerScore {
   playerCode: string;
   playerName: string;
   records: ScoreRecord[];
-  totalSum: number;
-  averageScore: number;
+  totalSum: Decimal;  // 修改为Decimal类型
+  averageScore: Decimal;  // 修改为Decimal类型
   validRecordsCount: number;
 }
 
@@ -66,7 +69,8 @@ export function parseCsvToScoreRecords(
     const lines = csvText.trim().split('\n');
     if (lines.length === 0) {
       throw new Error('CSV文件为空');
-    }    // 解析表头
+    }
+    // 解析表头
     const headers = lines[0].split(',').map(h => h.trim());
     let playerCodeIndex = headers.findIndex(h => h === '选手码');
     let isUsernameFormat = false;
@@ -100,7 +104,8 @@ export function parseCsvToScoreRecords(
     const expectedColumns = SCORING_SCHEMES[scoringScheme as keyof typeof SCORING_SCHEMES];
     if (!expectedColumns) {
       throw new Error(`未知的评分方案: ${scoringScheme}`);
-    }  // 解析数据行
+    }
+    // 解析数据行
   const records: ScoreRecord[] = [];
   const playerMap = buildPlayerJudgeMap(yamlData, year, round);
   // 用于跟踪成绩无效的选手
@@ -108,7 +113,8 @@ export function parseCsvToScoreRecords(
   
   // 先解析所有记录，但不处理评委名称
   for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);    if (values.length < 2) continue;
+    const values = parseCSVLine(lines[i]);
+    if (values.length < 2) continue;
 
     const originalPlayerValue = values[playerCodeIndex]?.trim();
     const judgeCode = values[judgeCodeIndex]?.trim();
@@ -140,18 +146,18 @@ export function parseCsvToScoreRecords(
     }
 
     // 解析分数
-    const scores: { [key: string]: number } = {};
-    let totalScore = 0;
-    let bonusPoints = 0;
-    let penaltyPoints = 0;
+    const scores: { [key: string]: Decimal } = {};
+    let totalScore = new Decimal(0);
+    let bonusPoints = new Decimal(0);
+    let penaltyPoints = new Decimal(0);
 
     for (let j = 2; j < headers.length && j < values.length; j++) {
       const header = headers[j].trim();
       const value = values[j]?.trim();
       
       if (value && value !== '') {
-        const numValue = parseFloat(value);
-        if (!isNaN(numValue)) {
+        const numValue = new Decimal(value);
+        if (!numValue.isNaN()) {
           scores[header] = numValue;
           
           if (header === '加分项') {
@@ -159,14 +165,14 @@ export function parseCsvToScoreRecords(
           } else if (header === '扣分项') {
             penaltyPoints = numValue;
           } else if (header !== '换算后大众评分') {
-            totalScore += numValue;
+            totalScore = totalScore.plus(numValue);
           }
         }
       }
     }
 
     // 计算最终总分（四舍五入到一位小数）
-    const finalScore = Math.round((totalScore + bonusPoints + penaltyPoints) * 10) / 10;
+    const finalScore = totalScore.plus(bonusPoints).plus(penaltyPoints).toDecimalPlaces(1);
     // 如果是协商评分，直接从YAML中查找评委名称而不是使用CSV中的judgeCode
     const judgeName = judgeInfo.isCollaborative 
       ? judgeInfo.collaborativeJudges?.map(j => getJudgeName(j, playerMap, playerCode)).join(', ') || ''
@@ -179,15 +185,16 @@ export function parseCsvToScoreRecords(
       playerName,
       judgeName: judgeName, // 协商评分的名称会在这里填充，其他评委稍后填充
       scores,
-      bonusPoints: bonusPoints || undefined,
-      penaltyPoints: penaltyPoints || undefined,
+      bonusPoints: bonusPoints.isZero() ? undefined : bonusPoints,
+      penaltyPoints: penaltyPoints.isZero() ? undefined : penaltyPoints,
       totalScore: finalScore,
       isRevoked: judgeInfo.isRevoked,
       isBackup: judgeInfo.isBackup,
       isCollaborative: judgeInfo.isCollaborative,
       collaborativeJudges: judgeInfo.collaborativeJudges
     });
-  }  // 检测协商评分（相同选手两个评委的所有评分子项均相同时视为协商评分）
+  }
+  // 检测协商评分（相同选手两个评委的所有评分子项均相同时视为协商评分）
   const playerJudgeScores: { [key: string]: { [key: string]: ScoreRecord } } = {};
   
   // 先按选手和评分项组织数据
@@ -267,7 +274,7 @@ export function parseCsvToScoreRecords(
         playerName,
         judgeName: "成绩无效",
         scores: {},
-        totalScore: 0,
+        totalScore: new Decimal(0),
         isCanceled: true
       };
       
@@ -278,8 +285,8 @@ export function parseCsvToScoreRecords(
         playerCode: actualPlayerCode,
         playerName,
         records: [canceledRecord],
-        totalSum: 0,
-        averageScore: 0,
+        totalSum: new Decimal(0),
+        averageScore: new Decimal(0),
         validRecordsCount: 0
       });
     }
@@ -512,8 +519,8 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
     const validRecords = playerRecords.filter(r => !r.isRevoked);
     if (validRecords.length === 0) continue;
 
-    let totalSum = 0;
-    let averageScore = 0;
+    let totalSum = new Decimal(0);
+    let averageScore = new Decimal(0);
     if (scoringScheme === 'D') {
       // 方案D特殊处理
       // 1. 评委评分员（J1/J2）每人一票按两票计入，大众评分员（JZx）一票计一票
@@ -528,7 +535,7 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
         judgeRecords.push(r);
       });
       // 票权展开
-      const weightedScores: {score: number, judgeType: 'judge'|'public', record: ScoreRecord}[] = [];
+      const weightedScores: {score: Decimal, judgeType: 'judge'|'public', record: ScoreRecord}[] = [];
       for (const rec of judgeRecords) {
         // 评委评分员：J1/J2（或以J开头且不是JZ）
         if (/^J\d+$/i.test(rec.judgeCode)) {
@@ -544,7 +551,7 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
       // 去除一个最高分和一个最低分（评委的两票只去除一票）
       if (weightedScores.length >= 5) {
         // 先排序
-        const sorted = [...weightedScores].sort((a, b) => a.score - b.score);
+        const sorted = [...weightedScores].sort((a, b) => a.score.comparedTo(b.score));
         // 找到最高分和最低分的下标
         let minIdx = 0;
         let maxIdx = sorted.length - 1;
@@ -564,38 +571,38 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
           removedPublic++;
         }
         // 构建剩余分数
-        const remain: number[] = [];
+        const remain: Decimal[] = [];
         for (let i = 0; i < sorted.length; i++) {
           if (i === minIdx || i === maxIdx) continue;
           remain.push(sorted[i].score);
         }
         // 取平均
-        averageScore = remain.length > 0 ? Math.round(remain.reduce((a, b) => a + b, 0) / remain.length * 10) / 10 : 0;
-        totalSum = remain.reduce((a, b) => a + b, 0);
+        averageScore = remain.length > 0 ? remain.reduce((a, b) => a.plus(b), new Decimal(0)).div(remain.length).toDecimalPlaces(1) : new Decimal(0);
+        totalSum = remain.reduce((a, b) => a.plus(b), new Decimal(0));
       } else {
         // 票数不足，直接平均
-        averageScore = Math.round(weightedScores.reduce((a, b) => a + b.score, 0) / weightedScores.length * 10) / 10;
-        totalSum = weightedScores.reduce((a, b) => a + b.score, 0);
+        averageScore = weightedScores.reduce((a, b) => a.plus(b.score), new Decimal(0)).div(weightedScores.length).toDecimalPlaces(1);
+        totalSum = weightedScores.reduce((a, b) => a.plus(b.score), new Decimal(0));
       }
     } else if (scoringScheme === 'E') {
       // 方案E：每个选手只有一条记录，直接用该行的totalScore和换算后大众评分加权
       const record = validRecords[0];
       const judgeScore = record.totalScore;
-      const publicScore = record.scores['换算后大众评分'] || 0;
-      let avg = judgeScore * 0.75 + publicScore * 0.25;
-      averageScore = Number(Number(avg.toFixed(2)).toFixed(1));
+      const publicScore = record.scores['换算后大众评分'] || new Decimal(0);
+      let avg = judgeScore.times(0.75).plus(publicScore.times(0.25));
+      averageScore = avg.toDecimalPlaces(1);
       totalSum = judgeScore;
     } else {
       // 其他评分方案的正常计算
-      totalSum = validRecords.reduce((sum, record) => sum + record.totalScore, 0);
-      averageScore = Math.round(totalSum / validRecords.length * 10) / 10;
+      totalSum = validRecords.reduce((sum, record) => sum.plus(record.totalScore), new Decimal(0));
+      averageScore = totalSum.div(validRecords.length).toDecimalPlaces(1);
     }
 
     playerScores.push({
       playerCode,
       playerName: validRecords[0].playerName,
       records: validRecords,
-      totalSum: Number((totalSum).toFixed(1)),
+      totalSum: totalSum.toDecimalPlaces(1),
       averageScore,
       validRecordsCount: validRecords.length
     });
@@ -618,7 +625,7 @@ function determineDisplayColumns(headers: string[], records: ScoreRecord[]): str
     const hasValue = records.some(record => 
       record.scores[header] !== undefined && 
       record.scores[header] !== null &&
-      record.scores[header] !== 0
+      !(record.scores[header] instanceof Decimal && record.scores[header].isZero())
     );
     
     if (hasValue) {
@@ -720,6 +727,7 @@ function handleDirectScores(yamlData: any, year: string, round: string): RoundSc
     for (const [playerCode, score] of Object.entries(roundData.scores)) {
       if (typeof score === 'number') {
         const playerName = getPlayerName(playerCode, playerMap);
+        const decimalScore = new Decimal(score);
         
         const record: ScoreRecord = {
           playerCode,
@@ -727,8 +735,8 @@ function handleDirectScores(yamlData: any, year: string, round: string): RoundSc
           originalJudgeCode: 'TOTAL',
           playerName,
           judgeName: 'MW杯组委会',
-          scores: { '总分': score },
-          totalScore: score,
+          scores: { '总分': decimalScore },
+          totalScore: decimalScore,
           isRevoked: false,
           isBackup: false,
           isCollaborative: false,
@@ -740,8 +748,8 @@ function handleDirectScores(yamlData: any, year: string, round: string): RoundSc
           playerCode,
           playerName,
           records: [record],
-          totalSum: score,
-          averageScore: score,
+          totalSum: decimalScore,
+          averageScore: decimalScore,
           validRecordsCount: 1
         });
       }

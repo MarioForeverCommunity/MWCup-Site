@@ -325,17 +325,16 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolde
       if (file.name.endsWith('.smwl') || file.name.endsWith('.smws') || file.name.endsWith('.mfl') || file.name.endsWith('.MFL') || file.name.endsWith('.mfs')) {
         // 先提取年份和轮次信息，用于选手码识别
         const { year, roundType } = extractYearAndRound(fileRelativePath);
-        
         // 优先使用父文件夹的选手码（多关卡题情况），否则从文件名提取
         let playerCode = parentFolderPlayerCode || extractPlayerCode(file.name, year, roundType, mwcupData);
-        
         // 只有能提取到有效选手码的文件才添加到索引中
         if (playerCode) {
           const stat = fs.statSync(fullPath);
           const playerInfo = findPlayerInfo(year, roundType, playerCode, mwcupData, fileRelativePath);
-            // 根据后缀名判断是否为多关卡文件
+          // 根据后缀名判断是否为多关卡文件
           const isMultiLevelFile = file.name.endsWith('.mfs') || file.name.endsWith('.smws');
-          
+          // 新增：精细化 roundType
+          const refinedRoundType = refineRoundType(playerInfo?.roundType || roundType, playerInfo?.roundKey, year ? parseInt(year) : null);
           const levelFile = {
             name: file.name,
             path: fileRelativePath,
@@ -344,7 +343,7 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolde
             playerCode: playerInfo?.matchedCode || playerCode,
             // 新增的关联信息
             year: year ? parseInt(year) : null,
-            roundType: roundType,
+            roundType: refinedRoundType,
             playerName: playerInfo?.playerName || null,
             roundKey: playerInfo?.roundKey || null,
             groupCode: playerInfo?.groupCode || null,
@@ -359,7 +358,6 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolde
               playerCode: parentFolderInfo?.playerCode || parentFolderPlayerCode
             } : null
           };
-          
           output.push(levelFile);
           
           if (playerInfo) {
@@ -500,6 +498,51 @@ function isMultiLevelRound(filePath) {
   }
   
   return false;
+}
+
+/**
+ * 根据 roundKey 精细化 roundType
+ */
+function refineRoundType(roundType, roundKey, year) {
+  if (!roundKey) return roundType;
+  // 2019年小组赛特殊处理
+  if (year === 2019 && roundKey.startsWith('G')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `小组赛第${['一','二','三','四'][idx-1]||idx}题`;
+    }
+  }
+  if (roundKey.startsWith('G')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `小组赛第${['一','二','三','四'][idx-1]||idx}轮`;
+    }
+  }
+  if (roundKey.startsWith('I')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `初赛第${['一','二','三','四'][idx-1]||idx}题`;
+    }
+  }
+  if (roundKey.startsWith('R')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `复赛第${['一','二','三'][idx-1]||idx}题`;
+    }
+  }
+  if (roundKey.startsWith('Q')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `四分之一决赛第${['一','二'][idx-1]||idx}轮`;
+    }
+  }
+  if (roundKey.startsWith('S')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `半决赛第${['一','二'][idx-1]||idx}轮`;
+    }
+  }
+  return roundType;
 }
 
 try {
