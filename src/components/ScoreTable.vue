@@ -183,12 +183,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(player, index) in filteredPlayerScores" :key="player.playerCode">
+            <tr v-for="(player, _index) in filteredPlayerScoresWithRank" :key="player.playerCode">
               <!-- 成绩无效的选手，排名显示为横杠，但得分保持显示原始值 -->
               <td class="rank">
                 <template v-if="player.records.length > 0 && player.records[0].isCanceled">-</template>
                 <template v-else-if="player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传'">-</template>
-                <template v-else>{{ index + 1 }}</template>
+                <template v-else>{{ player.displayRank }}</template>
               </td>
               <td class="player-name">
                 <span v-if="player.playerCode !== player.playerName && !player.playerCode.startsWith('~')" class="player-code">{{ player.playerCode }}</span>
@@ -210,7 +210,8 @@
                     <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
                   </template>
                 </td>
-                <td class="count">{{ player.validRecordsCount }}</td>                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ formatScore(player.totalSum) }}</td>
+                <td class="count">{{ player.validRecordsCount }}</td>
+                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ formatScore(player.totalSum) }}</td>
               </template>
               <td class="average">{{ formatScore(player.averageScore) }}</td>
             </tr>
@@ -594,6 +595,34 @@ const filteredPlayerScores = computed(() => {
   }
   
   return players
+})
+
+// 总分排名并列排名算法
+function assignRankingWithTiesForTotal(players: any[], scoreField: string = 'averageScore', rankField: string = 'displayRank') {
+  let lastScore: string | null = null
+  let lastRank = 0
+  let skip = 0
+  for (let i = 0; i < players.length; i++) {
+    // 统一格式化分数字符串，避免小数精度误差
+    const currScore = players[i][scoreField] instanceof Decimal
+      ? players[i][scoreField].toFixed(3)
+      : new Decimal(players[i][scoreField]).toFixed(3)
+    if (lastScore !== null && currScore === lastScore) {
+      players[i][rankField] = lastRank
+      skip++
+    } else {
+      players[i][rankField] = lastRank + 1 + skip
+      lastRank = players[i][rankField]
+      skip = 0
+    }
+    lastScore = currScore
+  }
+}
+
+const filteredPlayerScoresWithRank = computed(() => {
+  const arr = filteredPlayerScores.value.slice()
+  assignRankingWithTiesForTotal(arr, 'averageScore', 'displayRank')
+  return arr
 })
 
 async function loadScoreData() {

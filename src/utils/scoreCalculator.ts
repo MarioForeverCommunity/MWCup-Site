@@ -33,6 +33,7 @@ export interface PlayerScore {
   totalSum: Decimal;  // 修改为Decimal类型
   averageScore: Decimal;  // 修改为Decimal类型
   validRecordsCount: number;
+  displayRank?: number; // 并列排名显示用，可选
 }
 
 export interface RoundScoreData {

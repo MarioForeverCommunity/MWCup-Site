@@ -1,7 +1,8 @@
 <template>
   <div class="attendance-stats animate-fadeInUp">
     <div class="page-header animate-fadeInDown">
-      <div class="control-panel">        <div class="form-group">
+      <div class="control-panel">
+        <div class="form-group">
           <label class="form-label">选择届次</label>
           <select v-model="selectedYear" class="form-control hover-scale">
             <option value="">全部届次</option>

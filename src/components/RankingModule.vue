@@ -40,14 +40,14 @@
         <label class="form-label">筛选届次：</label>
         <select v-model="filters.selectedYear" class="form-control hover-scale" @change="handleFilterChange">
           <option value="">全部届次</option>
-          <option v-for="year in availableYears" :key="year" :value="year.toString()">
+          <option v-for="year in availableYearsFiltered" :key="year" :value="year.toString()">
             {{ getEditionString(year) }}
           </option>
         </select>
       </div>
       
       <div class="form-group scoring-scheme-filters">
-        <label class="form-label">筛选评分标准：</label>
+        <label class="form-label">筛选：</label>
         <div class="checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.A" @change="handleFilterChange">
@@ -69,8 +69,13 @@
             <input type="checkbox" v-model="filters.scoringSchemes.E" @change="handleFilterChange">
             <span class="checkbox-text">2025 大众评分标准</span>
           </label>
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="filters.onlyHighScore" @change="handleFilterChange">
+            <span class="checkbox-text">仅显示得分率高于 87%</span>
+          </label>
         </div>
       </div>
+      <p class="scoring-note">注：榜单不含 2012 年关卡；由于 2025 年新大众评分方案不兼容，原始得分率榜单暂时剔除了使用新方案评分的关卡。</p>
     </div>
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state animate-pulse">
@@ -177,7 +182,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in filteredOriginalScoreRanking" :key="`${item.year}-${item.roundKey}-${item.playerCode}`">
+              <tr v-for="item in filteredOriginalScoreRanking.slice().sort((a, b) => a.originalRank - b.originalRank)" :key="`${item.year}-${item.roundKey}-${item.playerCode}`">
                 <td :class="getRankClass(item.originalRank)">{{ item.originalRank }}</td>
                 <td :class="getRankClass(item.scoreRateRank)">{{ item.scoreRateRank }}</td>
                 <td :class="getRankChangeClass(item.rankChange)">
@@ -240,7 +245,8 @@ const filters = reactive<RankingFilters>({
     C: true,
     D: true,
     E: true
-  }
+  },
+  onlyHighScore: true
 })
 
 // 标签页配置
@@ -250,17 +256,47 @@ const tabs = [
   { key: 'original' as const, label: '原始得分率排名' }
 ]
 
+// 并列排名算法，支持动态字段赋值
+function assignRankingWithTies<T extends Record<string, any>>(items: T[], rankField: string = 'rank') {
+  let lastScore = null
+  let lastRank = 0
+  let skip = 0
+  for (let i = 0; i < items.length; i++) {
+    const currScore = Number(items[i].scoreRate)
+    if (lastScore !== null && Math.abs(currScore - lastScore) < 1e-6) {
+      (items[i] as any)[rankField] = lastRank
+      skip++
+    } else {
+      (items[i] as any)[rankField] = lastRank + 1 + skip
+      lastRank = (items[i] as any)[rankField]
+      skip = 0
+    }
+    lastScore = currScore
+  }
+}
+
 // 计算属性：过滤后的数据
 const filteredSingleLevelRanking = computed(() => {
-  return applySingleLevelFilters(singleLevelRanking.value, filters)
+  const arr = applySingleLevelFilters(singleLevelRanking.value, filters)
+  assignRankingWithTies(arr, 'rank')
+  return arr
 })
 
 const filteredMultiLevelRanking = computed(() => {
-  return applyMultiLevelFilters(multiLevelRanking.value, filters)
+  const arr = applyMultiLevelFilters(multiLevelRanking.value, filters)
+  assignRankingWithTies(arr, 'rank')
+  return arr
 })
 
 const filteredOriginalScoreRanking = computed(() => {
-  return applyOriginalScoreFilters(originalScoreRanking.value, filters)
+  const arr = applyOriginalScoreFilters(originalScoreRanking.value, filters)
+  // 原始分排名
+  arr.sort((a, b) => b.originalScoreRate - a.originalScoreRate)
+  assignRankingWithTies(arr, 'originalRank')
+  // 得分率排名
+  arr.sort((a, b) => b.scoreRate - a.scoreRate)
+  assignRankingWithTies(arr, 'scoreRateRank')
+  return arr
 })
 
 // 初始化
@@ -334,9 +370,14 @@ function getEditionString(year: number): string {
   return editionMap[year] || `${year}年`
 }
 
+// 可用届次（移除2012）
+const availableYearsFiltered = computed(() => availableYears.value.filter(y => y !== 2012))
+
 // 过滤器函数
 function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilters): LevelRankingItem[] {
   let filtered = items
+  // 剔除2012年关卡
+  filtered = filtered.filter(item => item.year !== 2012)
   
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.toLowerCase()
@@ -366,6 +407,11 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
     if (enabledSchemes.length > 0) {
       filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
     }
+  }
+
+  // 仅显示得分率高于87%
+  if (filters.onlyHighScore) {
+    filtered = filtered.filter(item => item.scoreRate > 87)
   }
   
   return filtered
@@ -373,6 +419,8 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
 
 function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: RankingFilters): MultiLevelRankingItem[] {
   let filtered = items
+  // 剔除2012年关卡
+  filtered = filtered.filter(item => item.year !== 2012)
   
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.toLowerCase()
@@ -402,6 +450,11 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
     if (enabledSchemes.length > 0) {
       filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
     }
+  }
+
+  // 仅显示得分率高于87%
+  if (filters.onlyHighScore) {
+    filtered = filtered.filter(item => item.scoreRate > 87)
   }
   
   return filtered
@@ -409,6 +462,8 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
 
 function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: RankingFilters): OriginalScoreRankingItem[] {
   let filtered = items
+  // 剔除2012和2025年关卡
+  filtered = filtered.filter(item => item.year !== 2012 && item.year !== 2025)
   
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.toLowerCase()
@@ -438,6 +493,11 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: R
     if (enabledSchemes.length > 0) {
       filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
     }
+  }
+
+  // 仅显示得分率高于87%
+  if (filters.onlyHighScore) {
+    filtered = filtered.filter(item => item.scoreRate > 87)
   }
   
   return filtered
@@ -706,6 +766,11 @@ td:first-child {
   border-collapse: collapse;
   background: rgba(255, 252, 248, 0.9);
   backdrop-filter: blur(8px);
+}
+
+.scoring-note {
+  color: #e74c3c;
+  font-size: 14px;
 }
 
 @media (min-width: 768px) {

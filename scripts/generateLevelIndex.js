@@ -167,7 +167,8 @@ function findPlayerInfo(year, roundType, playerCode, mwcupData, filePath) {
           if (specificRound === '第一轮' || specificRound === '第一题') matchingKey = keyArray.find(key => key.endsWith('1'));
           else if (specificRound === '第二轮' || specificRound === '第二题') matchingKey = keyArray.find(key => key.endsWith('2'));
           else if (specificRound === '第三轮' || specificRound === '第三题') matchingKey = keyArray.find(key => key.endsWith('3'));
-          else if (specificRound === '第四轮' || specificRound === '第四题') matchingKey = keyArray.find(key => key.endsWith('4'));        finalRoundKey = matchingKey || keyArray[0];
+          else if (specificRound === '第四轮' || specificRound === '第四题') matchingKey = keyArray.find(key => key.endsWith('4'));
+          finalRoundKey = matchingKey || keyArray[0];
         } else if (isArrayKey) {
           const keyArray = roundKey.split(',').map(k => k.trim());
           finalRoundKey = keyArray[0];

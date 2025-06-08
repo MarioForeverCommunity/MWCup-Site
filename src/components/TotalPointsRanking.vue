@@ -1,7 +1,8 @@
 <template>
   <div class="total-points-ranking animate-fadeInUp">
     <div class="page-header animate-fadeInDown">
-      <div class="control-panel">        <div class="form-group">
+      <div class="control-panel">
+        <div class="form-group">
           <label for="year-select" class="form-label">选择届次：</label>
           <select id="year-select" v-model="selectedYear" @change="loadData" class="form-control hover-scale">
             <option v-for="option in availableEditionOptions" :key="option.value" :value="option.value">
@@ -50,13 +51,13 @@
           </thead>
           <tbody>
             <tr 
-              v-for="(player, index) in data.players" 
+              v-for="player in playersWithRank" 
               :key="player.playerName"
               class="ranking-row"
-              :class="getRankingClass(index + 1)"
+              :class="getRankingClass(player.displayRank)"
             >
               <td class="rank-cell">
-                <span class="rank-number">{{ index + 1 }}</span>
+                <span class="rank-number">{{ player.displayRank }}</span>
               </td>
               <td class="player-cell">
                 <div class="player-info">
@@ -354,6 +355,48 @@ export default defineComponent({
       return bestResult;
     };
 
+    // 并列排名算法，支持总积分、参与轮次数并列
+    function assignRankingWithTiesForTotal(players: any[], scoreField: string = 'totalPoints', secondaryField: string = 'validRoundsCount', rankField: string = 'displayRank') {
+      let lastScore: string | null = null
+      let lastSecondary: number | null = null
+      let lastRank = 0
+      let skip = 0
+      for (let i = 0; i < players.length; i++) {
+        // 统一格式化分数字符串，避免小数精度误差
+        const currScore = players[i][scoreField]?.toFixed ? players[i][scoreField].toFixed(3) : String(players[i][scoreField])
+        const currSecondary = players[i][secondaryField]
+        if (
+          lastScore !== null && currScore === lastScore &&
+          lastSecondary !== null && currSecondary === lastSecondary
+        ) {
+          players[i][rankField] = lastRank
+          skip++
+        } else {
+          players[i][rankField] = lastRank + 1 + skip
+          lastRank = players[i][rankField]
+          skip = 0
+        }
+        lastScore = currScore
+        lastSecondary = currSecondary
+      }
+    }
+
+    // 计算带并列排名的players
+    const playersWithRank = computed(() => {
+      if (!data.value.players) return []
+      // 按总积分降序，参与轮次数降序
+      const arr = [...data.value.players].sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return Number(b.totalPoints) - Number(a.totalPoints)
+        return b.validRoundsCount - a.validRoundsCount
+      })
+      assignRankingWithTiesForTotal(arr, 'totalPoints', 'validRoundsCount', 'displayRank')
+      // 添加缺失的 displayRank 属性到每个 player 对象
+      return arr.map((player, index) => ({
+        ...player,
+        displayRank: index + 1
+      }));
+    })
+
     // 初始化
     onMounted(async () => {
       availableYears.value = getAvailableYears();
@@ -374,7 +417,8 @@ export default defineComponent({
       formatRoundsDisplay,
       formatResultDisplay,
       getPlayerCountForRound,
-      formatAvailableRoundsDisplay
+      formatAvailableRoundsDisplay,
+      playersWithRank
     };
   }
 });

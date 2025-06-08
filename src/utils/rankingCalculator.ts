@@ -368,7 +368,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
               let baseScore = 0;
               let calculatedBaseScore = new Decimal(0);
               for (const [key, value] of Object.entries(record.scores)) {
-                if (key !== '加分项' && key !== '扣分项' && key !== '换算后大众评分') {
+                if (key !== '加分项' && key !== '换算后大众评分') {
                   let score = typeof value === 'number' ? value : Number(value);
                   let calculatedScore = new Decimal(score);
                   // 2016年Q2轮次的欣赏性得分需要乘以10/15
@@ -491,6 +491,11 @@ function applyFilters(items: LevelRankingItem[], filters?: RankingFilters): Leve
     }
   }
   
+  // 仅展示得分率高于87.000%的关卡
+  if (filters.onlyHighScore) {
+    filtered = filtered.filter(item => item.scoreRate > 87.0);
+  }
+  
   return filtered;
 }
 
@@ -534,6 +539,11 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters?: Rankin
     }
   }
   
+  // 仅展示得分率高于87.000%的关卡
+  if (filters.onlyHighScore) {
+    filtered = filtered.filter(item => item.scoreRate > 87.0);
+  }
+  
   return filtered;
 }
 
@@ -575,6 +585,11 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters?: 
     if (enabledSchemes.length > 0) {
       filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme));
     }
+  }
+  
+  // 仅展示得分率高于87.000%的关卡
+  if (filters.onlyHighScore) {
+    filtered = filtered.filter(item => item.scoreRate > 87.0);
   }
   
   return filtered;
