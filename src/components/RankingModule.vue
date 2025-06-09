@@ -553,13 +553,6 @@ function formatScore(score: number): string {
   margin-bottom: var(--spacing-lg);
 }
 
-.ranking-header h1 {
-  margin-bottom: var(--spacing-md);
-  color: var(--text-primary);
-  font-size: 28px;
-  font-weight: 600;
-}
-
 .ranking-tabs {
   display: flex;
   gap: var(--spacing-sm);

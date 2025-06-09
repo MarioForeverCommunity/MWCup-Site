@@ -697,7 +697,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
     return directScores;
   }
   
-  const csvUrl = `/data/rounds/${year}${round}.csv`;
+  const csvUrl = `/data/scores/${year}${round}.csv`;
   
   try {
     const response = await fetch(csvUrl);

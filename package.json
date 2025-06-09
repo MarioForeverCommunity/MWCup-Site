@@ -14,12 +14,14 @@
     "decimal.js": "^10.5.0",
     "fs": "^0.0.1-security",
     "js-yaml": "^4.1.0",
+    "marked": "^15.0.12",
     "papaparse": "^5.5.3",
     "path": "^0.12.7",
     "vue": "^3.5.13"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
+    "@types/marked": "^5.0.2",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/tsconfig": "^0.7.0",
     "typescript": "~5.8.3",

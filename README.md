@@ -86,7 +86,7 @@ src/
 
 项目使用以下数据源：
 - `public/data/levels/index.json` - 关卡索引
-- `public/data/rounds/*.csv` - 各轮次评分数据
+- `public/data/scores/*.csv` - 各轮次评分数据
 - `public/data/maxScore.json` - 满分配置
 - `public/data/mwcup.yaml` - 比赛配置
 

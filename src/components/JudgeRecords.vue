@@ -324,10 +324,11 @@ onMounted(() => {
 }
 
 .details-header h4 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-lg);
-  font-weight: 600;
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--text-secondary);
+  font-size: 22px;
+  border-bottom: 2px solid var(--primary-active);
+  padding-bottom: var(--spacing-sm);
 }
 
 .yearly-data {

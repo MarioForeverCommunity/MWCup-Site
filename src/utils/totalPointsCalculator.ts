@@ -60,7 +60,7 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
   const validRounds: string[] = [];
   for (const round of availableRounds) {
     try {
-      const response = await fetch(`/data/rounds/${year}${round}.csv`);
+      const response = await fetch(`/data/scores/${year}${round}.csv`);
       if (response.ok) {
         validRounds.push(round);
       }

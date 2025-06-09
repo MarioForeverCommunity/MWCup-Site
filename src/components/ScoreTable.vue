@@ -12,8 +12,7 @@
   </div>
   <div v-else-if="scoreData" class="content-panel animate-fadeInUp">
     <div class="score-header">
-      <h3>{{ scoreData.year }}年第{{ getEditionNumber(scoreData.year) }}届MW杯{{ roundDisplayName }}评分结果</h3>
-      <p class="scheme-info">评分标准: {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}</p>
+      <h3>评分数据</h3>
     </div>
     <!-- 控制面板 -->
       <div class="control-panel">
@@ -42,6 +41,7 @@
     <!-- 详细评分表 -->
       <div class="detailed-scores">
       <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
+      <p class="scheme-info">评分标准: {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}</p>
       <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
       
       <!-- 删除分页相关控件和 pageSize 选择器 -->
@@ -228,7 +228,6 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { loadRoundScoreData, type RoundScoreData, type ScoreRecord, buildPlayerJudgeMap } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
-import { getEditionNumber } from '../utils/editionHelper'
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
 import { fetchLevelFilesFromLocal, type LevelFile } from '../utils/levelFileHelper'
 import { Decimal } from 'decimal.js'
@@ -849,29 +848,29 @@ onMounted(() => {
   margin-bottom: var(--spacing-xl);
 }
 
-.detailed-scores h4, .player-totals h4 {
+.score-header h3 {
+  text-align: center;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 22px;
+  border-bottom: 2px solid var(--primary-active);
+  padding-bottom: var(--spacing-sm);
+} 
+
+.detailed-scores h4,
+.player-totals h4 {
+  text-align: center;
   margin: 0 0 var(--spacing-lg) 0;
   color: var(--text-secondary);
-  font-size: 18px;
+  font-size: 22px;
   border-bottom: 2px solid var(--primary-active);
   padding-bottom: var(--spacing-sm);
 }
 
-.score-header {
-  text-align: center;
-}
-
-.score-header h3 {
-  margin: 0 0 var(--spacing-sm) 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
 .scheme-info {
-  margin: 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
+  text-align: center;
 }
 
 .scoring-note {
@@ -973,15 +972,6 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 14px;
   background: rgba(255, 250, 245, 0.9);
-}
-
-.detailed-scores h4, .player-totals h4 {
-  text-align: center;
-  margin: 0 0 15px 0;
-  color: #34495e;
-  font-size: 18px;
-  border-bottom: 2px solid var(--primary-active);
-  padding-bottom: 5px;
 }
 
 .score-table, .total-table {
@@ -1171,10 +1161,6 @@ onMounted(() => {
   .score-table th, .score-table td,
   .total-table th, .total-table td {
     padding: 6px 4px;
-  }
-  
-  .score-header h3 {
-    font-size: 20px;
   }
 
   .score-table, .total-table {

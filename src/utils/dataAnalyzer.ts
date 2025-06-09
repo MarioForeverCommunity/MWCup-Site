@@ -83,7 +83,7 @@ async function getMaxScore(year: number, round: string): Promise<number> {
  */
 async function loadRoundData(year: number, round: string): Promise<RoundData[]> {
   try {
-    const response = await fetch(`/data/rounds/${year}${round}.csv`);
+    const response = await fetch(`/data/scores/${year}${round}.csv`);
     if (!response.ok) return [];
     
     const text = await response.text();

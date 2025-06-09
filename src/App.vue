@@ -82,8 +82,8 @@ const openSidebar = () => {
           :class="{ active: activeTab === 'scores' }"
           class="nav-btn hover-scale"
         >
-          <span class="nav-icon">🏆</span>
-          <span class="nav-text">评分查询</span>
+          <span class="nav-icon">📚</span>
+          <span class="nav-text">赛事详览</span>
         </button>
         <button 
           @click="setActiveTab('levels')" 

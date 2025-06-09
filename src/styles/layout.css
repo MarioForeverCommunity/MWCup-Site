@@ -146,7 +146,7 @@
 }
 
 /* 页面头部标题动画 */
-h1, .page-header h2 {
+.app-title, .page-header h2 {
   background: linear-gradient(135deg, var(--primary-color), #ff8a65, #ffb74d);
   background-size: 200% 200%;
   background-clip: text;

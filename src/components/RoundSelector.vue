@@ -1,6 +1,6 @@
 <template>
   <div class="page-header animate-fadeInUp">
-    <h2 class="animate-textGlow">Mario Worker 杯评分数据查看</h2>
+    <h2 class="animate-textGlow">Mario Worker 杯各轮比赛详情</h2>
     <div class="control-panel">
       <div class="form-group">
         <label for="year-select" class="form-label">届次:</label>
@@ -21,27 +21,50 @@
           </option>
         </select>
       </div>
-    </div>
-  </div>
+    </div>  </div>
+  
+  <!-- 内容区域，包含试题和评分表格 -->
+  <div v-if="displayYear && displayRound" class="content-area">
+    <!-- 显示试题内容 -->
+    <SubjectDisplay 
+      :year="displayYear" 
+      :round="displayRound"
+    />
 
-  <!-- 显示评分表格 -->
-  <ScoreTable 
-    v-if="selectedYear && selectedRound" 
-    :year="selectedYear" 
-    :round="selectedRound"
-  />
+    <!-- 显示评分表格 -->
+    <ScoreTable 
+      :year="displayYear" 
+      :round="displayRound"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
 import { getRoundChineseName } from '../utils/roundNames'
 import ScoreTable from './ScoreTable.vue'
+import SubjectDisplay from './SubjectDisplay.vue'
 
 const seasonData = ref<any>(null)
 const selectedYear = ref('')
 const selectedRound = ref('')
+const lastSelectedYear = ref('')
+const lastSelectedRound = ref('')
+const displayYear = ref('')
+const displayRound = ref('')
+
+watch([selectedYear, selectedRound], async () => {
+  if (!selectedYear.value || !selectedRound.value) return
+  const hasScore = hasScoreData(selectedYear.value, selectedRound.value)
+  const hasSubject = await checkSubjectExists(selectedYear.value, selectedRound.value)
+  if (hasScore || hasSubject) {
+    displayYear.value = selectedYear.value
+    displayRound.value = selectedRound.value
+  }
+  // 否则 displayYear/displayRound 保持不变
+}, { immediate: true })
 
 const availableYears = computed(() => {
   if (!seasonData.value) return []
@@ -104,12 +127,47 @@ const availableRounds = computed(() => {
   })
 })
 
-function onYearChange() {
+async function checkSubjectExists(year: string, round: string) {
+  const fileName = `${year}${round}.md`
+  const filePath = `/data/subjects/${fileName}`
+  try {
+    const res = await fetch(filePath, { method: 'HEAD' })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+function hasScoreData(year: string, round: string) {
+  if (!seasonData.value?.[year]?.rounds?.[round]) return false
+  // 可根据实际数据结构进一步判断
+  return true
+}
+
+async function onYearChange() {
+  if (!selectedYear.value) return
+  // 检查该年是否有可用轮次
+  const rounds = seasonData.value?.[selectedYear.value]?.rounds
+  if (!rounds || Object.keys(rounds).length === 0) {
+    alert('该届暂无可用轮次！')
+    selectedYear.value = lastSelectedYear.value
+    return
+  }
+  lastSelectedYear.value = selectedYear.value
   selectedRound.value = ''
 }
 
-function onRoundChange() {
-  // 可以在这里添加其他逻辑
+async function onRoundChange() {
+  if (!selectedYear.value || !selectedRound.value) return
+  // 检查评分数据和试题文件是否存在
+  const hasScore = hasScoreData(selectedYear.value, selectedRound.value)
+  const hasSubject = await checkSubjectExists(selectedYear.value, selectedRound.value)
+  if (!hasScore && !hasSubject) {
+    alert('该轮次暂无内容，已为您保留原内容！')
+    selectedRound.value = lastSelectedRound.value
+    return
+  }
+  lastSelectedRound.value = selectedRound.value
 }
 
 async function loadSeasonData() {
@@ -123,10 +181,18 @@ async function loadSeasonData() {
 
 onMounted(() => {
   loadSeasonData()
+  lastSelectedYear.value = selectedYear.value
+  lastSelectedRound.value = selectedRound.value
 })
 </script>
 
 <style scoped>
 /* 组件特定样式 - 使用新的CSS类系统 */
 /* 大部分样式现在使用全局CSS类，只保留必要的组件特定样式 */
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
 </style>

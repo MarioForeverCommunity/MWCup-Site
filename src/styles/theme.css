@@ -17,11 +17,16 @@
   --bg-panel: rgba(255, 245, 230, 0.8);
   --bg-card: rgba(255, 250, 245, 0.9);
   --bg-table: rgba(255, 252, 248, 0.9);
+  --bg-table-header: rgba(255, 235, 215, 0.9);
+  --bg-table-hover: rgba(255, 240, 220, 0.9);
   --bg-button: rgba(255, 245, 235, 0.7);
   --bg-button-hover: rgba(255, 220, 200, 0.8);
   --bg-input: rgba(255, 250, 245, 0.9);
   --bg-error: rgba(255, 234, 234, 0.9);
   --bg-success: rgba(240, 248, 255, 0.9);
+  
+  /* 强调色 */
+  --accent-color: #50c878;
   
   /* 边框色 */
   --border-light: rgba(255, 210, 190, 0.6);
