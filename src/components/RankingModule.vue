@@ -727,7 +727,7 @@ td:first-child {
   align-items: center;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: var(--radius-smallall);
+  border-radius: var(--radius-medium);
   background: var(--bg-panel-light);
   border: 1px solid var(--border-light);
   transition: var(--transition-fast);

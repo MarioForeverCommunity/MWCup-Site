@@ -156,14 +156,12 @@
 }
 
 /* === 内容区域通用样式 === */
-.section-header {
-  text-align: center;
-}
 
 .section-header h3 {
+  text-align: center;
   margin: 0 0 var(--spacing-lg) 0;
   color: var(--text-secondary);
-  font-size: 20px;
+  font-size: 22px;
   border-bottom: 2px solid var(--primary-active);
   padding-bottom: var(--spacing-sm);
 }
