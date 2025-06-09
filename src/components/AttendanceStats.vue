@@ -506,6 +506,11 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .attendance-table {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
   .header {
     flex-direction: column;
     align-items: stretch;
@@ -533,7 +538,7 @@ onMounted(() => {
   }
   
   .rate-bar {
-    width: 100px;
+    display: none;
   }
   
   .pagination-controls {

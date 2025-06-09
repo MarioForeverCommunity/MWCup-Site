@@ -975,52 +975,6 @@ onMounted(() => {
   background: rgba(255, 250, 245, 0.9);
 }
 
-@media (max-width: 768px) {
-  .controls-panel {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 15px;
-  }
-  
-  .filter-controls, .sort-controls, .search-controls {
-    justify-content: space-between;
-  }
-    .search-controls input {
-    width: 100%;
-  }
-  
-  .score-table, .total-table {
-    min-width: 800px; /* 评分表格需要更宽的最小宽度 */
-  }
-  
-  .score-table th, .score-table td,
-  .total-table th, .total-table td {
-    padding: 8px 6px;
-  }
-  
-  .judge-name {
-    max-width: 80px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .score-cell {
-    text-align: center;
-    min-width: 50px;
-  }
-  
-  .pagination-controls {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  
-  .page-btn {
-    font-size: 12px;
-    padding: 6px 12px;
-  }
-}
-
 .detailed-scores h4, .player-totals h4 {
   text-align: center;
   margin: 0 0 15px 0;
@@ -1191,7 +1145,6 @@ onMounted(() => {
   color: #495057;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: normal;
 }
 
 .level-file-link {
@@ -1223,11 +1176,43 @@ onMounted(() => {
   .score-table th, .score-table td,
   .total-table th, .total-table td {
     padding: 6px 4px;
-    font-size: 12px;
   }
   
   .score-header h3 {
     font-size: 20px;
+  }
+
+  .score-table, .total-table {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .controls-panel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .filter-controls, .sort-controls, .search-controls {
+    justify-content: space-between;
+  }
+    
+  .search-controls input {
+    width: 100%;
+  }
+  
+  .score-cell {
+    text-align: center;
+  }
+  
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .page-btn {
+    font-size: 12px;
+    padding: 6px 12px;
   }
 }
 

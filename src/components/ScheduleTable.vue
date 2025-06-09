@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { fetchMarioWorkerYaml, getYearSchedules } from '../utils/scheduleYaml';
 import type { YearSchedule } from '../utils/scheduleYaml';
+import { getEditionDisplayText } from '../utils/editionHelper';
 
 const schedules = ref<YearSchedule[]>([]);
 const selectedYear = ref<string>('');
@@ -86,9 +87,9 @@ function getLinkText(link: string) {
     
     <div class="control-panel">
       <div class="form-group">
-        <label for="year-select" class="form-label">选择年份：</label>
+        <label for="year-select" class="form-label">选择届次：</label>
         <select id="year-select" v-model="selectedYear" class="form-control">
-          <option v-for="year in years" :key="year" :value="year">{{ year }} 年</option>
+          <option v-for="year in years" :key="year" :value="year">{{ getEditionDisplayText(year) }}</option>
         </select>
       </div>
     </div>

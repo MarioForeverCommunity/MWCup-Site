@@ -626,7 +626,7 @@ async function addSpecialYearZeroScorePlayers(year: string, validLevelData: any,
 }
 
 /**
- * 从YAML配置中获取选手姓名
+ * 从YAML配置中获取选手用户名
  */
 function getPlayerNameFromYaml(seasonData: any, playerCode: string): string | null {
   if (!seasonData?.rounds) return null;

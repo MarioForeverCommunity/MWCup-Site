@@ -506,6 +506,11 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .user-table {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
   .user-management {
     padding: var(--spacing-md);
   }

@@ -475,7 +475,6 @@ export default defineComponent({
 
 .rounds-list {
   color: var(--text-primary);
-  font-size: 0.9rem;
   line-height: 1.4;
 }
 
@@ -572,6 +571,11 @@ export default defineComponent({
   }
 }
 @media (max-width: 768px) {
+  .ranking-table {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
   .total-points-ranking {
     padding: var(--spacing-md);
   }

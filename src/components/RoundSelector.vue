@@ -3,9 +3,9 @@
     <h2 class="animate-textGlow">Mario Worker 杯评分数据查看</h2>
     <div class="control-panel">
       <div class="form-group">
-        <label for="year-select" class="form-label">年份:</label>
+        <label for="year-select" class="form-label">届次:</label>
         <select id="year-select" v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
-          <option value="">请选择年份</option>
+          <option value="">请选择届次</option>
           <option v-for="year in availableYears" :key="year" :value="year">
             {{ year }}年第{{ getEditionNumber(year) }}届
           </option>

@@ -336,7 +336,7 @@ async function getPlayerCountFromYaml(year: number, round: string): Promise<numb
 }
 
 /**
- * 从YAML数据中获取评委的真实姓名
+ * 从YAML数据中获取评委的用户名
  */
 function getJudgeNameFromYaml(judgeCode: string, playerMap: any, playerCode?: string): string | null {
   // 优先按分组查找（如果选手有分组信息）
@@ -448,7 +448,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
   // 记录每个选手的最高得分及其对应的满分
   const playerMaxScoreInfo: { [unifiedUserId: string]: { maxScore: Decimal; maxPossibleScore: number } } = {};
   
-  // 获取YAML数据用于查找选手真实姓名
+  // 获取YAML数据用于查找选手用户名
   const yamlData = await fetchMarioWorkerYaml();
   
   // 分析每个轮次的数据
@@ -664,7 +664,7 @@ export async function analyzeJudgeRecords(): Promise<JudgeRecord[]> {
   const judgeRecords: { [judgeName: string]: JudgeRecord } = {};
   const judgeRoundParticipation: { [judgeName: string]: Set<string> } = {};
   
-  // 获取YAML数据用于查找评委真实姓名
+  // 获取YAML数据用于查找评委用户名
   const yamlData = await fetchMarioWorkerYaml();
   
   for (const { year, round } of rounds) {
@@ -679,7 +679,7 @@ export async function analyzeJudgeRecords(): Promise<JudgeRecord[]> {
       if (!isValidJudge(judgeCode)) continue;
         // 处理有波浪号前缀的评委代号
       const cleanJudgeCode = judgeCode.replace(/^~/, '');
-        // 从YAML中获取评委的真实姓名
+        // 从YAML中获取评委的用户名
       const yamlJudgeName = getJudgeNameFromYaml(cleanJudgeCode, playerMap, row.选手码) || cleanJudgeCode;
         // 获取统一的用户标识符（用于合并相同用户的不同评委名称）
       const unifiedUserId = await getUnifiedUserId(yamlJudgeName);

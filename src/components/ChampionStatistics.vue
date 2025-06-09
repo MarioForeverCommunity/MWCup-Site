@@ -546,9 +546,9 @@ onMounted(() => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .champions-table {
-    font-size: 14px;
+    font-size: 12px;
     min-width: 800px; /* 确保表格有足够宽度触发横向滚动 */
-    table-layout: fixed; /* 防止单元格内容影响表格布局 */
+    white-space: nowrap;
   }
   
   .year {

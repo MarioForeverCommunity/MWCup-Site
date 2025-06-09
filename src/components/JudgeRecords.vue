@@ -7,7 +7,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="输入评委代号..."
+            placeholder="输入评委名称..."
             class="form-control hover-scale"
           />
         </div>
@@ -42,7 +42,7 @@
         <table class="table-base records-table">
           <thead>
             <tr>
-              <th>评委代号</th>
+              <th>评委名称</th>
               <th>参评届数</th>
               <th>参评轮数</th>
               <th>参评关卡数</th>
@@ -400,6 +400,11 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .records-table {
+    min-width: 600px;
+    white-space: nowrap;
+  }
+
   .judge-records {
     padding: var(--spacing-md);
   }

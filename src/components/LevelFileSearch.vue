@@ -18,9 +18,9 @@
     <div v-if="searchMode === 'selector'" class="content-panel">
       <div class="form-grid">
         <div class="form-group">
-          <label class="form-label">年份:</label>
+          <label class="form-label">届次:</label>
           <select v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
-            <option value="">请选择年份</option>
+            <option value="">请选择届次</option>
             <option v-for="year in availableYears" :key="year" :value="year">
               {{ year }}年第{{ getEditionNumber(year) }}届
             </option>
@@ -353,7 +353,7 @@ function getSearchButtonText(): string {
 
 async function searchBySelector() {
   if (!selectedYear.value) {
-    error.value = '请选择年份'
+    error.value = '请选择届次'
     return
   }
 
@@ -753,9 +753,8 @@ function getRefinedRoundType(file: LevelFile): string {
 /* 移动端样式 */
 @media (max-width: 768px) {
   .file-table {
-    font-size: 14px;
-    min-width: 800px; /* 确保表格有足够宽度触发横向滚动 */
-    table-layout: fixed; /* 防止单元格内容影响表格布局 */
+    font-size: 12px;
+    white-space: nowrap; /* 防止文件名换行 */
   }
 }
 </style>

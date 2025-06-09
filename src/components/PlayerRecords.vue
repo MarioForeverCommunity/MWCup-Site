@@ -242,7 +242,7 @@ const championPlayersCount = computed(() => {
   return records.value.filter(record => record.championCount > 0).length
 })
 
-// 获取选手姓名
+// 获取选手用户名
 const getPlayerName = (userId: number): string => {
   const user = users.value.find(u => u.序号 === userId)
   if (!user) return `用户${userId}`
@@ -499,6 +499,7 @@ onMounted(() => {
   
   .records-table {
     min-width: 600px;
+    white-space: nowrap;
   }
   
   .records-table th,
