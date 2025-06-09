@@ -15,18 +15,9 @@
         <div class="form-group animate-scaleIn" v-if="selectedYear">
           <label class="form-label">轮次:</label>
           <select v-model="selectedRound" @change="onRoundChange" class="form-control hover-scale">
-            <option value="">请选择轮次</option>
+            <option value="">全部轮次</option>
             <option v-for="round in availableRounds" :key="round.key" :value="round.key">
               {{ round.name }}
-            </option>
-          </select>
-        </div>
-        <div class="form-group animate-scaleIn" v-if="selectedRound">
-          <label class="form-label">选手:</label>
-          <select v-model="selectedPlayer" class="form-control hover-scale">
-            <option value="">全部选手</option>
-            <option v-for="player in availablePlayers" :key="player.code" :value="player.code">
-              {{ player.code }} - {{ player.name }}
             </option>
           </select>
         </div>
@@ -116,7 +107,6 @@ const LEVELS_BASE_URL = 'https://levels.smwp.marioforever.net/MW杯关卡/'
 // 选择器模式的数据
 const selectedYear = ref('')
 const selectedRound = ref('')
-const selectedPlayer = ref('')
 const availableYears = ref<number[]>([])
 const availableRounds = ref<{ key: string; name: string }[]>([])
 const availablePlayers = ref<{ code: string; name: string }[]>([])
@@ -153,9 +143,7 @@ async function loadYamlData() {
 
 function onYearChange() {
   selectedRound.value = ''
-  selectedPlayer.value = ''
   availableRounds.value = []
-  availablePlayers.value = []
   
   if (selectedYear.value && yamlData?.season?.[selectedYear.value]?.rounds) {
     const rounds = yamlData.season[selectedYear.value].rounds
@@ -215,9 +203,6 @@ function onYearChange() {
 }
 
 function onRoundChange() {
-  selectedPlayer.value = ''
-  availablePlayers.value = []
-  
   if (selectedYear.value && selectedRound.value && yamlData?.season?.[selectedYear.value]?.rounds) {
     const rounds = yamlData.season[selectedYear.value].rounds
     let targetRoundData: any = null
@@ -306,9 +291,6 @@ function formatDate(dateStr: string): string {
 }
 
 function getLoadingText(): string {
-  if (selectedPlayer.value) {
-    return '正在加载该选手关卡文件...'
-  }
   if (selectedRound.value) {
     return '正在加载该轮次所有文件...'
   }
@@ -399,7 +381,7 @@ function getRefinedRoundType(file: LevelFile): string {
 let searchDebounceTimer: number | null = null
 
 // 自动搜索：监听所有筛选项和关键词变化
-watch([selectedYear, selectedRound, selectedPlayer, searchKeyword], ([year, , , keyword]) => {
+watch([selectedYear, selectedRound, searchKeyword], ([year, , keyword]) => {
   // 没有任何条件时清空
   if (!year && !keyword) {
     searchResults.value = [];
@@ -431,7 +413,6 @@ function searchBySelectorAndKeyword() {
       results = results.filter(file => {
         if (file.year !== parseInt(selectedYear.value)) return false;
         if (selectedRound.value && file.roundKey !== selectedRound.value) return false;
-        if (selectedPlayer.value && file.playerCode !== selectedPlayer.value) return false;
         return true;
       });
     }
