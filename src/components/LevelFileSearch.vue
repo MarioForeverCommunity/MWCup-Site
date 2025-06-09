@@ -49,14 +49,14 @@
         <table class="table-base file-table">
           <thead>
             <tr>
-              <th>文件名</th>
               <th>选手码</th>
               <th>选手名</th>
+              <th>文件名</th>
               <th>年份</th>
               <th>轮次</th>
               <th>分组</th>
+              <th>上传时间</th>
               <th>文件大小</th>
-              <th>修改时间</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -66,14 +66,14 @@
               :key="file.path" 
               class="table-row"
             >
-              <td class="filename">{{ file.name }}</td>
               <td class="player-code">{{ file.playerCode || '-' }}</td>
               <td>{{ file.playerName || '-' }}</td>
+              <td class="filename">{{ file.name }}</td>
               <td>{{ file.year || '-' }}</td>
               <td>{{ getRefinedRoundType(file) }}</td>
               <td>{{ file.groupCode ? getGroupDisplayName(file.groupCode) : '-' }}</td>
-              <td class="file-size">{{ formatFileSize(file.size) }}</td>
               <td>{{ formatDate(file.mtime) }}</td>
+              <td class="file-size">{{ formatFileSize(file.size) }}</td>
               <td class="actions">
                 <button @click.stop="downloadLevel(file)" class="download-btn hover-scale" title="下载关卡文件">
                   下载
