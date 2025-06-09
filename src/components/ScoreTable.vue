@@ -136,7 +136,9 @@
                         <!-- 显示协商标签 -->
                         <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
                         <!-- 只保留一个预备标签，优先重评，其次预备，其次大众 -->
-                        <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
+                        <template v-if="!record.isRevoked">
+                          <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
+                        </template>
                         <span v-else-if="record.isBackup" class="backup-tag">预备</span>
                         <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
                       </div>
@@ -337,15 +339,13 @@ function isPublicJudge(judgeCode: string): boolean {
 }
 
 function isReEvaluationJudge(judgeCode: string, record: any): boolean {
+  // 首先检查是否是JR评委
   if (!isBackupJudge(judgeCode) || !scoreData.value) return false;
   
-  // 检查是否有对应的作废评分来判断是重评还是预备
-  const baseJudgeCode = judgeCode.replace('JR', 'J');
-  
+  // 检查当前选手是否有被作废的评分记录
   return scoreData.value.allRecords.some(r => 
     r.playerCode === record.playerCode && 
-    r.isRevoked && 
-    r.judgeCode.replace(/^~/, '') === baseJudgeCode
+    r.isRevoked
   );
 }
 

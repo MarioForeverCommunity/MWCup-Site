@@ -240,22 +240,6 @@ button:hover:not(:disabled) {
   color: white;
 }
 
-.tag-collaborative {
-  background-color: #17a2b8;
-}
-
-.tag-backup {
-  background-color: #6c757d;
-}
-
-.tag-public {
-  background-color: #28a745;
-}
-
-.tag-re-evaluation {
-  background-color: #dc3545;
-}
-
 /* === 分页样式 === */
 .pagination-wrapper {
   display: flex;
