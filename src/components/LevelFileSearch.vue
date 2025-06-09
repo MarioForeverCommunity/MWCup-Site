@@ -66,7 +66,7 @@
               :key="file.path" 
               class="table-row"
             >
-              <td class="player-code">{{ file.playerCode || '-' }}</td>
+              <td class="player-code">{{ (file.playerCode === file.playerName) ? '-' : (file.playerCode || '-') }}</td>
               <td>{{ file.playerName || '-' }}</td>
               <td class="filename">{{ file.name }}</td>
               <td>{{ file.year || '-' }}</td>
