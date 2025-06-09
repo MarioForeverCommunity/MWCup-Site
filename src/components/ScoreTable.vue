@@ -1092,11 +1092,6 @@ onMounted(() => {
   text-align: center;
 }
 
-.total-score {
-  font-weight: 600;
-  text-align: center;
-}
-
 .final-score {
   font-weight: 600;
   color: #e74c3c;
@@ -1117,7 +1112,7 @@ onMounted(() => {
 
 /* 只有评分单元格和总分应用透明度和删除线 */
 .revoked-score .score-cell, 
-.revoked-score .total-score {
+.revoked-score .judge-total {
   text-decoration: line-through;
   opacity: 0.7;
 }
