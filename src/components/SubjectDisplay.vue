@@ -17,7 +17,12 @@
         <span>{{ error }}</span>
       </div>
       
-      <div v-else-if="subjectContent" class="markdown-content" v-html="renderedContent"></div>
+      <div v-else-if="subjectContent" class="subject-content-wrapper">
+        <div class="markdown-content" v-html="renderedContent"></div>
+        <div v-if="smwpVersion" class="smwp-version">
+          <div class="smwp-version-text">{{ smwpVersion }}</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -25,6 +30,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { marked } from 'marked'
+import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 
 interface Props {
   year: string
@@ -37,6 +43,7 @@ const subjectContent = ref<string>('')
 const loading = ref(false)
 const error = ref<string>('')
 const isExpanded = ref(true)
+const smwpVersion = ref<string>('')
 
 const showSubject = computed(() => {
   return props.year && props.round
@@ -46,6 +53,109 @@ const renderedContent = computed(() => {
   if (!subjectContent.value) return ''
   return marked(subjectContent.value)
 })
+
+// 获取比赛阶段名称（不显示第几轮）
+const getStageDisplayName = (round: string): string => {
+  if (round.startsWith('G')) return '小组赛'
+  if (round.startsWith('I')) return '初赛'
+  if (round.startsWith('R')) return '复赛'
+  if (round.startsWith('Q')) return '四分之一决赛'
+  if (round.startsWith('S')) return '半决赛'
+  if (round === 'F') return '决赛'
+  if (round === 'P2') return '资格赛'
+  // P1的处理需要特殊判断是热身赛还是预选赛
+  if (round === 'P1') return '预选赛' // 默认为预选赛，后续会根据YAML数据修正
+  return round
+}
+
+// 格式化SMWP版本显示文案
+const formatSmwpVersionText = (version: any, stage: string): string => {
+  if (!version) return ''
+  
+  if (Array.isArray(version)) {
+    // 数组格式：SMWP v1.7.8 或 v1.7.9
+    const formattedVersions = version.map(v => `v${v}`).join('或')
+    return `${stage}期间使用的SMWP版本为：SMWP ${formattedVersions}`
+  } else if (typeof version === 'string') {
+    if (version.endsWith('+')) {
+      // 带加号：SMWP v1.7.9 及以上版本
+      const baseVersion = version.slice(0, -1)
+      return `${stage}期间使用的SMWP版本为：SMWP v${baseVersion}及以上版本`
+    } else {
+      // 普通版本：SMWP v1.7.9
+      return `${stage}期间使用的SMWP版本为：SMWP v${version}`
+    }
+  }
+  
+  return ''
+}
+
+// 从YAML获取SMWP版本信息
+async function loadSmwpVersion() {
+  if (!props.year || !props.round) {
+    smwpVersion.value = ''
+    return
+  }
+
+  try {
+    const yamlDoc = await fetchMarioWorkerYaml()
+    const seasonData = extractSeasonData(yamlDoc)
+    const yearData = seasonData[props.year]
+    
+    if (!yearData?.rounds) {
+      smwpVersion.value = ''
+      return
+    }
+
+    // 查找对应轮次的数据
+    let roundData = yearData.rounds[props.round]
+    
+    // 如果直接查找失败，尝试在组合轮次中查找
+    if (!roundData) {
+      for (const [roundKey, data] of Object.entries(yearData.rounds)) {
+        // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
+        if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
+          try {
+            const parsedKey = JSON.parse(roundKey)
+            if (Array.isArray(parsedKey) && parsedKey.includes(props.round)) {
+              roundData = data
+              break
+            }
+          } catch {
+            // JSON解析失败，继续下一个
+          }
+        }
+        
+        // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
+        if (roundKey.includes(',')) {
+          const singleRounds = roundKey.split(',').map(r => r.trim())
+          if (singleRounds.includes(props.round)) {
+            roundData = data
+            break
+          }
+        }
+      }
+    }
+    // 获取SMWP版本，优先使用轮次级别的，如果没有则使用年份级别的
+    let versionToUse = roundData?.smwp_version || yearData.smwp_version
+    
+    if (versionToUse) {
+      let stageName = getStageDisplayName(props.round)
+      
+      // 特殊处理P1轮次的热身赛情况
+      if (props.round === 'P1' && roundData?.is_warmup) {
+        stageName = '热身赛'
+      }
+      
+      smwpVersion.value = formatSmwpVersionText(versionToUse, stageName)
+    } else {
+      smwpVersion.value = ''
+    }
+  } catch (err) {
+    console.error('加载SMWP版本失败:', err)
+    smwpVersion.value = ''
+  }
+}
 
 async function loadSubjectContent() {
   if (!props.year || !props.round) {
@@ -79,6 +189,7 @@ async function loadSubjectContent() {
 // 监听属性变化
 watch(() => [props.year, props.round], () => {
   loadSubjectContent()
+  loadSmwpVersion()
 }, { immediate: true })
 </script>
 
@@ -133,6 +244,20 @@ watch(() => [props.year, props.round], () => {
 
 .markdown-content {
   color: var(--text-primary);
+}
+
+.smwp-version {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-medium);
+  border-left: 4px solid var(--primary-color);
+}
+
+.smwp-version-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
 /* Markdown 内容样式 */

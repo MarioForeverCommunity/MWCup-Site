@@ -1139,6 +1139,7 @@ season:
             tieba_tid: 4728980542
   2017:
     scoring_scheme: B
+    smwp_version: 0.2.4
     host: Fahlee_5
     chief_judge: [Fahlee_5, nmnmoooh]
     rounds:
@@ -1404,10 +1405,12 @@ season:
             tieba_tid: 5270454110
   2018:
     scoring_scheme: B
+    smwp_version: 1.4.5
     host: zqh——123
     chief_judge: [zqh——123, 大幽灵王]
     rounds:
       P1:
+        smwp_version: 1.3.1
         players:
           a:
             a1: R大次郎
@@ -1470,6 +1473,7 @@ season:
             end: 2018-07-04T16:00
             tieba_tid: 5766440679
       P2:
+        smwp_version: 1.4.4
         players:
           I:
             '1': koopa4
@@ -1668,10 +1672,12 @@ season:
             tieba_tid: 5843079982
   2019:
     scoring_scheme: B
+    smwp_version: 1.6.5
     host: 巃嵸巋巚
     chief_judge: [R大次郎, 毒蘑菇vn]
     rounds:
       P1:
+        smwp_version: 1.5.2
         players:
           a:
             a1: 绿色的糖果233
@@ -1741,6 +1747,7 @@ season:
             end: 2019-07-06T16:00
             tieba_tid: 6174580525
       P2:
+        smwp_version: 1.6.3
         players:
           I:
             '1': 2333ty
@@ -1930,12 +1937,14 @@ season:
             tieba_tid: 6225070825
   2020:
     scoring_scheme: C # 第三套评分方案，csv 格式为“选手码,评委,得体度,美观度,独特度,思辨度,完成度,合理度,有效度,参与度,耐玩度,成就度,加分项,扣分项”；得体度、美观度为欣赏性，独特度、思辨度为创新性，完成度、合理度、有效度为设计性，参与度、耐玩度、成就度为游戏性
+    smwp_version: 1.7.5
     host: '1168438795'
     chief_judge: [LLX奶油马里奥, '123568024']
     rounds:
       P1:
         is_warmup: true
         scoring_scheme: B # 轮次下 scoring_scheme 仅适用本轮次
+        smwp_version: 1.6.5
         players:
           '1': 2333ty
           '2': 克洛伊Prime
@@ -1982,6 +1991,7 @@ season:
             end: 2020-07-12T20:00
             mf_tid: 540
       P2:
+        smwp_version: 1.7.4
         players:
           '1': nmnmoooh
           '2': 6463喝喝了
@@ -2131,10 +2141,12 @@ season:
             mf_tid: 637
   2021:
     scoring_scheme: C
+    smwp_version: 1.7.6+
     host: Fahlee_5
     chief_judge: [yuyangmiau, s小s飞s侠s]
     rounds:
       P1:
+        smwp_version: 1.7.6
         players:
           a:
             a1: TNT与爬行者
@@ -2199,6 +2211,7 @@ season:
             end: 2021-07-12T16:00
             mf_tid: 1228
       P2:
+        smwp_version: 1.7.6
         players:
           '1': 大爷23大买卖吗
           '2': Andrews123
@@ -2349,6 +2362,7 @@ season:
             mf_tid: 1403
   2022:
     scoring_scheme: C
+    smwp_version: 1.7.8
     host: '1168438795'
     chief_judge: ['1168438795', Fahlee_5]
     rounds:
@@ -2417,6 +2431,7 @@ season:
             end: 2022-07-14T16:00
             mf_tid: 2136
       [I1, I2, I3]:
+        smwp_version: 1.7.8+
         players:
           A:
             A1: 无视我233
@@ -2470,6 +2485,7 @@ season:
             time: 2022-07-28T12:00
             mf_tid: 2211
       R:
+        smwp_version: [1.7.8, 1.7.9]
         players:
           '1':
             1A: 把僵尸炖了
@@ -2509,6 +2525,7 @@ season:
             time: 2022-08-05T12:00
             mf_tid: 2237
       F:
+        smwp_version: [1.7.8, 1.7.9]
         players:
           S: 无视我233
           M: s小s飞s侠s
@@ -2532,12 +2549,14 @@ season:
             mf_tid: 2240
   2023:
     scoring_scheme: C
+    smwp_version: 1.7.9+
     host: 'zqh——123'
     chief_judge: ['zqh——123', 马里奥奥里马]
     rounds:
       P1:
         is_warmup: true
         scoring_scheme: D # 2023 年热身赛试行的大众评分方案，后被废止；csv 格式为“选手码,评分员,欣赏性,创新性,设计性,游戏性,加分项,扣分项”
+        smwp_version: 1.7.9
         players:
           a:
             a1: 把僵尸炖了
@@ -2671,6 +2690,7 @@ season:
             mf_tid: 2826
   2024:
     scoring_scheme: C
+    smwp_version: 1.7.9+
     host: '1168438795'
     chief_judge: ['1168438795', 玛丽的死对头]
     rounds:
@@ -2841,6 +2861,7 @@ season:
             mf_tid: 3323
   2025:
     scoring_scheme: E # 2025 年热身赛试行新的大众评分方案，csv格式为“选手码,评委,得体度,美观度,独特度,思辨度,完成度,合理度,有效度,参与度,耐玩度,成就度,加分项,扣分项,换算后大众评分”；本方案每关只有一位评委评分员
+    smwp_version: 1.7.10
     rounds:
       P1:
         is_warmup: true
