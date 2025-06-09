@@ -4,7 +4,7 @@
     <div class="loading-text">正在加载数据<span class="loading-dots"></span></div>
   </div>
 
-  <div v-else-if="error" class="error-state animate-pulse">
+  <div v-else-if="error" class="error-state">
     {{ error }}
   </div>
 

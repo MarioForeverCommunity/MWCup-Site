@@ -1,12 +1,12 @@
 <template>
-  <div v-if="loading" class="content-panel">
+  <div v-if="loading" class="content-panel animate-fadeInUp">
     <div class="loading-state animate-pulse">
       <div class="loading-spinner"></div>
       <div class="loading-text">正在加载数据<span class="loading-dots"></span></div>
     </div>
   </div>
   <div v-else-if="error" class="content-panel">
-    <div class="error-state animate-fadeInUp animate-pulse">
+    <div class="error-state">
       {{ error }}
     </div>
   </div>

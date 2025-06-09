@@ -75,7 +75,7 @@
     <div class="loading-text">加载中<span class="loading-dots"></span></div>
   </div>
 
-  <div v-if="error" class="error-state animate-pulse">
+  <div v-if="error" class="error-state">
     错误: {{ error }}
   </div>
   <!-- 结果表格 -->
