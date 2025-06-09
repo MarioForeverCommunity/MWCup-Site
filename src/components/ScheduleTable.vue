@@ -4,6 +4,19 @@ import { fetchMarioWorkerYaml, getYearSchedules } from '../utils/scheduleYaml';
 import type { YearSchedule } from '../utils/scheduleYaml';
 import { getEditionDisplayText } from '../utils/editionHelper';
 
+// 定义props，支持外部传入年份和轮次
+interface Props {
+  year?: string;
+  round?: string;
+  hideControls?: boolean; // 是否隐藏控制面板
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  year: '',
+  round: '',
+  hideControls: false
+});
+
 const schedules = ref<YearSchedule[]>([]);
 const selectedYear = ref<string>('');
 const years = ref<string[]>([]);
@@ -35,10 +48,57 @@ function calculateRowspans(items: YearSchedule['items']) {
 
 // 为选中年份的数据计算rowspan
 const filteredSchedule = computed(() => {
-  if (!selectedYear.value) {
+  const yearToUse = props.year || selectedYear.value;
+  if (!yearToUse) {
     return schedules.value.length > 0 ? schedules.value[0] : null;
   }
-  return schedules.value.find(ys => ys.year === selectedYear.value) || null;
+  const yearSchedule = schedules.value.find(ys => ys.year === yearToUse) || null;
+  
+  // 如果指定了轮次，则过滤相关的赛程项
+  if (yearSchedule && props.round) {
+    const roundItems = yearSchedule.items.filter(item => {
+      // 根据轮次过滤赛程项
+      // 如果是小组赛轮次（G1、G2等），显示所有小组赛阶段
+      if (props.round.startsWith('G')) {
+        return item.stage === '小组赛';
+      }
+      // 如果是初赛轮次（I1、I2等），显示所有初赛阶段
+      if (props.round.startsWith('I')) {
+        return item.stage === '初赛';
+      }
+      // 如果是复赛轮次（R1、R2等），显示所有复赛阶段
+      if (props.round.startsWith('R')) {
+        return item.stage === '复赛';
+      }
+      // 如果是四分之一决赛轮次（Q1、Q2等），显示所有四分之一决赛阶段
+      if (props.round.startsWith('Q')) {
+        return item.stage === '四分之一决赛';
+      }
+      // 如果是半决赛轮次（S1、S2等），显示所有半决赛阶段
+      if (props.round.startsWith('S')) {
+        return item.stage === '半决赛';
+      }
+      // 如果是决赛轮次（F），显示所有决赛阶段
+      if (props.round === 'F') {
+        return item.stage === '决赛';
+      }
+      // 如果是预选赛或资格赛轮次
+      if (props.round === 'P1') {
+        return item.stage === '预选赛' || item.stage === '热身赛';
+      }
+      if (props.round === 'P2') {
+        return item.stage === '资格赛';
+      }
+      return false;
+    });
+    
+    return {
+      ...yearSchedule,
+      items: roundItems
+    };
+  }
+  
+  return yearSchedule;
 });
 
 const scheduleWithRowspans = computed(() => {
@@ -82,10 +142,10 @@ function getLinkText(link: string) {
 </script>
 
 <template>
-  <div class="page-header animate-fadeInUp">
+  <div v-if="!props.hideControls" class="page-header animate-fadeInUp">
     <h2>Mario Worker 杯赛程表</h2>
     
-    <div class="control-panel">
+    <div v-if="!props.hideControls" class="control-panel">
       <div class="form-group">
         <label for="year-select" class="form-label">选择届次：</label>
         <select id="year-select" v-model="selectedYear" class="form-control">
@@ -96,55 +156,62 @@ function getLinkText(link: string) {
   </div>
   
   <div v-if="scheduleWithRowspans" class="content-panel animate-fadeInUp">
-    <div class="table-wrapper shimmer-effect">
-      <table class="table-base schedule-table">
-      <thead>
-        <tr>
-          <th>比赛阶段</th>
-          <th>内容</th>
-          <th>开始时间</th>
-          <th>结束时间</th>
-          <th>链接</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="!scheduleWithRowspans.items || scheduleWithRowspans.items.length === 0">
-          <td colspan="5">无日程数据</td>
-        </tr>
-        <tr 
-          v-for="(item, index) in scheduleWithRowspans.items" 
-          :key="item.stage + item.content + (item.start||'') + index"
-          class="schedule-row"
-        >
-          <td 
-            v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
-            :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
-            class="stage-cell"
+    <div v-if="props.hideControls" class="schedule-header">
+      <h3 class="schedule-title">
+        赛程安排
+      </h3>
+    </div>
+    <div class="table-container">
+      <div class="table-wrapper shimmer-effect">
+        <table class="table-base schedule-table">
+        <thead>
+          <tr>
+            <th>比赛阶段</th>
+            <th>内容</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+            <th>链接</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="!scheduleWithRowspans.items || scheduleWithRowspans.items.length === 0">
+            <td colspan="5">无日程数据</td>
+          </tr>
+          <tr 
+            v-for="(item, index) in scheduleWithRowspans.items" 
+            :key="item.stage + item.content + (item.start||'') + index"
+            class="schedule-row"
           >
-            {{ item.stage }}
-          </td>
-          <td class="content-cell">{{ item.content }}</td>
-          <template v-if="item.start === item.end">
-            <td colspan="2" class="time-cell">{{ formatTime(item.start) }}</td>
-          </template>
-          <template v-else-if="item.start && item.end">
-            <td class="time-cell">{{ formatTime(item.start) }}</td>
-            <td class="time-cell">{{ formatTime(item.end) }}</td>
-          </template>
-          <template v-else>
-            <td colspan="2" class="time-cell">{{ formatTime(item.start) || formatTime(item.end) || '——' }}</td>
-          </template>
-          <td class="link-cell">
-            <template v-if="item.multipleLinks">
-              <div v-for="(link, idx) in item.multipleLinks" :key="link + idx" class="multi-link-container">
-                <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link)"></a>
-              </div>
+            <td 
+              v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
+              :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
+              class="stage-cell"
+            >
+              {{ item.stage }}
+            </td>
+            <td class="content-cell">{{ item.content }}</td>
+            <template v-if="item.start === item.end">
+              <td colspan="2" class="time-cell">{{ formatTime(item.start) }}</td>
             </template>
-            <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <template v-else-if="item.start && item.end">
+              <td class="time-cell">{{ formatTime(item.start) }}</td>
+              <td class="time-cell">{{ formatTime(item.end) }}</td>
+            </template>
+            <template v-else>
+              <td colspan="2" class="time-cell">{{ formatTime(item.start) || formatTime(item.end) || '——' }}</td>
+            </template>
+            <td class="link-cell">
+              <template v-if="item.multipleLinks">
+                <div v-for="(link, idx) in item.multipleLinks" :key="link + idx" class="multi-link-container">
+                  <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link)"></a>
+                </div>
+              </template>
+              <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
     </div>
   </div>
 </template>
@@ -153,12 +220,34 @@ function getLinkText(link: string) {
 /* 组件特定样式 - 使用新的CSS类系统 */
 .content-panel {
   display: flex;
+  flex-direction: column;
+}
+
+.table-container {
+  display: flex;
+  justify-content: center; /* 表格容器水平居中 */
 }
 
 .schedule-table {
   width: auto; /* 表格自适应宽度 */
   table-layout: auto; /* 让表格根据内容调整列宽 */
   white-space: nowrap;
+}
+
+.schedule-header h3 {
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--text-secondary);
+  font-size: 22px;
+  border-bottom: 2px solid var(--primary-active);
+  padding-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+.stage-cell {
+  font-weight: 600;
+  background: rgba(255, 240, 230, 0.9);
+  border-right: 2px solid var(--border-medium);
+  color: var(--text-primary);
 }
 
 .link-btn {
@@ -182,6 +271,11 @@ function getLinkText(link: string) {
 }
 
 .multi-link-container {
-  margin: 4px 0;
+  margin-bottom: var(--spacing-sm);  /* 增加每个容器之间的垂直间距 */
 }
+
+.multi-link-container:last-child {
+  margin-bottom: 0;  /* 最后一个容器不需要底部间距 */
+}
+
 </style>

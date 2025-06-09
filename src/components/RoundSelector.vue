@@ -25,6 +25,13 @@
   
   <!-- 内容区域，包含试题和评分表格 -->
   <div v-if="displayYear && displayRound" class="content-area">
+    <!-- 显示单轮次赛程表 -->
+    <ScheduleTable 
+      :year="displayYear" 
+      :round="displayRound"
+      :hide-controls="true"
+    />
+
     <!-- 显示试题内容 -->
     <SubjectDisplay 
       :year="displayYear" 
@@ -46,6 +53,7 @@ import { getEditionNumber } from '../utils/editionHelper'
 import { getRoundChineseName } from '../utils/roundNames'
 import ScoreTable from './ScoreTable.vue'
 import SubjectDisplay from './SubjectDisplay.vue'
+import ScheduleTable from './ScheduleTable.vue'
 
 const seasonData = ref<any>(null)
 const selectedYear = ref('')
