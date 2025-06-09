@@ -203,7 +203,7 @@ function onYearChange() {
             for (const singleRound of parsedKey) {
               roundList.push({
                 key: singleRound,
-                name: getRoundChineseName(singleRound, roundData)
+                name: getRoundChineseName(singleRound, { ...roundData as any, year: selectedYear.value })
               });
             }
             continue;
@@ -219,7 +219,7 @@ function onYearChange() {
         for (const singleRound of singleRounds) {
           roundList.push({
             key: singleRound,
-            name: getRoundChineseName(singleRound, roundData)
+            name: getRoundChineseName(singleRound, Object.assign({}, roundData, { year: String(selectedYear.value) }))
           });
         }
         continue;
@@ -228,7 +228,7 @@ function onYearChange() {
       // 处理普通的单轮次
       roundList.push({
         key: roundKey,
-        name: getRoundChineseName(roundKey, roundData)
+        name: getRoundChineseName(roundKey, Object.assign({}, roundData, { year: String(selectedYear.value) }))
       });
     }
     
@@ -598,6 +598,12 @@ function getRefinedRoundType(file: LevelFile): string {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
       return `小组赛第${['一','二','三','四'][idx-1]||idx}轮`;
+    }
+  }
+  if (year === 2012 && roundKey.startsWith('I')) {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `初赛第${['一','二','三','四'][idx-1]||idx}轮`;
     }
   }
   if (roundKey.startsWith('I')) {

@@ -63,7 +63,7 @@ const availableRounds = computed(() => {
           for (const singleRound of parsedKey) {
           roundList.push({
             code: singleRound,
-            name: getRoundChineseName(singleRound, roundData as any)
+            name: getRoundChineseName(singleRound, { ...roundData as any, year: selectedYear.value })
           });
         }
           continue;
@@ -79,7 +79,7 @@ const availableRounds = computed(() => {
       for (const singleRound of singleRounds) {
         roundList.push({
           code: singleRound,
-          name: getRoundChineseName(singleRound, roundData as any)
+          name: getRoundChineseName(singleRound, { ...roundData as any, year: selectedYear.value })
         });
       }
       continue;
@@ -88,7 +88,7 @@ const availableRounds = computed(() => {
     // 处理普通的单轮次
     roundList.push({
       code: roundKey,
-      name: getRoundChineseName(roundKey, roundData as any)
+      name: getRoundChineseName(roundKey, { ...roundData as any, year: selectedYear.value })
     });
   }
   

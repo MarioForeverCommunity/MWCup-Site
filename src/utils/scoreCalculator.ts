@@ -3,6 +3,7 @@
  */
 
 import { Decimal } from 'decimal.js';
+import { getRoundChineseName } from './roundNames';
 
 // 设置Decimal的精度和舍入模式
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
@@ -686,7 +687,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   }
   
   if (!roundData) {
-    throw new Error(`找不到${year}年${round}轮的比赛数据`);
+    throw new Error(`找不到${year}年${getRoundChineseName(round, { ...roundData, year: String(year) })}的比赛数据`);
   }
     // 加载用户映射
   // const userMapping = await loadUserMapping();
@@ -702,7 +703,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
     const response = await fetch(csvUrl);
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error(`找不到评分文件: ${year}${round}.csv`);
+        throw new Error(`暂无${year}年${getRoundChineseName(round, { ...roundData, year: String(year) })}评分数据`);
       } else if (response.status >= 500) {
         throw new Error(`服务器错误 (${response.status}): 无法获取评分数据`);
       } else {

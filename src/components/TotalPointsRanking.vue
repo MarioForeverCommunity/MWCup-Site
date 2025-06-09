@@ -181,11 +181,11 @@ export default defineComponent({
             const num = round[1] as keyof typeof numMap;
             return `小组赛第${numMap[num]}题`;
           } else {
-            return getRoundChineseName(round, yearRoundsData?.[round]);
+            return getRoundChineseName(round, { ...yearRoundsData?.[round], year: selectedYear.value });
           }
         }).join(', ');
       } else {
-        return rounds.map(round => getRoundChineseName(round, yearRoundsData?.[round])).join(', ');
+        return rounds.map(round => getRoundChineseName(round, { ...yearRoundsData?.[round], year: selectedYear.value })).join(', ');
       }
     };
     // 格式化可用轮次显示（将轮次代号转换为中文名称，2019年小组赛特殊处理）
@@ -201,12 +201,12 @@ export default defineComponent({
             const num = round[1] as keyof typeof numMap;
             return `小组赛第${numMap[num]}题`;
           } else {
-            return getRoundChineseName(round, yearRoundsData?.[round]);
+            return getRoundChineseName(round, { ...yearRoundsData?.[round], year: selectedYear.value });
           }
         }).join(', ');
       } else {
         // 其它年份
-        return rounds.map(round => getRoundChineseName(round, yearRoundsData?.[round])).join(', ');
+        return rounds.map(round => getRoundChineseName(round, { ...yearRoundsData?.[round], year: selectedYear.value })).join(', ');
       }
     };
     // 获取特定轮次的选手数量
