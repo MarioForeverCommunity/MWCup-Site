@@ -137,10 +137,10 @@ function getLinkText(link: string) {
           <td class="link-cell">
             <template v-if="item.multipleLinks">
               <div v-for="(link, idx) in item.multipleLinks" :key="link + idx" class="multi-link-container">
-                <a :href="getLinkHref(link)" target="_blank" class="link-btn" v-text="getLinkText(link)"></a>
+                <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link)"></a>
               </div>
             </template>
-            <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn">链接</a>
+            <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>
           </td>
         </tr>
       </tbody>
@@ -158,68 +158,21 @@ function getLinkText(link: string) {
 .schedule-table {
   width: auto; /* 表格自适应宽度 */
   table-layout: auto; /* 让表格根据内容调整列宽 */
-}
-
-/* 优化各列的宽度 */
-.schedule-table th:nth-child(1), /* 比赛阶段 */
-.schedule-table td.stage-cell {
-  min-width: 50px;
-  padding: 8px 12px;
-}
-
-.schedule-table th:nth-child(2), /* 内容 */
-.schedule-table td.content-cell {
-  min-width: 100px;
-  padding: 8px 12px;
-}
-
-.schedule-table th:nth-child(3), /* 开始时间 */
-.schedule-table th:nth-child(4), /* 结束时间 */
-.schedule-table td.time-cell {
-  padding: 8px 10px;
-}
-
-.schedule-table th:nth-child(5), /* 链接 */
-.schedule-table td.link-cell {
-  padding: 8px 10px;
-}
-
-.stage-cell {
-  font-weight: 500;
-  background: rgba(255, 240, 230, 0.9);
-  vertical-align: middle;
-  border-right: 2px solid var(--border-medium);
-  color: var(--text-primary);
-}
-
-.content-cell {
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.time-cell {
-  font-size: 13px;
   white-space: nowrap;
-  text-align: center;
-}
-
-.link-cell {
-  text-align: center;
 }
 
 .link-btn {
-  display: inline-block;
-  padding: 3px 8px;
-  margin: 1px 0;
+  padding: 4px 8px;
   background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
   color: white;
-  border: 2px solid var(--primary-hover);
-  text-decoration: none;
+  border: none;
   border-radius: var(--radius-medium);
-  font-size: 0.9rem;
+  cursor: pointer;
+  font-size: 12px;
   font-weight: 500;
   transition: var(--transition-normal);
-  white-space: nowrap; /* 防止按钮文字换行 */
+  min-width: 50px;
+  white-space: nowrap;
 }
 
 .link-btn:hover {

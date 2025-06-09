@@ -615,43 +615,6 @@ function formatScore(score: number): string {
   border-color: var(--primary-hover);
 }
 
-thead {
-  background: linear-gradient(135deg, rgba(255, 220, 200, 0.9), rgba(255, 200, 180, 0.8));
-}
-
-th,
-td {
-  padding: var(--spacing-sm) var(--spacing-md);
-  text-align: center;
-  border-bottom: 1px solid #eee;
-  vertical-align: middle;
-}
-
-th {
-  font-weight: 600;
-  color: var(--text-primary);
-  border-bottom: 2px solid var(--border-strong);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-tbody tr {
-  transition: var(--transition-fast);
-}
-
-tbody tr:hover {
-  background: rgba(255, 235, 220, 0.7);
-}
-
-tbody tr:nth-child(even) {
-  background: rgba(255, 248, 240, 0.5);
-}
-
-tbody tr:nth-child(even):hover {
-  background: rgba(255, 230, 210, 0.8);
-}
-
 /* 排名列特殊样式 */
 td:first-child {
   font-weight: 600;
