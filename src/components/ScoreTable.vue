@@ -74,7 +74,7 @@
         <table class="table-base score-table">
           <thead>
             <!-- 评分方案为C或E时，添加分类行 -->
-              <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
+            <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
               <th :colspan="2" class="empty-header">人员</th>
               <th colspan="2" class="category-header">欣赏性</th>
               <th colspan="2" class="category-header">创新性</th>
@@ -203,8 +203,14 @@
               <th>排名</th>
               <th>选手</th>
               <th>关卡名</th>
-              <th>有效评分次数</th>
-              <th v-if="scoreData.scoringScheme !== 'E'">总分之和</th>
+              <th v-if="scoreData.scoringScheme !== 'E'">有效评分次数</th>
+              <template v-if="scoreData.scoringScheme === 'E'">
+                <th>评委评分</th>
+                <th>换算后大众评分</th>
+              </template>
+              <template v-else>
+                <th>总分之和</th>
+              </template>
               <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
             </tr>
           </thead>
@@ -236,8 +242,12 @@
                     <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
                   </template>
                 </td>
-                <td class="count">{{ player.validRecordsCount }}</td>
-                <td v-if="scoreData.scoringScheme !== 'E'" class="sum">{{ formatScore(player.totalSum) }}</td>
+                <td v-if="scoreData.scoringScheme !== 'E'" class="count">{{ player.validRecordsCount }}</td>
+                <template v-if="scoreData.scoringScheme === 'E'">
+                  <td class="judge-total">{{ formatScore(player.totalSum) }}</td>
+                  <td class="public-score">{{ formatScore(player.records[0]?.scores['换算后大众评分']) }}</td>
+                </template>
+                <td v-else class="sum">{{ formatScore(player.totalSum) }}</td>
               </template>
               <td class="average">{{ formatScore(player.averageScore) }}</td>
             </tr>
