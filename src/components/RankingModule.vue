@@ -7,7 +7,7 @@
         :key="tab.key"
         class="ranking-tab-btn btn-base"
         :class="{ 'btn-primary': activeTab === tab.key, 'btn-secondary': activeTab !== tab.key }"
-        @click="activeTab = tab.key"
+        @click="activeTab = tab.key as 'single' | 'multi' | 'original'"
       >
         {{ tab.label }}
       </button>
@@ -249,12 +249,22 @@ const filters = reactive<RankingFilters>({
   onlyHighScore: true
 })
 
+// 响应式判断是否为移动端
+const isMobile = ref(false)
+if (typeof window !== 'undefined') {
+  const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768
+  }
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+}
+
 // 标签页配置
-const tabs = [
-  { key: 'single' as const, label: '单关排名' },
-  { key: 'multi' as const, label: '多关排名' },
-  { key: 'original' as const, label: '原始得分率排名' }
-]
+const tabs = computed(() => [
+  { key: 'single', label: isMobile.value ? '单关榜' : '单关排名' },
+  { key: 'multi', label: isMobile.value ? '多关榜' : '多关排名' },
+  { key: 'original', label: isMobile.value ? '原始得分率榜' : '原始得分率排名' }
+])
 
 // 并列排名算法，支持动态字段赋值
 function assignRankingWithTies<T extends Record<string, any>>(items: T[], rankField: string = 'rank') {
@@ -560,11 +570,6 @@ function formatScore(score: number): string {
   flex-wrap: wrap;
 }
 
-/* 使用components.css中定义的全局按钮样式，只添加一些额外的特定调整 */
-.ranking-tab-btn {
-  min-width: 100px;
-}
-
 .filters {
   background: var(--bg-panel);
   border: 1px solid var(--border-medium);
@@ -760,14 +765,7 @@ td:first-child {
   }
   
   .ranking-tabs {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .ranking-tab-btn {
-    width: 100%;
-    text-align: center;
-    margin: 3px 0;
+    justify-content: center;
   }
   
   table {

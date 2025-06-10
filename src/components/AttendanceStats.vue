@@ -482,10 +482,6 @@ onMounted(() => {
     align-items: stretch;
   }
 
-  .filters {
-    justify-content: stretch;
-  }
-
   .attendance-stats {
     padding: var(--spacing-md);
   }

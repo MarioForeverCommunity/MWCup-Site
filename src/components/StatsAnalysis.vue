@@ -123,10 +123,6 @@ onUnmounted(() => {
   justify-content: center;
 }
 
-.tab-btn {
-  min-width: 100px;
-}
-
 .tab-content {
   min-height: 200px;
 }
