@@ -2551,8 +2551,8 @@ season:
   2023:
     scoring_scheme: C
     smwp_version: 1.7.9+
-    host: 'zqh——123'
-    chief_judge: ['zqh——123', 马里奥奥里马]
+    host: zqh——123
+    chief_judge: [zqh——123, 马里奥奥里马]
     rounds:
       P1:
         is_warmup: true

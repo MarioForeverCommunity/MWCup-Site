@@ -56,10 +56,37 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
   // 获取所有轮次，排除P1、P2预选赛轮次
   const allRounds = extractRounds(seasonData.rounds);
   const availableRounds = allRounds.filter(round => !round.startsWith('P'));
-  // 验证CSV文件存在性
+  // 验证CSV文件存在性或特殊总分制评分
   const validRounds: string[] = [];
   for (const round of availableRounds) {
     try {
+      // 首先检查是否为特殊的总分制评分（如2015年半决赛）
+      let roundData = seasonData.rounds[round];
+      
+      // 如果直接找不到，检查是否在多轮次键中
+      if (!roundData && seasonData.rounds) {
+        for (const [key, data] of Object.entries(seasonData.rounds)) {
+          // 检查方括号格式的多轮次键，如 [G1, G2, G3]
+          if (key.startsWith('[') && key.endsWith(']')) {
+            const rounds = key.slice(1, -1).split(',').map(r => r.trim());
+            if (rounds.includes(round)) {
+              roundData = data;
+              break;
+            }
+          } else if (key.includes(',') && key.split(',').map(r => r.trim()).includes(round)) {
+            // 处理逗号分隔的轮次键（如果存在）
+            roundData = data;
+            break;
+          }
+        }
+      }
+      
+      if (roundData?.scoring_scheme === 'S' && roundData?.scores) {
+        validRounds.push(round);
+        continue;
+      }
+      
+      // 检查CSV文件是否存在
       const response = await fetch(`/data/scores/${year}${round}.csv`);
       if (response.ok) {
         validRounds.push(round);
