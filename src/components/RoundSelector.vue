@@ -29,7 +29,7 @@
       </div>
     </div>
   </div>
-    <!-- 内容区域 -->
+  <!-- 内容区域 -->
   <div v-if="selectedYear" class="content-area">
     <!-- 只选择了届次，显示完整赛程表 -->
     <div v-if="!selectedRound">
@@ -210,7 +210,7 @@ async function onRoundChange() {
 /* 组件特定样式 - 使用新的CSS类系统 */
 /* 大部分样式现在使用全局CSS类，只保留必要的组件特定样式 */
 
-.content-area {
+.content-area div {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
