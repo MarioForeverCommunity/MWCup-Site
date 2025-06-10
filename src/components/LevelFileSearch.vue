@@ -1,92 +1,89 @@
 <template>
-  <div class="page-header animate-fadeInUp">
-    <h2 class="animate-textGlow">Mario Worker 杯关卡文件查询</h2>
-    <div class="content-panel">
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">届次:</label>
-          <select v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
-            <option value="">请选择届次</option>
-            <option v-for="year in availableYears" :key="year" :value="year">
-              {{ year }}年第{{ getEditionNumber(year) }}届
-            </option>
-          </select>
-        </div>
-        <div class="form-group animate-scaleIn" v-if="selectedYear">
-          <label class="form-label">轮次:</label>
-          <select v-model="selectedRound" @change="onRoundChange" class="form-control hover-scale">
-            <option value="">全部轮次</option>
-            <option v-for="round in availableRounds" :key="round.key" :value="round.key">
-              {{ round.name }}
-            </option>
-          </select>
-        </div>
-        <div class="form-group" style="min-width:220px;flex:1;">
-          <label class="form-label">关键词:</label>
-          <div class="search-input-group">
-            <input 
-              v-model="searchKeyword" 
-              type="text" 
-              placeholder="输入选手名或文件名关键词"
-              class="form-control"
-            >
-          </div>
+  <div class="content-panel animate-fadeInUp">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">届次:</label>
+        <select v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
+          <option value="">请选择届次</option>
+          <option v-for="year in availableYears" :key="year" :value="year">
+            {{ year }}年第{{ getEditionNumber(year) }}届
+          </option>
+        </select>
+      </div>
+      <div class="form-group animate-scaleIn" v-if="selectedYear">
+        <label class="form-label">轮次:</label>
+        <select v-model="selectedRound" @change="onRoundChange" class="form-control hover-scale">
+          <option value="">全部轮次</option>
+          <option v-for="round in availableRounds" :key="round.key" :value="round.key">
+            {{ round.name }}
+          </option>
+        </select>
+      </div>
+      <div class="form-group" style="min-width:220px;flex:1;">
+        <label class="form-label">关键词:</label>
+        <div class="search-input-group">
+          <input 
+            v-model="searchKeyword" 
+            type="text" 
+            placeholder="输入选手名或文件名关键词"
+            class="form-control"
+          >
         </div>
       </div>
     </div>
-    <div v-if="loading" class="loading-state animate-pulse">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">{{ getLoadingText() }}<span class="loading-dots"></span></div>
+  </div>
+  <div v-if="loading" class="loading-state animate-pulse">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">{{ getLoadingText() }}<span class="loading-dots"></span></div>
+  </div>
+  <div v-if="error" class="error-state">
+    错误: {{ error }}
+  </div>
+  <div v-if="searchResults && searchResults.length > 0" class="content-panel animate-fadeInUp">
+    <div class="section-header">
+      <h3>找到的关卡文件 ({{ searchResults.length }} 个):</h3>
     </div>
-    <div v-if="error" class="error-state">
-      错误: {{ error }}
+    <div class="table-wrapper">
+      <table class="table-base file-table">
+        <thead>
+          <tr>
+            <th>选手码</th>
+            <th>选手名</th>
+            <th>文件名</th>
+            <th>年份</th>
+            <th>轮次</th>
+            <th>分组</th>
+            <th>上传时间</th>
+            <th>文件大小</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            v-for="(file) in searchResults" 
+            :key="file.path" 
+            class="table-row"
+          >
+            <td class="player-code">{{ (file.playerCode === file.playerName) ? '-' : (file.playerCode || '-') }}</td>
+            <td>{{ file.playerName || '-' }}</td>
+            <td class="filename">{{ file.name }}</td>
+            <td>{{ file.year || '-' }}</td>
+            <td>{{ getRefinedRoundType(file) }}</td>
+            <td>{{ file.groupCode ? getGroupDisplayName(file.groupCode) : '-' }}</td>
+            <td>{{ formatDate(file.mtime) }}</td>
+            <td class="file-size">{{ formatFileSize(file.size) }}</td>
+            <td class="actions">
+              <button @click.stop="downloadLevel(file)" class="download-btn hover-scale" title="下载关卡文件">
+                下载
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <div v-if="searchResults && searchResults.length > 0" class="content-panel animate-fadeInUp">
-      <div class="section-header">
-        <h3>找到的关卡文件 ({{ searchResults.length }} 个):</h3>
-      </div>
-      <div class="table-wrapper">
-        <table class="table-base file-table">
-          <thead>
-            <tr>
-              <th>选手码</th>
-              <th>选手名</th>
-              <th>文件名</th>
-              <th>年份</th>
-              <th>轮次</th>
-              <th>分组</th>
-              <th>上传时间</th>
-              <th>文件大小</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr 
-              v-for="(file) in searchResults" 
-              :key="file.path" 
-              class="table-row"
-            >
-              <td class="player-code">{{ (file.playerCode === file.playerName) ? '-' : (file.playerCode || '-') }}</td>
-              <td>{{ file.playerName || '-' }}</td>
-              <td class="filename">{{ file.name }}</td>
-              <td>{{ file.year || '-' }}</td>
-              <td>{{ getRefinedRoundType(file) }}</td>
-              <td>{{ file.groupCode ? getGroupDisplayName(file.groupCode) : '-' }}</td>
-              <td>{{ formatDate(file.mtime) }}</td>
-              <td class="file-size">{{ formatFileSize(file.size) }}</td>
-              <td class="actions">
-                <button @click.stop="downloadLevel(file)" class="download-btn hover-scale" title="下载关卡文件">
-                  下载
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div v-if="searched && (!searchResults || searchResults.length === 0)" class="no-result">
-      没有找到符合条件的关卡文件
-    </div>
+  </div>
+  <div v-if="searched && (!searchResults || searchResults.length === 0)" class="no-result">
+    没有找到符合条件的关卡文件
   </div>
 </template>
 

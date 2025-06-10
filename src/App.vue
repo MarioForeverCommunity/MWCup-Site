@@ -1,19 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import ScheduleTable from './components/ScheduleTable.vue'
 import RoundSelector from './components/RoundSelector.vue'
 import LevelFileTest from './components/LevelFileSearch.vue'
 import UploadSystem from './components/UploadSystem.vue'
 import UserManagement from './components/UserManagement.vue'
 import StatsAnalysis from './components/StatsAnalysis.vue'
 
-type TabType = 'schedule' | 'upload' | 'scores' | 'levels' | 'users' | 'stats'
+type TabType = 'matches'  | 'upload' | 'levels' | 'users' | 'stats'
 
-// 从 sessionStorage 获取上次访问的标签页，如果不存在则默认为 'schedule'
-// sessionStorage 在浏览器关闭后会自动清除，重新打开时会使用默认的 'schedule'
 const getSavedTab = (): TabType => {
   const savedTab = sessionStorage.getItem('mwcup-active-tab')
-  return (savedTab as TabType) || 'schedule'
+  return (savedTab as TabType) || 'matches'
 }
 
 const activeTab = ref<TabType>(getSavedTab())
@@ -24,6 +21,11 @@ const isMobileView = ref(false)
 const setActiveTab = (tab: TabType) => {
   activeTab.value = tab
   sessionStorage.setItem('mwcup-active-tab', tab)
+  
+  // 移动端点击导航项后自动收起侧边栏
+  if (isMobileView.value) {
+    isSidebarOpen.value = false
+  }
 }
 
 // 检测当前视图是否为移动设备
@@ -62,12 +64,12 @@ const openSidebar = () => {
       </header>
       <nav class="sidebar-nav">
         <button 
-          @click="setActiveTab('schedule')" 
-          :class="{ active: activeTab === 'schedule' }"
+          @click="setActiveTab('matches')" 
+          :class="{ active: activeTab === 'matches' }"
           class="nav-btn hover-scale"
         >
-          <span class="nav-icon">📅</span>
-          <span class="nav-text">赛程安排</span>
+          <span class="nav-icon">📚</span>
+          <span class="nav-text">赛事详览</span>
         </button>
         <button 
           @click="setActiveTab('upload')" 
@@ -76,14 +78,6 @@ const openSidebar = () => {
         >
           <span class="nav-icon">📤</span>
           <span class="nav-text">上传系统</span>
-        </button>
-        <button 
-          @click="setActiveTab('scores')" 
-          :class="{ active: activeTab === 'scores' }"
-          class="nav-btn hover-scale"
-        >
-          <span class="nav-icon">📚</span>
-          <span class="nav-text">赛事详览</span>
         </button>
         <button 
           @click="setActiveTab('levels')" 
@@ -107,7 +101,7 @@ const openSidebar = () => {
           class="nav-btn hover-scale"
         >
           <span class="nav-icon">👥</span>
-          <span class="nav-text">用户管理</span>
+          <span class="nav-text">用户一览</span>
         </button>
       </nav>
     </aside>
@@ -118,17 +112,15 @@ const openSidebar = () => {
       @click="isSidebarOpen = false"
     ></div>
     <main class="main-content" :class="{ 'content-expanded': !isSidebarOpen }">
-      <div class="content-container">
-        <Transition name="slide-fade" mode="out-in">
-          <div v-if="activeTab === 'schedule'" class="content-panel animate-fadeInUp" key="schedule">
-            <ScheduleTable />
-          </div>
-
-          <div v-else-if="activeTab === 'upload'" class="content-panel animate-fadeInUp" key="upload">
-            <UploadSystem />
-          </div>
-          
-          <div v-else-if="activeTab === 'scores'" class="content-panel animate-fadeInUp" key="scores">
+      <Transition name="slide-fade" mode="out-in">
+        <!-- 上传系统独立布局，不使用 content-container -->
+        <div v-if="activeTab === 'upload'" class="upload-container animate-fadeInUp" key="upload">
+          <UploadSystem />
+        </div>
+        
+        <!-- 其他页面使用 content-container -->
+        <div v-else class="content-container">
+          <div v-if="activeTab === 'matches'" class="content-panel animate-fadeInUp" key="matches">
             <RoundSelector />
           </div>
           
@@ -139,11 +131,12 @@ const openSidebar = () => {
           <div v-else-if="activeTab === 'stats'" class="content-panel animate-fadeInUp" key="stats-main">
             <StatsAnalysis />
           </div>
+          
           <div v-else-if="activeTab === 'users'" class="content-panel animate-fadeInUp" key="users">
             <UserManagement />
           </div>
-        </Transition>
-      </div>
+        </div>
+      </Transition>
     </main>
   </div>
 </template>
@@ -425,6 +418,23 @@ const openSidebar = () => {
     50% { transform: scale(1.1); opacity: 1; }
     70% { transform: scale(0.95); }
     100% { transform: scale(1); }
+  }
+}
+
+/* 上传系统独立容器样式 */
+.upload-container {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* 确保上传系统在移动端也能全屏显示 */
+@media (max-width: 768px) {
+  .upload-container {
+    padding: 0;
+    margin: 0;
   }
 }
 </style>

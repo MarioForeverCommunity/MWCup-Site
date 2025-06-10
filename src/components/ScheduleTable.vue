@@ -2,19 +2,16 @@
 import { ref, onMounted, computed } from 'vue';
 import { fetchMarioWorkerYaml, getYearSchedules } from '../utils/scheduleYaml';
 import type { YearSchedule } from '../utils/scheduleYaml';
-import { getEditionDisplayText } from '../utils/editionHelper';
 
 // 定义props，支持外部传入年份和轮次
 interface Props {
   year?: string;
   round?: string;
-  hideControls?: boolean; // 是否隐藏控制面板
 }
 
 const props = withDefaults(defineProps<Props>(), {
   year: '',
   round: '',
-  hideControls: false
 });
 
 const schedules = ref<YearSchedule[]>([]);
@@ -113,8 +110,10 @@ function formatTime(time?: string) {
   if (!time) return '';
   // 兼容 YYYY-MM-DDTHH:mm 或 YYYY-MM-DD HH:mm
   const t = time.replace('T', ' ');
+  // 将日期中的 - 替换为 /
+  const formatted = t.replace(/-/g, '/');
   // 只显示日期和时间
-  return t.length > 16 ? t.slice(0, 16) : t;
+  return formatted.length > 16 ? formatted.slice(0, 16) : formatted;
 }
 
 onMounted(async () => {
@@ -142,21 +141,8 @@ function getLinkText(link: string) {
 </script>
 
 <template>
-  <div v-if="!props.hideControls" class="page-header animate-fadeInUp">
-    <h2>Mario Worker 杯赛程表</h2>
-    
-    <div v-if="!props.hideControls" class="control-panel">
-      <div class="form-group">
-        <label for="year-select" class="form-label">选择届次：</label>
-        <select id="year-select" v-model="selectedYear" class="form-control">
-          <option v-for="year in years" :key="year" :value="year">{{ getEditionDisplayText(year) }}</option>
-        </select>
-      </div>
-    </div>
-  </div>
-  
   <div v-if="scheduleWithRowspans" class="content-panel animate-fadeInUp">
-    <div v-if="props.hideControls" class="schedule-header">
+    <div class="schedule-header">
       <h3 class="schedule-title">
         赛程安排
       </h3>

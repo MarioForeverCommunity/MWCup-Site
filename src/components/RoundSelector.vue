@@ -1,7 +1,6 @@
 <template>
-  <div class="page-header animate-fadeInUp">
-    <h2 class="animate-textGlow">Mario Worker 杯各轮比赛详情</h2>
-    <div class="control-panel">
+  <div class="page-header">
+    <div class="control-panel animate-fadeInUp">
       <div class="form-group">
         <label for="year-select" class="form-label">届次:</label>
         <select id="year-select" v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
@@ -30,27 +29,37 @@
       </div>
     </div>
   </div>
-  
-  <!-- 内容区域，包含试题和评分表格 -->
-  <div v-if="displayYear && displayRound" class="content-area">
-    <!-- 显示单轮次赛程表 -->
-    <ScheduleTable 
-      :year="displayYear" 
-      :round="displayRound"
-      :hide-controls="true"
-    />
+    <!-- 内容区域 -->
+  <div v-if="selectedYear" class="content-area">
+    <!-- 只选择了届次，显示完整赛程表 -->
+    <div v-if="!selectedRound">
+      <ScheduleTable 
+        :year="selectedYear" 
+        :hide-controls="true"
+      />
+    </div>
+    
+    <!-- 选择了具体轮次，显示该轮次的详细内容 -->
+    <div v-else>
+      <!-- 显示单轮次赛程表 -->
+      <ScheduleTable 
+        :year="selectedYear" 
+        :round="selectedRound"
+        :hide-controls="true"
+      />
 
-    <!-- 显示试题内容 -->
-    <SubjectDisplay 
-      :year="displayYear" 
-      :round="displayRound"
-    />
+      <!-- 显示试题内容 -->
+      <SubjectDisplay 
+        :year="selectedYear" 
+        :round="selectedRound"
+      />
 
-    <!-- 显示评分表格 -->
-    <ScoreTable 
-      :year="displayYear" 
-      :round="displayRound"
-    />
+      <!-- 显示评分表格 -->
+      <ScoreTable 
+        :year="selectedYear" 
+        :round="selectedRound"
+      />
+    </div>
   </div>
 </template>
 
@@ -66,10 +75,6 @@ import ScheduleTable from './ScheduleTable.vue'
 const seasonData = ref<any>(null)
 const selectedYear = ref('')
 const selectedRound = ref('')
-const lastSelectedYear = ref('')
-const lastSelectedRound = ref('')
-const displayYear = ref('')
-const displayRound = ref('')
 
 // 检查Wiki是否可用（第一届没有词条）
 const isWikiAvailable = computed(() => {
@@ -115,14 +120,7 @@ const openWikiPage = () => {
 }
 
 watch([selectedYear, selectedRound], async () => {
-  if (!selectedYear.value || !selectedRound.value) return
-  const hasScore = hasScoreData(selectedYear.value, selectedRound.value)
-  const hasSubject = await checkSubjectExists(selectedYear.value, selectedRound.value)
-  if (hasScore || hasSubject) {
-    displayYear.value = selectedYear.value
-    displayRound.value = selectedRound.value
-  }
-  // 否则 displayYear/displayRound 保持不变
+  // 监听变化，可在此处添加其他逻辑
 }, { immediate: true })
 
 const availableYears = computed(() => {
@@ -186,49 +184,6 @@ const availableRounds = computed(() => {
   })
 })
 
-async function checkSubjectExists(year: string, round: string) {
-  const fileName = `${year}${round}.md`
-  const filePath = `/data/subjects/${fileName}`
-  try {
-    const res = await fetch(filePath, { method: 'HEAD' })
-    return res.ok
-  } catch {
-    return false
-  }
-}
-
-function hasScoreData(year: string, round: string) {
-  if (!seasonData.value?.[year]?.rounds?.[round]) return false
-  // 可根据实际数据结构进一步判断
-  return true
-}
-
-async function onYearChange() {
-  if (!selectedYear.value) return
-  // 检查该年是否有可用轮次
-  const rounds = seasonData.value?.[selectedYear.value]?.rounds
-  if (!rounds || Object.keys(rounds).length === 0) {
-    alert('该届暂无可用轮次！')
-    selectedYear.value = lastSelectedYear.value
-    return
-  }
-  lastSelectedYear.value = selectedYear.value
-  selectedRound.value = ''
-}
-
-async function onRoundChange() {
-  if (!selectedYear.value || !selectedRound.value) return
-  // 检查评分数据和试题文件是否存在
-  const hasScore = hasScoreData(selectedYear.value, selectedRound.value)
-  const hasSubject = await checkSubjectExists(selectedYear.value, selectedRound.value)
-  if (!hasScore && !hasSubject) {
-    alert('该轮次暂无内容，已为您保留原内容！')
-    selectedRound.value = lastSelectedRound.value
-    return
-  }
-  lastSelectedRound.value = selectedRound.value
-}
-
 async function loadSeasonData() {
   try {
     const yamlDoc = await fetchMarioWorkerYaml()
@@ -240,9 +195,15 @@ async function loadSeasonData() {
 
 onMounted(() => {
   loadSeasonData()
-  lastSelectedYear.value = selectedYear.value
-  lastSelectedRound.value = selectedRound.value
 })
+
+async function onYearChange() {
+  selectedRound.value = ''
+}
+
+async function onRoundChange() {
+  // 可以在这里添加其他逻辑
+}
 </script>
 
 <style scoped>

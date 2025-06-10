@@ -70,7 +70,7 @@ const changeYear = (year: string) => {
 .year-selector {
   display: flex;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
+  margin-top: var(--spacing-md);
   justify-content: center;
 }
 
@@ -80,7 +80,6 @@ const changeYear = (year: string) => {
   flex: 1;
   width: 100%;
   overflow: hidden;
-  border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   background-color: var(--background-secondary);
   /* 让iframe容器撑满可用空间 */
@@ -92,7 +91,7 @@ const changeYear = (year: string) => {
   width: 100%;
   height: 100%;
   min-height: 760px;
-  border: none;
+  border-top: 2px solid var(--primary-hover);
   /* 撑满父容器，并且保持比例 */
   flex: 1;
 }
@@ -101,6 +100,7 @@ const changeYear = (year: string) => {
 @media (max-width: 768px) {
   .year-selector {
     flex-wrap: wrap;
+    margin: var(--spacing-md) var(--spacing-md) 0 var(--spacing-md);
   }
   
   .year-selector button {

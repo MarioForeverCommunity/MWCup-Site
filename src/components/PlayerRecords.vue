@@ -294,14 +294,6 @@ onMounted(() => {
   background: var(--bg-secondary);
 }
 
-/* 控制面板 */
-.control-panel {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: var(--spacing-md);
-  align-items: end;
-}
-
 .form-group {
   display: flex;
   flex-direction: column;
@@ -469,11 +461,6 @@ onMounted(() => {
 }
 
 @media (max-width: 1024px) {
-  .control-panel {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-  }
-  
   .records-table {
     min-width: 800px;
   }
@@ -482,10 +469,6 @@ onMounted(() => {
 @media (max-width: 768px) {
   .player-records {
     padding: var(--spacing-md);
-  }
-  
-  .control-panel {
-    grid-template-columns: 1fr;
   }
   
   .summary-cards {

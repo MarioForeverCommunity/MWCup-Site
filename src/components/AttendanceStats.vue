@@ -277,13 +277,6 @@ onMounted(() => {
   min-height: 100vh;
 }
 
-.control-panel {
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
-
 .form-group {
   display: flex;
   flex-direction: column;
@@ -522,11 +515,6 @@ onMounted(() => {
 
   .attendance-stats {
     padding: var(--spacing-md);
-  }
-  
-  .control-panel {
-    flex-direction: column;
-    align-items: stretch;
   }
   
   .summary-cards {

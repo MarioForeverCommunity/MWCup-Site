@@ -174,7 +174,7 @@ button:hover:not(:disabled) {
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-large);
   padding: var(--spacing-lg);
-  margin: var(--spacing-xl) 0;
+  margin: var(--spacing-lg) 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-lg);

@@ -1,7 +1,6 @@
 <template>
   <div class="user-management animate-fadeInUp">
     <div class="page-header animate-fadeInDown">
-      <h2>用户管理数据分析</h2>
       <div class="control-panel">
         <div class="form-group">
           <label class="form-label">搜索用户</label>
@@ -275,13 +274,6 @@ onMounted(() => {
   box-shadow: var(--shadow-subtle);
 }
 
-.control-panel {
-  display: flex;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
-  align-items: end;
-}
-
 .form-label {
   font-size: var(--text-sm);
   color: var(--text-secondary);
@@ -518,11 +510,6 @@ onMounted(() => {
   .summary-cards {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
-  }
-  
-  .control-panel {
-    flex-direction: column;
-    align-items: stretch;
   }
   
   .pagination-controls {

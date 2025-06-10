@@ -434,13 +434,6 @@ export default defineComponent({
   min-height: 100vh;
 }
 
-.control-panel {
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
-
 .form-group {
   display: flex;
   flex-direction: column;
@@ -578,11 +571,6 @@ export default defineComponent({
 
   .total-points-ranking {
     padding: var(--spacing-md);
-  }
-  
-  .control-panel {
-    flex-direction: column;
-    align-items: stretch;
   }
   
   .player-col {

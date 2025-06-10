@@ -208,14 +208,6 @@ onMounted(() => {
   background: var(--bg-secondary);
 }
 
-/* 控制面板 */
-.control-panel {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: var(--spacing-md);
-  align-items: end;
-}
-
 .form-group {
   display: flex;
   flex-direction: column;
@@ -408,10 +400,6 @@ onMounted(() => {
 
   .judge-records {
     padding: var(--spacing-md);
-  }
-  
-  .control-panel {
-    grid-template-columns: 1fr;
   }
   
   .summary-cards {
