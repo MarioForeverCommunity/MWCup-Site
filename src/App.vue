@@ -10,6 +10,15 @@ import DocumentDisplay from './components/DocumentDisplay.vue'
 type TabType = 'matches'  | 'upload' | 'levels' | 'users' | 'stats' | 'docs'
 
 const getSavedTab = (): TabType => {
+  // 优先检查URL参数
+  const urlParams = new URLSearchParams(window.location.search)
+  const tabParam = urlParams.get('tab')
+  
+  if (tabParam && ['matches', 'upload', 'levels', 'users', 'stats', 'docs'].includes(tabParam)) {
+    return tabParam as TabType
+  }
+  
+  // 如果没有URL参数，则使用sessionStorage
   const savedTab = sessionStorage.getItem('mwcup-active-tab')
   return (savedTab as TabType) || 'matches'
 }
@@ -24,10 +33,36 @@ const setActiveTab = (tab: TabType) => {
   activeTab.value = tab
   sessionStorage.setItem('mwcup-active-tab', tab)
   
+  // 同步URL参数
+  updateUrlParams(tab)
+  
   // 移动端点击导航项后自动收起侧边栏
   if (isMobileView.value) {
     isSidebarOpen.value = false
   }
+}
+
+// 更新URL参数
+const updateUrlParams = (tab: TabType) => {
+  const url = new URL(window.location.href)
+  const params = new URLSearchParams(url.search)
+  
+  // 设置tab参数
+  params.set('tab', tab)
+  
+  // 如果不是docs标签页，移除doc参数
+  if (tab !== 'docs') {
+    params.delete('doc')
+  }
+  
+  // 如果不是stats标签页，移除stats参数
+  if (tab !== 'stats') {
+    params.delete('stats')
+  }
+  
+  // 更新URL（不会触发页面刷新）
+  const newUrl = `${url.pathname}?${params.toString()}`
+  window.history.replaceState({}, '', newUrl)
 }
 
 // 检测当前视图是否为移动设备
@@ -45,12 +80,25 @@ onMounted(() => {
   checkMobileView()
   window.addEventListener('resize', checkMobileView)
   window.addEventListener('scroll', handleScroll)
+  
+  // 监听浏览器前进后退事件，同步标签页状态
+  window.addEventListener('popstate', handlePopState)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobileView)
   window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('popstate', handlePopState)
 })
+
+// 处理浏览器前进后退事件
+const handlePopState = () => {
+  const newTab = getSavedTab()
+  if (newTab !== activeTab.value) {
+    activeTab.value = newTab
+    sessionStorage.setItem('mwcup-active-tab', newTab)
+  }
+}
 
 const openSidebar = () => {
   isSidebarOpen.value = true

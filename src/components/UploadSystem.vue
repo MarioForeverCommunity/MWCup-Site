@@ -104,8 +104,6 @@ const changeYear = (year: string) => {
   }
   
   .year-selector button {
-    flex: 1;
-    min-width: 70px;
     text-align: center;
     font-size: 14px;
   }

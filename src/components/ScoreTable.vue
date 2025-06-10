@@ -41,7 +41,31 @@
     <!-- 详细评分表 -->
       <div class="detailed-scores">
       <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
-      <p class="scheme-info">评分标准: {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}</p>
+      <p class="scheme-info">
+        评分标准: 
+        <template v-if="getSchemeLink(scoreData.scoringScheme)">
+          <a 
+            :href="getSchemeLink(scoreData.scoringScheme)!" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="scheme-link"
+          >
+            {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
+          </a>
+        </template>
+        <template v-else-if="scoreData.scoringScheme === 'C'">
+          <a 
+            href="#" 
+            @click.prevent="navigateToDocumentStandard"
+            class="scheme-link"
+          >
+            {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
+          </a>
+        </template>
+        <template v-else>
+          {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
+        </template>
+      </p>
       <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
       
       <!-- 删除分页相关控件和 pageSize 选择器 -->
@@ -706,6 +730,28 @@ function getScoringSchemeDisplayName(scheme: string | undefined): string {
   return schemeMap[scheme] || scheme
 }
 
+// 获取评分标准对应的链接
+function getSchemeLink(scheme: string | undefined): string | null {
+  if (!scheme) return null
+  
+  const linkMap: { [key: string]: string } = {
+    'A': 'https://archive.marioforever.net/post/650057027',
+    'B': 'https://archive.marioforever.net/post/2833085201',
+    'D': 'https://www.marioforever.net/thread-2530-1-1.html',
+    'E': 'https://www.marioforever.net/thread-3479-1-1.html'
+  }
+  
+  return linkMap[scheme] || null
+}
+
+// 导航到文档标准页面
+function navigateToDocumentStandard(): void {
+  // 在新标签页中打开，并设置对应的标签页和文档选择
+  const baseUrl = window.location.origin + window.location.pathname
+  const url = `${baseUrl}?tab=docs&doc=standard`
+  window.open(url, '_blank')
+}
+
 // 获取选手的平均分
 function getPlayerAverageScore(playerCode: string): string {
   if (!scoreData.value) return '-';
@@ -868,7 +914,7 @@ onMounted(() => {
 }
 
 .scheme-info {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 13px;
   text-align: center;
 }
@@ -1210,5 +1256,26 @@ onMounted(() => {
   text-align: center;
   background: rgba(255, 240, 235, 0.8);
   font-weight: 500;
+}
+
+/* 评分标准链接样式 */
+.scheme-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.scheme-link:hover {
+  color: var(--primary-active);
+  border-bottom-color: var(--primary-active);
+  text-decoration: none;
+}
+
+.scheme-link:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 </style>

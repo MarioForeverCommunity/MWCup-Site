@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { marked } from 'marked'
 
 interface DocumentInfo {
@@ -61,6 +61,7 @@ const renderedContent = computed(() => {
 const selectDocument = (docKey: string) => {
   selectedDoc.value = docKey
   loadDocumentContent()
+  updateUrlParams(docKey)
   
   // 文档切换时滚动到顶部
   setTimeout(() => {
@@ -102,16 +103,62 @@ async function loadDocumentContent() {
   }
 }
 
-// 默认选择第一个文档
+// 更新URL参数
+const updateUrlParams = (docKey: string) => {
+  const url = new URL(window.location.href)
+  const params = new URLSearchParams(url.search)
+  
+  // 设置doc参数
+  params.set('doc', docKey)
+  
+  // 更新URL（不会触发页面刷新）
+  const newUrl = `${url.pathname}?${params.toString()}`
+  window.history.replaceState({}, '', newUrl)
+}
+
+// 检查URL参数来确定初始选择的文档
+const checkUrlParams = () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const docParam = urlParams.get('doc')
+  
+  if (docParam && availableDocs.find(doc => doc.key === docParam)) {
+    return docParam
+  }
+  
+  return availableDocs[0]?.key || ''
+}
+
+// 处理浏览器前进后退事件
+const handlePopState = () => {
+  const newDoc = checkUrlParams()
+  if (newDoc !== selectedDoc.value) {
+    selectDocument(newDoc)
+  }
+}
+
+// 组件挂载时初始化
+onMounted(() => {
+  if (availableDocs.length > 0) {
+    selectDocument(checkUrlParams())
+  }
+  // 监听popstate事件
+  window.addEventListener('popstate', handlePopState)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('popstate', handlePopState)
+})
+
+// 如果不在onMounted中，先设置一个默认值
 if (availableDocs.length > 0) {
-  selectDocument(availableDocs[0].key)
+  selectedDoc.value = availableDocs[0].key
 }
 </script>
 
 <style scoped>
 .document-selector {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-lg);
   flex-wrap: wrap;
   justify-content: center;
@@ -222,11 +269,6 @@ if (availableDocs.length > 0) {
 }
 
 @media (max-width: 768px) {
-  .document-selector {
-    flex-direction: column;
-    align-items: center;
-  }
-  
   .markdown-content :deep(img) {
     max-width: 100%;
     height: auto;

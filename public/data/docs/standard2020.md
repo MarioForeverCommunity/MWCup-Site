@@ -1,3 +1,5 @@
+<h1 style="text-align: center;">Mario Worker Golden Square 评分标准 2020 版</h1>
+
 ## 一、基本阐述
 
 ### （一）使用方式
