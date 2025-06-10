@@ -134,9 +134,34 @@ function getLinkHref(link: string) {
   const match = link.match(/href=["']([^"']+)["']/);
   return match ? match[1] : '#';
 }
-function getLinkText(link: string) {
+function getLinkText(link: string, useSimpleText = false) {
+  if (useSimpleText) {
+    return '链接';
+  }
   const match = link.match(/>([^<]*)<\/a>/);
   return match ? match[1] : '链接';
+}
+
+// 工具函数：根据轮次过滤多链接
+function filterMultipleLinks(links: string[], round?: string): string[] {
+  if (!round || !links) return links;
+  
+  // 如果没有指定轮次，显示所有链接
+  if (!round) return links;
+  
+  // 提取轮次中的数字（如 G1 -> 1, I2 -> 2）
+  const roundMatch = round.match(/[GIQSR](\d+)/);
+  if (!roundMatch) return links;
+  
+  const roundNum = roundMatch[1];
+  const cnNum = ['零','一','二','三','四','五','六','七','八','九','十'][Number(roundNum)] || roundNum;
+  const targetText = `第${cnNum}题`;
+  
+  // 过滤出包含目标题目的链接
+  return links.filter(link => {
+    const linkText = getLinkText(link, false);
+    return linkText.includes(targetText);
+  });
 }
 </script>
 
@@ -188,8 +213,8 @@ function getLinkText(link: string) {
             </template>
             <td class="link-cell">
               <template v-if="item.multipleLinks">
-                <div v-for="(link, idx) in item.multipleLinks" :key="link + idx" class="multi-link-container">
-                  <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link)"></a>
+                <div v-for="(link, idx) in filterMultipleLinks(item.multipleLinks, props.round)" :key="link + idx" class="multi-link-container">
+                  <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link, !!props.round)"></a>
                 </div>
               </template>
               <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>

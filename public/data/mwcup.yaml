@@ -2059,6 +2059,7 @@ season:
         schedule:
           draw:
             time: 2020-07-15T18:00
+            mf_tid: 568
           topics:
             I1:
               time: 2020-07-15T20:00
