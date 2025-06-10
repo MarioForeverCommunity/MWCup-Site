@@ -1,9 +1,9 @@
 <template>
   <div class="attendance-stats animate-fadeInUp">
-    <div class="page-header animate-fadeInDown">
+    <div class="page-header">
       <div class="control-panel">
         <div class="form-group">
-          <label class="form-label">选择届次</label>
+          <label class="form-label">选择届次：</label>
           <select v-model="selectedYear" class="form-control hover-scale">
             <option value="">全部届次</option>
             <option v-for="option in availableEditionOptions" :key="option.value" :value="option.value">
@@ -12,7 +12,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">排序方式</label>
+          <label class="form-label">排序方式：</label>
           <select v-model="sortBy" class="form-control hover-scale">
             <option value="year">按年份排序</option>
             <option value="attendanceRate">按出勤率排序</option>
@@ -288,12 +288,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-}
-
-.form-label {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  font-weight: 500;
 }
 
 /* 统计卡片 */

@@ -17,7 +17,7 @@
     <!-- 控制面板 -->
       <div class="control-panel">
       <div class="form-group">
-        <label class="form-label">筛选评委类型:</label>
+        <label class="form-label">筛选评委类型：</label>
         <select v-model="filterJudgeType" class="form-control hover-scale">
           <option value="all">全部</option>
           <option value="normal">正常评分</option>
@@ -27,7 +27,7 @@
         </select>
       </div>
         <div class="form-group">
-        <label class="form-label">搜索选手:</label>
+        <label class="form-label">搜索选手：</label>
         <input 
           type="text" 
           v-model="searchPlayer" 

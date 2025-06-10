@@ -3,18 +3,17 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import RoundSelector from './components/RoundSelector.vue'
 import LevelFileTest from './components/LevelFileSearch.vue'
 import UploadSystem from './components/UploadSystem.vue'
-import UserManagement from './components/UserManagement.vue'
 import StatsAnalysis from './components/StatsAnalysis.vue'
 import DocumentDisplay from './components/DocumentDisplay.vue'
 
-type TabType = 'matches'  | 'upload' | 'levels' | 'users' | 'stats' | 'docs'
+type TabType = 'matches'  | 'upload' | 'levels' | 'stats' | 'docs'
 
 const getSavedTab = (): TabType => {
   // 优先检查URL参数
   const urlParams = new URLSearchParams(window.location.search)
   const tabParam = urlParams.get('tab')
   
-  if (tabParam && ['matches', 'upload', 'levels', 'users', 'stats', 'docs'].includes(tabParam)) {
+  if (tabParam && ['matches', 'upload', 'levels', 'stats', 'docs'].includes(tabParam)) {
     return tabParam as TabType
   }
   
@@ -57,7 +56,7 @@ const updateUrlParams = (tab: TabType) => {
   
   // 如果不是stats标签页，移除stats参数
   if (tab !== 'stats') {
-    params.delete('stats')
+    params.delete('stat')
   }
   
   // 更新URL（不会触发页面刷新）
@@ -161,14 +160,6 @@ const handleScroll = () => {
           <span class="nav-text">数据统计</span>
         </button>
         <button 
-          @click="setActiveTab('users')" 
-          :class="{ active: activeTab === 'users' }"
-          class="nav-btn hover-scale"
-        >
-          <span class="nav-icon">👥</span>
-          <span class="nav-text">用户一览</span>
-        </button>
-        <button 
           @click="setActiveTab('docs')" 
           :class="{ active: activeTab === 'docs' }"
           class="nav-btn hover-scale"
@@ -207,10 +198,6 @@ const handleScroll = () => {
           
           <div v-else-if="activeTab === 'stats'" class="content-panel animate-fadeInUp" key="stats-main">
             <StatsAnalysis />
-          </div>
-          
-          <div v-else-if="activeTab === 'users'" class="content-panel animate-fadeInUp" key="users">
-            <UserManagement />
           </div>
         </div>
       </Transition>

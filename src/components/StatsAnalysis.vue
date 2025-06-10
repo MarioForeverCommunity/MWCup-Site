@@ -28,6 +28,9 @@
         <div v-else-if="activeTab === 'attendance'" :key="'attendance'">
           <AttendanceStats />
         </div>
+        <div v-else-if="activeTab === 'users'" :key="'users'">
+          <UserManagement />
+        </div>
       </Transition>
     </div>
   </div>
@@ -41,6 +44,7 @@ import PlayerRecords from './PlayerRecords.vue'
 import ChampionStatistics from './ChampionStatistics.vue'
 import JudgeRecords from './JudgeRecords.vue'
 import AttendanceStats from './AttendanceStats.vue'
+import UserManagement from './UserManagement.vue'
 
 const tabs = [
   { key: 'ranking', label: '关卡排名' },
@@ -49,12 +53,13 @@ const tabs = [
   { key: 'champions', label: '冠军统计' },
   { key: 'judges', label: '评委数据' },
   { key: 'attendance', label: '出勤率统计' },
+  { key: 'users', label: '用户一览' }, // 新增用户一览Tab
 ]
 
 // 检查URL参数来确定初始选择的标签页
 const getInitialTab = () => {
   const urlParams = new URLSearchParams(window.location.search)
-  const statsParam = urlParams.get('stats')
+  const statsParam = urlParams.get('stat')
   
   if (statsParam && tabs.find(tab => tab.key === statsParam)) {
     return statsParam
@@ -77,7 +82,7 @@ const updateUrlParams = (statsTab: string) => {
   const params = new URLSearchParams(url.search)
   
   // 设置stats参数
-  params.set('stats', statsTab)
+  params.set('stat', statsTab)
   
   // 更新URL（不会触发页面刷新）
   const newUrl = `${url.pathname}?${params.toString()}`

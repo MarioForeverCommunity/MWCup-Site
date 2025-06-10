@@ -1,8 +1,8 @@
 <template>
-  <div class="content-panel animate-fadeInUp">
+  <div class="control-panel animate-fadeInUp">
     <div class="form-grid">
       <div class="form-group">
-        <label class="form-label">届次:</label>
+        <label class="form-label">届次：</label>
         <select v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
           <option value="">请选择届次</option>
           <option v-for="year in availableYears" :key="year" :value="year">
@@ -11,7 +11,7 @@
         </select>
       </div>
       <div class="form-group animate-scaleIn" v-if="selectedYear">
-        <label class="form-label">轮次:</label>
+        <label class="form-label">轮次：</label>
         <select v-model="selectedRound" @change="onRoundChange" class="form-control hover-scale">
           <option value="">全部轮次</option>
           <option v-for="round in availableRounds" :key="round.key" :value="round.key">
@@ -20,7 +20,7 @@
         </select>
       </div>
       <div class="form-group" style="min-width:220px;flex:1;">
-        <label class="form-label">关键词:</label>
+        <label class="form-label">关键词：</label>
         <div class="search-input-group">
           <input 
             v-model="searchKeyword" 

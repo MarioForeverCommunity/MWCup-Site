@@ -1,9 +1,9 @@
 <template>
   <div class="judge-records animate-fadeInUp">
-    <div class="page-header animate-fadeInDown">
+    <div class="page-header">
       <div class="control-panel">
         <div class="form-group">
-          <label class="form-label">搜索评委</label>
+          <label class="form-label">搜索评委：</label>
           <input
             v-model="searchQuery"
             type="text"
@@ -12,7 +12,7 @@
           />
         </div>
         <div class="form-group">
-          <label class="form-label">排序方式</label>
+          <label class="form-label">排序方式：</label>
           <select v-model="sortBy" class="form-control hover-scale">
             <option value="totalLevels">按参评关卡数排序</option>
             <option value="totalRounds">按参评轮数排序</option>
@@ -212,12 +212,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-}
-
-.form-label {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  font-weight: 500;
 }
 
 /* 统计卡片 */

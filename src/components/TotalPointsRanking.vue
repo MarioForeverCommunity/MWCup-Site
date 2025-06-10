@@ -1,6 +1,6 @@
 <template>
   <div class="total-points-ranking animate-fadeInUp">
-    <div class="page-header animate-fadeInDown">
+    <div class="page-header">
       <div class="control-panel">
         <div class="form-group">
           <label for="year-select" class="form-label">选择届次：</label>
@@ -438,12 +438,6 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-}
-
-.form-label {
-  font-weight: 500;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
 }
 
 .ranking-row:hover {

@@ -1,9 +1,9 @@
 <template>
   <div class="user-management animate-fadeInUp">
-    <div class="page-header animate-fadeInDown">
+    <div class="page-header">
       <div class="control-panel">
         <div class="form-group">
-          <label class="form-label">搜索用户</label>
+          <label class="form-label">搜索用户：</label>
           <input
             v-model="searchQuery"
             type="text"
@@ -12,7 +12,7 @@
           />
         </div>
         <div class="form-group">
-          <label class="form-label">用户筛选</label>
+          <label class="form-label">用户筛选：</label>
           <select v-model="filterType" class="form-control hover-scale">
             <option value="">全部用户</option>
             <option value="both">有百度+社区账号</option>
@@ -279,12 +279,6 @@ onMounted(() => {
   background: var(--bg-primary);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-subtle);
-}
-
-.form-label {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  font-weight: 500;
 }
 
 /* 统计卡片 */
