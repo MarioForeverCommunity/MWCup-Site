@@ -5,8 +5,9 @@ import LevelFileTest from './components/LevelFileSearch.vue'
 import UploadSystem from './components/UploadSystem.vue'
 import UserManagement from './components/UserManagement.vue'
 import StatsAnalysis from './components/StatsAnalysis.vue'
+import DocumentDisplay from './components/DocumentDisplay.vue'
 
-type TabType = 'matches'  | 'upload' | 'levels' | 'users' | 'stats'
+type TabType = 'matches'  | 'upload' | 'levels' | 'users' | 'stats' | 'docs'
 
 const getSavedTab = (): TabType => {
   const savedTab = sessionStorage.getItem('mwcup-active-tab')
@@ -16,6 +17,7 @@ const getSavedTab = (): TabType => {
 const activeTab = ref<TabType>(getSavedTab())
 const isSidebarOpen = ref(true)
 const isMobileView = ref(false)
+const showBackToTop = ref(false)
 
 // 监听标签页变化并保存到 sessionStorage
 const setActiveTab = (tab: TabType) => {
@@ -42,14 +44,29 @@ const checkMobileView = () => {
 onMounted(() => {
   checkMobileView()
   window.addEventListener('resize', checkMobileView)
+  window.addEventListener('scroll', handleScroll)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobileView)
+  window.removeEventListener('scroll', handleScroll)
 })
 
 const openSidebar = () => {
   isSidebarOpen.value = true
+}
+
+// 返回顶部功能
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
+
+// 监听滚动事件，控制返回顶部按钮显示
+const handleScroll = () => {
+  showBackToTop.value = window.scrollY > 300
 }
 </script>
 
@@ -103,6 +120,14 @@ const openSidebar = () => {
           <span class="nav-icon">👥</span>
           <span class="nav-text">用户一览</span>
         </button>
+        <button 
+          @click="setActiveTab('docs')" 
+          :class="{ active: activeTab === 'docs' }"
+          class="nav-btn hover-scale"
+        >
+          <span class="nav-icon">📄</span>
+          <span class="nav-text">规章标准</span>
+        </button>
       </nav>
     </aside>
     <!-- 遮罩层，移动端且菜单展开时显示 -->
@@ -124,6 +149,10 @@ const openSidebar = () => {
             <RoundSelector />
           </div>
           
+          <div v-else-if="activeTab === 'docs'" class="content-panel animate-fadeInUp" key="docs">
+            <DocumentDisplay />
+          </div>
+          
           <div v-else-if="activeTab === 'levels'" class="content-panel animate-fadeInUp" key="levels">
             <LevelFileTest />
           </div>
@@ -138,6 +167,19 @@ const openSidebar = () => {
         </div>
       </Transition>
     </main>
+    
+    <!-- 返回顶部按钮 -->
+    <Transition name="fade">
+      <button 
+        v-if="showBackToTop"
+        @click="scrollToTop"
+        class="back-to-top-btn"
+        :class="{ 'mobile': isMobileView }"
+        title="返回顶部"
+      >
+        <span class="back-to-top-icon">↑</span>
+      </button>
+    </Transition>
   </div>
 </template>
 
@@ -412,13 +454,6 @@ const openSidebar = () => {
     transform: scale(1.1);
     background-color: var(--accent-color);
   }
-  
-  @keyframes bounceIn {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.1); opacity: 1; }
-    70% { transform: scale(0.95); }
-    100% { transform: scale(1); }
-  }
 }
 
 /* 上传系统独立容器样式 */
@@ -436,5 +471,73 @@ const openSidebar = () => {
     padding: 0;
     margin: 0;
   }
+}
+
+/* 返回顶部按钮样式 */
+.back-to-top-btn {
+  position: fixed;
+  width: 48px;
+  height: 48px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 999;
+  
+  /* 桌面端位置：右下角 */
+  bottom: 30px;
+  right: 30px;
+}
+
+.back-to-top-btn:hover {
+  background: var(--primary-active);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.back-to-top-btn.mobile {
+  /* 移动端位置：菜单按钮正上方，大小与菜单按钮一致 */
+  bottom: 78px; /* 48px按钮+10px间距+20px安全边距 */
+  left: 20px;
+  right: auto;
+  width: 48px;
+  height: 48px;
+}
+
+@media (max-width: 768px) {
+  .back-to-top-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+    /* 其余样式同上 */
+  }
+  .back-to-top-btn.mobile {
+    bottom: 78px;
+    left: 20px;
+    right: auto;
+    width: 48px;
+    height: 48px;
+    z-index: 999;
+  }
+  /* 菜单和遮罩z-index更高，确保遮住返回顶部按钮 */
+  .sidebar-open-btn {
+    z-index: 999;
+  }
+}
+
+/* 返回顶部按钮淡入淡出动画 */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

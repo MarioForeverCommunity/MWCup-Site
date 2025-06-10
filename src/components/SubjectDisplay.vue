@@ -233,11 +233,6 @@ watch(() => [props.year, props.round], () => {
   backdrop-filter: var(--blur-medium);
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .error-icon {
   font-size: 1.2rem;
 }
@@ -344,14 +339,6 @@ watch(() => [props.year, props.round], () => {
   vertical-align: text-bottom;
 }
 
-@media (max-width: 768px) {
-  .markdown-content :deep(img) {
-    max-width: 100%;
-    height: auto;
-    display: block;
-  }
-}
-
 /* 只修改嵌套有序列表为 (1) (2) ...，顶级仍为 1. 2. 3. */
 .markdown-content :deep(ol ol) {
   list-style: none;
@@ -364,5 +351,13 @@ watch(() => [props.year, props.round], () => {
   content: "(" counter(custom-ol-n2) ")";
   position: absolute;
   left: -1.5em;
+}
+
+@media (max-width: 768px) {
+  .markdown-content :deep(img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 }
 </style>

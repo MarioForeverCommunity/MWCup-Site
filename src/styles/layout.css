@@ -166,18 +166,6 @@
   padding-bottom: var(--spacing-sm);
 }
 
-/* === 动画定义 === */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* === 响应式设计 === */
 @media (max-width: 1024px) {
   .sidebar {

@@ -521,19 +521,6 @@ onMounted(() => {
   font-weight: 700;
 }
 
-/* 渐变动画 */
-@keyframes gradientMove {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
 @media (min-width: 768px) {
   .table-wrapper {
     display: flex;

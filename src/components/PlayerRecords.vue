@@ -522,16 +522,4 @@ onMounted(() => {
     display: none;
   }
 }
-
-/* 动画效果 */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes dots {
-  0%, 20% { opacity: 0; }
-  50% { opacity: 1; }
-  80%, 100% { opacity: 0; }
-}
 </style>

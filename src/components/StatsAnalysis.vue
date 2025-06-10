@@ -79,17 +79,6 @@ const activeTab = ref('ranking')
   animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* 过渡动画 */
 .fade-enter-active,
 .fade-leave-active {

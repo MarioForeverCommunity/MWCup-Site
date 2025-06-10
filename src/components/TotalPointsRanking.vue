@@ -542,12 +542,6 @@ export default defineComponent({
   margin-top: var(--spacing-xs);
 }
 
-/* 动画关键帧 */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .ranking-table {
   width: 100%;
   border-collapse: collapse;

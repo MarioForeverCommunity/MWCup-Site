@@ -158,17 +158,6 @@ button:hover:not(:disabled) {
   justify-content: center; /* 让表格在面板中居中 */
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .control-panel {
   background: var(--bg-panel);
   border: 1px solid var(--border-medium);
@@ -410,11 +399,6 @@ button:hover:not(:disabled) {
     max-width: 100vw;
     overflow-x: auto !important;
     position: relative;
-  }
-  
-  @keyframes fadeInOut {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.8; }
   }
   
   .table-base {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { fetchMarioWorkerYaml, getYearSchedules } from '../utils/scheduleYaml';
-import type { YearSchedule } from '../utils/scheduleYaml';
+import { fetchMarioWorkerYaml, getYearSchedules } from '../utils/scheduleHelper';
+import type { YearSchedule } from '../utils/scheduleHelper';
 
 // 定义props，支持外部传入年份和轮次
 interface Props {

@@ -197,6 +197,13 @@
     transform: translateY(-5px);
   }
 }
+  
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); opacity: 1; }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
 
 @keyframes wiggle {
   0%, 100% {
@@ -374,7 +381,8 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* ===== 闪烁光效 ===== */

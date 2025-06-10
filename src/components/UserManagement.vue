@@ -104,7 +104,7 @@
         </table>
       </div>
 
-      <div class="pagination-controls animate-slideInUp">
+      <div class="pagination-controls animate-fadeInUp">
         <button 
           @click="currentPage = Math.max(1, currentPage - 1)" 
           :disabled="currentPage === 1"
@@ -322,7 +322,6 @@ onMounted(() => {
 }
 
 .uid {
-  font-family: var(--font-mono);
   color: var(--text-secondary);
   background: var(--bg-secondary);
   padding: 2px 6px;
@@ -480,12 +479,6 @@ onMounted(() => {
 .help-content .status-badge {
   margin: 0 var(--spacing-xs);
   display: inline-block;
-}
-
-/* 动画 */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 .user-table {
