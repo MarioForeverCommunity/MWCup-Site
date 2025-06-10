@@ -21,7 +21,15 @@
           </option>
         </select>
       </div>
-    </div>  </div>
+      
+      <div class="form-group animate-scaleIn" v-if="selectedYear && isWikiAvailable">
+        <label for="round-select" class="form-label">Wiki:</label>
+        <button @click="openWikiPage" class="btn-primary">
+          {{ selectedRound ? `查看${getStageNameForWiki(selectedRound)}词条` : '查看本届主词条' }}
+        </button>
+      </div>
+    </div>
+  </div>
   
   <!-- 内容区域，包含试题和评分表格 -->
   <div v-if="displayYear && displayRound" class="content-area">
@@ -62,6 +70,49 @@ const lastSelectedYear = ref('')
 const lastSelectedRound = ref('')
 const displayYear = ref('')
 const displayRound = ref('')
+
+// 检查Wiki是否可用（第一届没有词条）
+const isWikiAvailable = computed(() => {
+  if (!selectedYear.value) return false
+  const year = parseInt(selectedYear.value)
+  return year > 2012 // 第一届是2012年，从第二届开始有词条
+})
+
+// 获取比赛阶段名称（用于Wiki链接，不显示轮次编号）
+const getStageNameForWiki = (round: string): string => {
+  if (round.startsWith('G')) return '小组赛'
+  if (round.startsWith('I')) return '初赛'
+  if (round.startsWith('R')) return '复赛'
+  if (round.startsWith('Q')) return '四分之一决赛'
+  if (round.startsWith('S')) return '半决赛'
+  if (round === 'F') return '决赛'
+  if (round === 'P1') {
+    // 需要检查是否为热身赛
+    const roundData = seasonData.value?.[selectedYear.value]?.rounds?.[round]
+    return roundData?.is_warmup ? '热身赛' : '预选赛'
+  }
+  if (round === 'P2') return '资格赛'
+  return ''
+}
+
+// 打开Wiki页面
+const openWikiPage = () => {
+  if (!selectedYear.value || !isWikiAvailable.value) return
+  
+  const year = parseInt(selectedYear.value)
+  const editionNumber = getEditionNumber(year)
+  
+  let wikiUrl = `https://zh.wiki.marioforever.net/wiki/第${editionNumber}届Mario_Worker杯`
+  
+  if (selectedRound.value) {
+    const stageName = getStageNameForWiki(selectedRound.value)
+    if (stageName) {
+      wikiUrl += `/${stageName}`
+    }
+  }
+  
+  window.open(wikiUrl, '_blank')
+}
 
 watch([selectedYear, selectedRound], async () => {
   if (!selectedYear.value || !selectedRound.value) return
@@ -202,5 +253,14 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
+}
+
+.btn-primary {
+  font-size: 14px;
+  white-space: nowrap;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
