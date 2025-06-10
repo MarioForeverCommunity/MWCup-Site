@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { loadUserData, type UserData } from '../utils/userDataProcessor'
 
 const users = ref<UserData[]>([])
@@ -209,6 +209,13 @@ const paginatedUsers = computed(() => {
 const totalPages = computed(() => {
   return Math.ceil(filteredUsers.value.length / itemsPerPage)
 })
+
+// 监听总页数变化，如果当前页数超过最大页数，则调整到最大页数
+watch(totalPages, (newTotalPages) => {
+  if (currentPage.value > newTotalPages && newTotalPages > 0) {
+    currentPage.value = newTotalPages
+  }
+}, { immediate: true })
 
 // 统计数据
 const bothPlatformUsers = computed(() => {

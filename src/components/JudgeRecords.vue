@@ -297,15 +297,6 @@ onMounted(() => {
   box-shadow: var(--shadow-medium);
 }
 
-.details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--border-light);
-}
-
 /* 详情行样式 */
 .details-row {
   background-color: var(--bg-hover);

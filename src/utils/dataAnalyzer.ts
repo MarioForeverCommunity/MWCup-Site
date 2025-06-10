@@ -742,8 +742,48 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
   // 获取YAML数据用于轮次名称转换
   const yamlData = await fetchMarioWorkerYaml();
   const seasonData = yamlData?.season;
-  
   for (const { year, round } of rounds) {
+    // 特殊处理：2012年I2轮次，评分没有进行，使用关卡上传数据
+    if (year === 2012 && round === 'I2') {
+      try {
+        // 从关卡索引获取上传数据
+        const response = await fetch('/data/levels/index.json');
+        const levelData = await response.json();
+        
+        // 筛选2012年I2轮次的关卡
+        const i2Levels = levelData.filter((level: any) => 
+          level.year === 2012 && level.roundKey === 'I2'
+        );
+        
+        // 统计上传的选手（去重）
+        const uploadedPlayers = [...new Set(i2Levels.map((level: any) => level.playerCode))];
+        const validSubmissions = uploadedPlayers.length;
+        
+        // 从YAML获取该轮的总选手数
+        const totalPlayers = await getPlayerCountFromYaml(year, round);
+        if (totalPlayers > 0) {
+          const attendanceRate = new Decimal(validSubmissions).div(totalPlayers).times(100).toNumber();
+          
+          // 获取轮次名称
+          const yearData = seasonData?.[year.toString()];
+          let roundData = yearData?.rounds?.[round];
+          const roundChineseName = getRoundChineseName(round, { ...roundData, year: year.toString() });
+          
+          attendanceData.push({
+            year,
+            round,
+            roundChineseName,
+            totalPlayers,
+            validSubmissions,
+            attendanceRate
+          });
+        }
+      } catch (error) {
+        console.error('处理2012年I2轮次数据失败:', error);
+      }
+      continue;
+    }
+    
     // 特殊处理：2015年S轮使用YAML中的scores数据
     if (year === 2015 && round === 'S') {
       const yearData = seasonData?.[year.toString()];
@@ -757,7 +797,7 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
         const validSubmissions = Object.values(scores).filter(score => score > 0).length;
         
         const attendanceRate = totalPlayers > 0 ? new Decimal(validSubmissions).div(totalPlayers).times(100).toNumber() : 0;
-        const roundChineseName = getRoundChineseName(round, roundData);
+        const roundChineseName = getRoundChineseName(round, { ...roundData, year: year.toString() });
         
         attendanceData.push({
           year,
@@ -826,7 +866,7 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
         }
       }
       
-      roundChineseName = getRoundChineseName(round, roundData);
+      roundChineseName = getRoundChineseName(round, { ...roundData, year: year.toString() });
     }
     
     attendanceData.push({

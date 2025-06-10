@@ -138,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { analyzeAttendanceData } from '../utils/dataAnalyzer'
 import { type AttendanceData } from '../utils/userDataProcessor'
 import { getEditionOptions } from '../utils/editionHelper'
@@ -218,6 +218,13 @@ const paginatedData = computed(() => {
 const totalPages = computed(() => {
   return Math.ceil(filteredData.value.length / itemsPerPage)
 })
+
+// 监听总页数变化，如果当前页数超过最大页数，则调整到最大页数
+watch(totalPages, (newTotalPages) => {
+  if (currentPage.value > newTotalPages && newTotalPages > 0) {
+    currentPage.value = newTotalPages
+  }
+}, { immediate: true })
 
 // 平均出勤率
 const averageAttendance = computed(() => {

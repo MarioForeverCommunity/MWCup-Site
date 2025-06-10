@@ -4,7 +4,6 @@
       <div class="form-group">
         <label for="year-select" class="form-label">届次:</label>
         <select id="year-select" v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
-          <option value="">请选择届次</option>
           <option v-for="year in availableYears" :key="year" :value="year">
             {{ year }}年第{{ getEditionNumber(year) }}届
           </option>
@@ -188,6 +187,11 @@ async function loadSeasonData() {
   try {
     const yamlDoc = await fetchMarioWorkerYaml()
     seasonData.value = extractSeasonData(yamlDoc)
+    // 自动选择最新一届
+    const years = Object.keys(seasonData.value).sort((a, b) => parseInt(b) - parseInt(a))
+    if (years.length > 0) {
+      selectedYear.value = years[0]
+    }
   } catch (error) {
     console.error('加载赛季数据失败:', error)
   }

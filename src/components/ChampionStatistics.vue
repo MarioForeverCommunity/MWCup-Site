@@ -506,7 +506,6 @@ onMounted(() => {
 /* 表格行动画效果 */
 .champion-row {
   transition: all 0.3s ease;
-  cursor: pointer;
 }
 
 .champion-row:hover {
