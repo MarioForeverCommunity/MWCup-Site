@@ -244,7 +244,10 @@
                 </td>
                 <td v-if="scoreData.scoringScheme !== 'E'" class="count">{{ player.validRecordsCount }}</td>
                 <template v-if="scoreData.scoringScheme === 'E'">
-                  <td class="judge-total">{{ formatScore(player.totalSum) }}</td>
+                  <td class="judge-total">
+                    <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
+                    <template v-else>{{ formatScore(player.totalSum) }}</template>
+                  </td>
                   <td class="public-score">{{ formatScore(player.records[0]?.scores['换算后大众评分']) }}</td>
                 </template>
                 <td v-else class="sum">{{ formatScore(player.totalSum) }}</td>
