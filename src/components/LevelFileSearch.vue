@@ -417,19 +417,21 @@ function searchBySelectorAndKeyword() {
     if (keyword) {
       const isExact = keyword.startsWith('"') && keyword.endsWith('"');
       const processedKeyword = isExact ? keyword.slice(1, -1) : keyword;
+      const lowerKeyword = processedKeyword.toLowerCase();
       results = results.filter(file => {
         if (isExact) {
-          return file.name === processedKeyword || file.playerCode === processedKeyword;
+          return (file.name && file.name.toLowerCase() === lowerKeyword) ||
+                 (file.playerCode && file.playerCode.toLowerCase() === lowerKeyword);
         } else {
           return (
-            (file.name && file.name.includes(processedKeyword)) ||
-            (file.playerCode && file.playerCode.includes(processedKeyword)) ||
-            (file.playerName && file.playerName.includes(processedKeyword))
+            (file.name && file.name.toLowerCase().includes(lowerKeyword)) ||
+            (file.playerCode && file.playerCode.toLowerCase().includes(lowerKeyword)) ||
+            (file.playerName && file.playerName.toLowerCase().includes(lowerKeyword))
           );
         }
       });
     }
-    // 排序逻辑同原有
+    // 排序逻辑
     const roundOrder = ['P1', 'P2', 'I1', 'I2', 'I3', 'I4', 'G1', 'G2', 'G3', 'G4', 'Q1', 'Q2', 'Q', 'R1', 'R2', 'R3', 'R', 'S1', 'S2', 'S', 'F'];
     if (selectedYear.value && selectedRound.value) {
       try {
@@ -497,6 +499,52 @@ function searchBySelectorAndKeyword() {
           }
           return (a.playerCode || '').localeCompare(b.playerCode || '');
         });
+      }
+    } else {
+      // 未选届次时，先按年份降序，再按 roundOrder 排序，每个 round 内按 playerCode 排序
+      const yearGroups = new Map<number, LevelFile[]>();
+      results.forEach(file => {
+        const year = file.year || 0;
+        if (!yearGroups.has(year)) {
+          yearGroups.set(year, []);
+        }
+        yearGroups.get(year)!.push(file);
+      });
+      const sortedYears = Array.from(yearGroups.keys()).sort((a, b) => b - a); // 年份降序
+      const roundOrder = ['P1', 'P2', 'I1', 'I2', 'I3', 'I4', 'G1', 'G2', 'G3', 'G4', 'Q1', 'Q2', 'Q', 'R1', 'R2', 'R3', 'R', 'S1', 'S2', 'S', 'F'];
+      results = [];
+      for (const year of sortedYears) {
+        const filesOfYear = yearGroups.get(year)!;
+        // 按 round 分组
+        const roundGroups = new Map<string, LevelFile[]>();
+        filesOfYear.forEach(file => {
+          const round = file.roundKey || '';
+          if (!roundGroups.has(round)) {
+            roundGroups.set(round, []);
+          }
+          roundGroups.get(round)!.push(file);
+        });
+        // 每个 round 内部排序：先按 playerCode，再按 name
+        for (const files of roundGroups.values()) {
+          files.sort((a: LevelFile, b: LevelFile) => {
+            if (a.playerCode && b.playerCode && a.playerCode !== b.playerCode) {
+              return a.playerCode.localeCompare(b.playerCode);
+            }
+            return a.name.localeCompare(b.name);
+          });
+        }
+        // 按 roundOrder 排序
+        for (const round of roundOrder) {
+          if (roundGroups.has(round)) {
+            results.push(...roundGroups.get(round)!);
+          }
+        }
+        // 未知轮次的放最后
+        const unknownRoundFiles = roundGroups.get('') || [];
+        if (unknownRoundFiles.length > 0) {
+          unknownRoundFiles.sort((a: LevelFile, b: LevelFile) => a.name.localeCompare(b.name));
+          results.push(...unknownRoundFiles);
+        }
       }
     }
     searchResults.value = results;
