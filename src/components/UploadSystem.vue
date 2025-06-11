@@ -99,7 +99,7 @@ const openUrl = () => {
         frameborder="0" 
         class="upload-iframe"
         title="Mario Worker Cup 上传系统"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups allow-modals"
         loading="lazy"
       ></iframe>
     </div>
