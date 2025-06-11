@@ -291,11 +291,6 @@ onMounted(() => {
   transition: all var(--transition-fast);
 }
 
-.hover-row:hover {
-  background: rgba(255, 235, 220, 0.7);
-  transform: translateX(2px);
-}
-
 .user-row:nth-child(even) {
   background: rgba(255, 248, 240, 0.5);
 }

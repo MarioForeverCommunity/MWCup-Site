@@ -1,43 +1,99 @@
 <script setup lang="ts">
-import { ref, } from 'vue'
+import { ref, computed } from 'vue'
+import { getEditionOptions } from '../utils/editionHelper'
 
-// 可以通过选项卡选择不同年份的上传系统
-const years = ['2025', '2024', '2023', '2022']
-const activeYear = ref('2025') // 默认显示2025年
+// 所有支持的年份，分为比赛系统和网盘两部分
+const competitionYears = ['2025', '2024', '2023', '2022']
+const archiveYears = ['2021', '2020', '2019', '2018', '2017', '2016', '2015', '2014', '2013', '2012']
+const years = [...competitionYears, ...archiveYears] as const
 
-// 构建上传系统URL
-const getUploadSystemUrl = (year: string) => {
-  return `https://mwcup${year}.marioforever.net`
+type Year = (typeof years)[number]
+const activeYear = ref<Year>(competitionYears[0]) // 默认显示最新一年
+
+// 使用 getEditionOptions 生成带有届数的选项
+const competitionOptions = getEditionOptions([...competitionYears])
+
+// 2012年特殊显示文字
+const isTotalArchive = computed(() => activeYear.value === '2012')
+
+// 动态按钮文字
+const buttonText = computed(() => {
+  if (isTotalArchive.value) return '前往MW杯总网盘'
+  return showIframe.value ? '在新窗口打开比赛系统' : '前往本届MW杯网盘'
+})
+
+// 下拉菜单选项（2012年特殊处理）
+const archiveOptions = getEditionOptions([...archiveYears]).map(opt =>
+  opt.value === '2012' ? { ...opt, label: 'MW杯总网盘' } : opt
+)
+
+// 构建URL映射
+const urlMap: Record<Year, string> = {
+  '2025': 'https://mwcup2025.marioforever.net',
+  '2024': 'https://mwcup2024.marioforever.net',
+  '2023': 'https://mwcup2023.marioforever.net',
+  '2022': 'https://mwcup2022.marioforever.net',
+  '2021': 'http://2021mwcup.yspean.com/',
+  '2020': 'http://mwcup2020.yspean.com/',
+  '2019': 'http://mwcup2019.yspean.com/',
+  '2018': 'http://mwcup2018.yspean.com/',
+  '2017': 'http://2017mwcup.yspean.com/',
+  '2016': 'http://mwcup2016.yspean.com/',
+  '2015': 'http://mwcup2015.yspean.com/',
+  '2014': 'http://mwcup3--2014.yspean.com/',
+  '2013': 'http://2013mwcup.yspean.com/',
+  '2012': 'http://mwcup.yspean.com/'
 }
 
 // 当前显示的URL
-const currentUrl = ref(getUploadSystemUrl(activeYear.value))
+const currentUrl = computed(() => urlMap[activeYear.value])
 
-// 更新显示的年份和URL
-const changeYear = (year: string) => {
-  activeYear.value = year
-  currentUrl.value = getUploadSystemUrl(year)
+// 判断是否显示iframe（只有比赛系统显示）
+const showIframe = computed(() => competitionYears.includes(activeYear.value))
+
+// 打开链接
+const openUrl = () => {
+  window.open(currentUrl.value, '_blank')
 }
 </script>
 
 <template>
   <div class="upload-system-container">
     <div class="year-selector">
-      <button 
-        v-for="year in years" 
-        :key="year"
-        @click="changeYear(year)"
-        :class="{ 
-          'btn-base': true,
-          'btn-primary': activeYear === year, 
-          'btn-secondary': activeYear !== year 
-        }"
+      <select 
+        v-model="activeYear" 
+        class="form-control hover-scale"
+        :class="{ 'archive': !showIframe }"
       >
-        {{ year }}
+        <optgroup label="比赛系统">
+          <option 
+            v-for="option in competitionOptions" 
+            :key="option.value" 
+            :value="option.value"
+          >
+            {{ option.label }}
+          </option>
+        </optgroup>
+        <optgroup label="历届网盘">
+          <option 
+            v-for="option in archiveOptions" 
+            :key="option.value" 
+            :value="option.value"
+          >
+            {{ option.label }}
+          </option>
+        </optgroup>
+      </select>
+      
+      <button 
+        class="btn-base btn-primary"
+        @click="openUrl"
+      >
+        {{ buttonText }}
       </button>
     </div>
     
-    <div class="iframe-container">
+    <div v-if="showIframe" class="iframe-container">
       <iframe 
         :src="currentUrl" 
         frameborder="0" 
@@ -72,9 +128,8 @@ const changeYear = (year: string) => {
   gap: var(--spacing-sm);
   margin-top: var(--spacing-md);
   justify-content: center;
+  align-items: center;
 }
-
-/* 使用 components.css 中的按钮样式代替自定义样式 */
 
 .iframe-container {
   flex: 1;
@@ -82,7 +137,6 @@ const changeYear = (year: string) => {
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   background-color: var(--background-secondary);
-  /* 让iframe容器撑满可用空间 */
   display: flex;
   flex-direction: column;
 }
@@ -92,7 +146,6 @@ const changeYear = (year: string) => {
   height: 100%;
   min-height: 760px;
   border-top: 2px solid var(--primary-hover);
-  /* 撑满父容器，并且保持比例 */
   flex: 1;
 }
 

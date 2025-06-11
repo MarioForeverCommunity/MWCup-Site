@@ -13,7 +13,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">排序方式：</label>
-          <select v-model="sortBy" class="form-control hover-scale">
+          <select v-model="sortBy" class=" hover-scale">
             <option value="year">按年份排序</option>
             <option value="attendanceRate">按出勤率排序</option>
             <option value="totalPlayers">按参赛人数排序</option>

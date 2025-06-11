@@ -26,7 +26,7 @@
             v-model="searchKeyword" 
             type="text" 
             placeholder="输入选手名或文件名关键词"
-            class="form-control"
+            class="form-control hover-scale"
           >
         </div>
       </div>

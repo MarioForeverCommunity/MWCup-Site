@@ -32,7 +32,7 @@
           type="text" 
           v-model="searchPlayer" 
           placeholder="输入选手名称..."
-          class="form-control"
+          class="form-control hover-scale"
         />
       </div>
 
