@@ -12,250 +12,250 @@
   </div>
   <div v-else-if="scoreData" class="content-panel animate-fadeInUp">
     <div class="score-header">
-      <h3>评分数据</h3>
+      <h3>评分数据
+        <FoldButton :is-folded="scoreContentHidden" @toggle="toggleScoreContent" />
+      </h3>
     </div>
-    <!-- 控制面板 -->
+    <div class="panel-collapse" :class="{'is-expanded': !scoreContentHidden}">
+      <!-- 控制面板 -->
       <div class="control-panel">
-      <div class="form-group">
-        <label class="form-label">筛选评委类型：</label>
-        <select v-model="filterJudgeType" class="form-control hover-scale">
-          <option value="all">全部</option>
-          <option value="normal">正常评分</option>
-          <option value="backup">预备评委</option>
-          <option value="collaborative">协商评分</option>
-          <option value="revoked">撤销评分</option>
-        </select>
-      </div>
         <div class="form-group">
-        <label class="form-label">搜索选手：</label>
-        <input 
-          type="text" 
-          v-model="searchPlayer" 
-          placeholder="输入选手名称..."
-          class="form-control hover-scale"
-        />
+          <label class="form-label">筛选评委类型：</label>
+          <select v-model="filterJudgeType" class="form-control hover-scale">
+            <option value="all">全部</option>
+            <option value="normal">正常评分</option>
+            <option value="backup">预备评委</option>
+            <option value="collaborative">协商评分</option>
+            <option value="revoked">撤销评分</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">搜索选手：</label>
+          <input 
+            type="text" 
+            v-model="searchPlayer" 
+            placeholder="输入选手名称..."
+            class="form-control hover-scale"
+          />
+        </div>
       </div>
-
-    </div>
-
-    <!-- 详细评分表 -->
+      <!-- 详细评分表 -->
       <div class="detailed-scores">
-      <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
-      <p class="scheme-info">
-        评分标准: 
-        <template v-if="getSchemeLink(scoreData.scoringScheme)">
-          <a 
-            :href="getSchemeLink(scoreData.scoringScheme)!" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="scheme-link"
-          >
+        <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
+        <p class="scheme-info">
+          评分标准: 
+          <template v-if="getSchemeLink(scoreData.scoringScheme)">
+            <a 
+              :href="getSchemeLink(scoreData.scoringScheme)!" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="scheme-link"
+            >
+              {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
+            </a>
+          </template>
+          <template v-else-if="scoreData.scoringScheme === 'C'">
+            <a 
+              href="#" 
+              @click.prevent="navigateToDocumentStandard"
+              class="scheme-link"
+            >
+              {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
+            </a>
+          </template>
+          <template v-else>
             {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
-          </a>
-        </template>
-        <template v-else-if="scoreData.scoringScheme === 'C'">
-          <a 
-            href="#" 
-            @click.prevent="navigateToDocumentStandard"
-            class="scheme-link"
-          >
-            {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
-          </a>
-        </template>
-        <template v-else>
-          {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
-        </template>
-      </p>
-      <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
-      
-      <!-- 删除分页相关控件和 pageSize 选择器 -->
-      <!-- <div class="pagination-controls" v-if="totalPages > 1"> ... </div> -->
-      <div class="table-wrapper">
-        <table class="table-base score-table">
-          <thead>
-            <!-- 评分方案为C或E时，添加分类行 -->
-            <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
-              <th :colspan="2" class="empty-header">人员</th>
-              <th colspan="2" class="category-header">欣赏性</th>
-              <th colspan="2" class="category-header">创新性</th>
-              <th colspan="3" class="category-header">设计性</th>
-              <th colspan="3" class="category-header">游戏性</th>
-              <th :colspan="scoreData.columns.length - 10 + 2" class="empty-header">其他项</th>
-            </tr>
-            <tr v-if="scoreData.scoringScheme === 'S'">
-              <th>选手</th>
-              <th>最终得分</th>
-            </tr>
-            <tr v-else>
-              <th>选手</th>
-              <th>评委</th>
-              <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>
-              <th>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '总分' }}</th>
-              <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="(playerGroup, playerIndex) in groupedDetailRecords" :key="playerGroup.playerCode">
-              <template v-for="(record, recordIndex) in playerGroup.records" :key="`${record.playerCode}-${record.judgeCode}`">
-                <!-- S方案的评分记录显示方式与其它评分方案不同 -->
-                <tr v-if="scoreData.scoringScheme === 'S'" :class="{ 'revoked-score': record.isRevoked }">
-                  <!-- S方案只显示选手和最终得分 -->
-                  <td class="player-name">
-                    <span v-if="record.playerCode !== record.playerName && !record.playerCode.startsWith('~')" class="player-code">{{ record.playerCode }}</span>
-                    <span class="player-name-text">{{ record.playerName }}</span>
-                  </td>
-                  <td class="final-score">{{ record.totalScore }}</td>
-                </tr>
-
-                <!-- 非S方案的正常显示方式 -->
-                <tr v-else :class="{ 'revoked-score': record.isRevoked }">
-                  <!-- 只在该选手的第一行显示选手信息，并合并行 -->
-                  <td v-if="recordIndex === 0" :rowspan="playerGroup.records.length" class="player-name player-cell-merged">
-                    <span v-if="record.playerCode !== record.playerName && !record.playerCode.startsWith('~')" class="player-code">{{ record.playerCode }}</span>
-                    <span class="player-name-text">{{ record.playerName }}</span>
-                  </td>
-                  <!-- 处理取消资格的选手（未上传关卡） -->
-                  <td v-if="record.isNoSubmission && record.playerCode.startsWith('~')"
-                      :colspan="scoreData.columns.length + 2"
-                      class="canceled-score-cell">
-                    取消资格
-                  </td>
-                  <!-- 处理未上传关卡的选手，将评委到总分的所有列合并为一个"未上传"单元格 -->
-                  <td v-else-if="record.isNoSubmission"
-                      :colspan="scoreData.columns.length + 2"
-                      class="no-submission-cell">
-                    未上传
-                  </td>
-                  <!-- 处理成绩无效的选手（已上传关卡） -->
-                  <td v-else-if="record.isCanceled"
-                      :colspan="scoreData.columns.length + 2"
-                      class="canceled-score-cell">
-                    成绩无效
-                  </td>
-                  
-                  <!-- 正常选手的评委和分数显示 -->
-                  <template v-else>
-                    <td class="judge-name">
-                      <!-- 手动处理协商评分的评委 -->
-                        <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
-                        <div 
-                          v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())" 
-                          :key="index"
-                          class="collaborative-judge-item"
-                        >
-                          <!-- 显示评委名 -->
-                          {{ getUserDisplayName(judgeCode, userMapping) }}
-                          <span class="collaborative-tag">协商</span>
-                          
-                          <!-- 显示重评、预备或大众评委标签 -->
-                          <span v-if="isBackupJudge(judgeCode)" class="backup-tag">预备</span>
-                          <span v-else-if="isPublicJudge(judgeCode)" class="public-tag">大众</span>
-                        </div>
-                      </div>
-                      
-                      <!-- 处理正常评委 -->
-                      <div v-else>
-                        <!-- 显示评委名称，使用judgeName而不是judgeCode查询用户映射 -->
-                        {{ record.judgeName.replace(/（[^）]*）/g, '').trim() }}
-                        <!-- 显示协商标签 -->
-                        <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
-                        <!-- 只保留一个预备标签，优先重评，其次预备，其次大众 -->
-                        <template v-if="!record.isRevoked">
-                          <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
-                        </template>
-                        <span v-else-if="record.isBackup" class="backup-tag">预备</span>
-                        <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
-                      </div>
-                    </td>
-                    <td v-for="column in scoreData.columns" 
-                        :key="column" 
-                        class="score-cell">
-                      {{ formatScore(record.scores[column]) }}
-                    </td>
-                    <td class="judge-total">{{ formatScore(record.totalScore) }}</td>
-                  </template>
-                  <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
-                    {{ getPlayerAverageScore(record.playerCode) }}
-                  </td>
-                </tr>
-              </template>
-              <!-- 添加一个极细的分隔线作为选手间的分隔符 -->
-              <tr v-if="playerIndex < groupedDetailRecords.length - 1" class="player-separator">
-                <td :colspan="scoreData.scoringScheme === 'S' ? 2 : scoreData.columns.length + 4" class="separator-cell"></td>
+          </template>
+        </p>
+        <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
+        <div class="table-wrapper">
+          <table class="table-base score-table">
+            <thead>
+              <!-- 评分方案为C或E时，添加分类行 -->
+              <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
+                <th :colspan="2" class="empty-header">人员</th>
+                <th colspan="2" class="category-header">欣赏性</th>
+                <th colspan="2" class="category-header">创新性</th>
+                <th colspan="3" class="category-header">设计性</th>
+                <th colspan="3" class="category-header">游戏性</th>
+                <th :colspan="scoreData.columns.length - 10 + 2" class="empty-header">其他项</th>
               </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </div><!-- 总分排名表 -->
-    <div class="player-totals">
-      <h4>总分排名 ({{ filteredPlayerScores.length }} 名选手)</h4>
-      <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
-      <div class="table-wrapper">
-        <table class="table-base total-table">
-          <thead>
-            <tr v-if="scoreData.scoringScheme === 'S'">
-              <th>排名</th>
-              <th>选手</th>
-              <th>最终得分</th>
-            </tr>
-            <tr v-else>
-              <th>排名</th>
-              <th>选手</th>
-              <th>关卡名</th>
-              <th v-if="scoreData.scoringScheme !== 'E'">有效评分次数</th>
-              <template v-if="scoreData.scoringScheme === 'E'">
-                <th>评委评分</th>
-                <th>换算后大众评分</th>
-              </template>
-              <template v-else>
-                <th>总分之和</th>
-              </template>
-              <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(player, _index) in filteredPlayerScoresWithRank" :key="player.playerCode">
-              <!-- 成绩无效的选手，排名显示为横杠，但得分保持显示原始值 -->
-              <td class="rank">
-                <template v-if="player.records.length > 0 && player.records[0].isCanceled">-</template>
-                <template v-else-if="player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传'">-</template>
-                <template v-else>{{ player.displayRank }}</template>
-              </td>
-              <td class="player-name">
-                <span v-if="player.playerCode !== player.playerName && !player.playerCode.startsWith('~')" class="player-code">{{ player.playerCode }}</span>
-                <span class="player-name-text">{{ player.playerName }}</span>
-              </td>
+              <tr v-if="scoreData.scoringScheme === 'S'">
+                <th>选手</th>
+                <th>最终得分</th>
+              </tr>
+              <tr v-else>
+                <th>选手</th>
+                <th>评委</th>
+                <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>
+                <th>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '总分' }}</th>
+                <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="(playerGroup, playerIndex) in groupedDetailRecords" :key="playerGroup.playerCode">
+                <template v-for="(record, recordIndex) in playerGroup.records" :key="`${record.playerCode}-${record.judgeCode}`">
+                  <!-- S方案的评分记录显示方式与其它评分方案不同 -->
+                  <tr v-if="scoreData.scoringScheme === 'S'" :class="{ 'revoked-score': record.isRevoked }">
+                    <!-- S方案只显示选手和最终得分 -->
+                    <td class="player-name">
+                      <span v-if="record.playerCode !== record.playerName && !record.playerCode.startsWith('~')" class="player-code">{{ record.playerCode }}</span>
+                      <span class="player-name-text">{{ record.playerName }}</span>
+                    </td>
+                    <td class="final-score">{{ record.totalScore }}</td>
+                  </tr>
 
-              <!-- S方案不显示关卡名和评分次数列 -->
-              <template v-if="scoreData.scoringScheme !== 'S'">
-                <td class="level-file">
-                  <template v-if="player.playerCode.startsWith('~')">取消资格</template>
-                  <template v-else>
-                    <span 
-                      v-if="getPlayerLevelFile(player.playerCode)" 
-                      class="level-file-link" 
-                      @click="downloadLevelFile(player.playerCode)"
-                    >
-                      {{ getPlayerLevelFileName(player.playerCode) }}
-                    </span>
-                    <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
-                  </template>
-                </td>
-                <td v-if="scoreData.scoringScheme !== 'E'" class="count">{{ player.validRecordsCount }}</td>
-                <template v-if="scoreData.scoringScheme === 'E'">
-                  <td class="judge-total">
-                    <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
-                    <template v-else>{{ formatScore(player.totalSum) }}</template>
-                  </td>
-                  <td class="public-score">{{ formatScore(player.records[0]?.scores['换算后大众评分']) }}</td>
+                  <!-- 非S方案的正常显示方式 -->
+                  <tr v-else :class="{ 'revoked-score': record.isRevoked }">
+                    <!-- 只在该选手的第一行显示选手信息，并合并行 -->
+                    <td v-if="recordIndex === 0" :rowspan="playerGroup.records.length" class="player-name player-cell-merged">
+                      <span v-if="record.playerCode !== record.playerName && !record.playerCode.startsWith('~')" class="player-code">{{ record.playerCode }}</span>
+                      <span class="player-name-text">{{ record.playerName }}</span>
+                    </td>
+                    <!-- 处理取消资格的选手（未上传关卡） -->
+                    <td v-if="record.isNoSubmission && record.playerCode.startsWith('~')"
+                        :colspan="scoreData.columns.length + 2"
+                        class="canceled-score-cell">
+                      取消资格
+                    </td>
+                    <!-- 处理未上传关卡的选手，将评委到总分的所有列合并为一个"未上传"单元格 -->
+                    <td v-else-if="record.isNoSubmission"
+                        :colspan="scoreData.columns.length + 2"
+                        class="no-submission-cell">
+                      未上传
+                    </td>
+                    <!-- 处理成绩无效的选手（已上传关卡） -->
+                    <td v-else-if="record.isCanceled"
+                        :colspan="scoreData.columns.length + 2"
+                        class="canceled-score-cell">
+                      成绩无效
+                    </td>
+                    
+                    <!-- 正常选手的评委和分数显示 -->
+                    <template v-else>
+                      <td class="judge-name">
+                        <!-- 手动处理协商评分的评委 -->
+                          <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
+                          <div 
+                            v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())" 
+                            :key="index"
+                            class="collaborative-judge-item"
+                          >
+                            <!-- 显示评委名 -->
+                            {{ getUserDisplayName(judgeCode, userMapping) }}
+                            <span class="collaborative-tag">协商</span>
+                            
+                            <!-- 显示重评、预备或大众评委标签 -->
+                            <span v-if="isBackupJudge(judgeCode)" class="backup-tag">预备</span>
+                            <span v-else-if="isPublicJudge(judgeCode)" class="public-tag">大众</span>
+                          </div>
+                        </div>
+                        
+                        <!-- 处理正常评委 -->
+                        <div v-else>
+                          <!-- 显示评委名称，使用judgeName而不是judgeCode查询用户映射 -->
+                          {{ record.judgeName.replace(/（[^）]*）/g, '').trim() }}
+                          <!-- 显示协商标签 -->
+                          <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
+                          <!-- 只保留一个预备标签，优先重评，其次预备，其次大众 -->
+                          <template v-if="!record.isRevoked">
+                            <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
+                          </template>
+                          <span v-else-if="record.isBackup" class="backup-tag">预备</span>
+                          <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
+                        </div>
+                      </td>
+                      <td v-for="column in scoreData.columns" 
+                          :key="column" 
+                          class="score-cell">
+                        {{ formatScore(record.scores[column]) }}
+                      </td>
+                      <td class="judge-total">{{ formatScore(record.totalScore) }}</td>
+                    </template>
+                    <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
+                      {{ getPlayerAverageScore(record.playerCode) }}
+                    </td>
+                  </tr>
                 </template>
-                <td v-else class="sum">{{ formatScore(player.totalSum) }}</td>
+                <!-- 添加一个极细的分隔线作为选手间的分隔符 -->
+                <tr v-if="playerIndex < groupedDetailRecords.length - 1" class="player-separator">
+                  <td :colspan="scoreData.scoringScheme === 'S' ? 2 : scoreData.columns.length + 4" class="separator-cell"></td>
+                </tr>
               </template>
-              <td class="average">{{ formatScore(player.averageScore) }}</td>
-            </tr>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
+        <!-- 总分排名表 -->
+        <div class="player-totals">
+          <h4>总分排名 ({{ filteredPlayerScores.length }} 名选手)</h4>
+          <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
+          <div class="table-wrapper">
+            <table class="table-base total-table">
+              <thead>
+                <tr v-if="scoreData.scoringScheme === 'S'">
+                  <th>排名</th>
+                  <th>选手</th>
+                  <th>最终得分</th>
+                </tr>
+                <tr v-else>
+                  <th>排名</th>
+                  <th>选手</th>
+                  <th>关卡名</th>
+                  <th v-if="scoreData.scoringScheme !== 'E'">有效评分次数</th>
+                  <template v-if="scoreData.scoringScheme === 'E'">
+                    <th>评委评分</th>
+                    <th>换算后大众评分</th>
+                  </template>
+                  <template v-else>
+                    <th>总分之和</th>
+                  </template>
+                  <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(player, _index) in filteredPlayerScoresWithRank" :key="player.playerCode">
+                  <!-- 成绩无效的选手，排名显示为横杠，但得分保持显示原始值 -->
+                  <td class="rank">
+                    <template v-if="player.records.length > 0 && player.records[0].isCanceled">-</template>
+                    <template v-else-if="player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传'">-</template>
+                    <template v-else>{{ player.displayRank }}</template>
+                  </td>
+                  <td class="player-name">
+                    <span v-if="player.playerCode !== player.playerName && !player.playerCode.startsWith('~')" class="player-code">{{ player.playerCode }}</span>
+                    <span class="player-name-text">{{ player.playerName }}</span>
+                  </td>
+
+                  <!-- S方案不显示关卡名和评分次数列 -->
+                  <template v-if="scoreData.scoringScheme !== 'S'">
+                    <td class="level-file">
+                      <template v-if="player.playerCode.startsWith('~')">取消资格</template>
+                      <template v-else>
+                        <span 
+                          v-if="getPlayerLevelFile(player.playerCode)" 
+                          class="level-file-link" 
+                          @click="downloadLevelFile(player.playerCode)"
+                        >
+                          {{ getPlayerLevelFileName(player.playerCode) }}
+                        </span>
+                        <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
+                      </template>
+                    </td>
+                    <td v-if="scoreData.scoringScheme !== 'E'" class="count">{{ player.validRecordsCount }}</td>
+                    <template v-if="scoreData.scoringScheme === 'E'">
+                      <td class="judge-total">
+                        <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
+                        <template v-else>{{ formatScore(player.totalSum) }}</template>
+                      </td>
+                      <td class="public-score">{{ formatScore(player.records[0]?.scores['换算后大众评分']) }}</td>
+                    </template>
+                    <td v-else class="sum">{{ formatScore(player.totalSum) }}</td>
+                  </template>
+                  <td class="average">{{ formatScore(player.averageScore) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -263,6 +263,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
+import FoldButton from './FoldButton.vue'
 import { loadRoundScoreData, type RoundScoreData, type ScoreRecord, buildPlayerJudgeMap } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
@@ -282,6 +283,13 @@ const props = defineProps<{
 
 // 控制状态
 const filterJudgeType = ref<'all' | 'normal' | 'backup' | 'collaborative' | 'revoked'>('all')
+const scoreContentHidden = ref(false)
+
+// 折叠/展开评分数据内容
+const toggleScoreContent = () => {
+  scoreContentHidden.value = !scoreContentHidden.value
+}
+
 const searchPlayer = ref('')
 
 const scoreData = ref<RoundScoreData | null>(null)
@@ -919,7 +927,7 @@ onMounted(() => {
 .detailed-scores h4,
 .player-totals h4 {
   text-align: center;
-  margin: 0 0 var(--spacing-lg) 0;
+  margin: var(--spacing-lg) 0;
   color: var(--text-secondary);
   font-size: 22px;
   border-bottom: 2px solid var(--primary-active);
@@ -1290,5 +1298,23 @@ onMounted(() => {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+.panel-collapse {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  will-change: max-height, opacity;
+  transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.panel-collapse.is-expanded {
+  max-height: 4000px;
+  opacity: 1;
+  pointer-events: auto;
+  transition: max-height 1s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

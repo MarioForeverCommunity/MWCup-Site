@@ -223,6 +223,11 @@
 }
 
 @media (max-width: 480px) {
+  .content-container {
+    margin: 5px;
+    padding: 15px 10px;
+  }
+  
   .content-panel {
     padding: var(--spacing-lg);
   }

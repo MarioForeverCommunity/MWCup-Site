@@ -3,24 +3,27 @@
     <div class="subject-header">
       <h3 class="subject-title">
         比赛试题
+        <FoldButton :is-folded="!isExpanded" @toggle="toggleExpand" />
       </h3>
     </div>
     
-    <div v-if="isExpanded" class="subject-content">
-      <div v-if="loading" class="loading-state">
-        <div class="loading-spinner"></div>
-        <span class="loading-text">加载试题中<span class="loading-dots"></span></span>
-      </div>
-      
-      <div v-else-if="error" class="error-state">
-        <i class="error-icon">⚠️</i>
-        <span>{{ error }}</span>
-      </div>
-      
-      <div v-else-if="subjectContent" class="subject-content-wrapper">
-        <div class="markdown-content" v-html="renderedContent"></div>
-        <div v-if="smwpVersion" class="smwp-version">
-          <div class="smwp-version-text">{{ smwpVersion }}</div>
+    <div class="panel-collapse" :class="{'is-expanded': isExpanded}">
+      <div class="subject-content">
+        <div v-if="loading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">加载试题中<span class="loading-dots"></span></span>
+        </div>
+        
+        <div v-else-if="error" class="error-state">
+          <i class="error-icon">⚠️</i>
+          <span>{{ error }}</span>
+        </div>
+        
+        <div v-else-if="subjectContent" class="subject-content-wrapper">
+          <div class="markdown-content" v-html="renderedContent"></div>
+          <div v-if="smwpVersion" class="smwp-version">
+            <div class="smwp-version-text">{{ smwpVersion }}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -29,6 +32,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import FoldButton from './FoldButton.vue'
 import { marked } from 'marked'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 
@@ -44,6 +48,11 @@ const loading = ref(false)
 const error = ref<string>('')
 const isExpanded = ref(true)
 const smwpVersion = ref<string>('')
+
+// 切换展开/折叠状态
+function toggleExpand() {
+  isExpanded.value = !isExpanded.value
+}
 
 const showSubject = computed(() => {
   return props.year && props.round
@@ -194,8 +203,6 @@ watch(() => [props.year, props.round], () => {
 </script>
 
 <style scoped>
-/* 使用通用样式，只保留必要的组件特定样式 */
-
 .subject-header h3 {
   margin: 0 0 var(--spacing-lg) 0;
   color: var(--text-secondary);
@@ -359,5 +366,20 @@ watch(() => [props.year, props.round], () => {
     height: auto;
     display: block;
   }
+}
+
+.panel-collapse {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.panel-collapse.is-expanded {
+  max-height: 16000px; /* 设置足够大的值以容纳内容 */
+  opacity: 1;
+  transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

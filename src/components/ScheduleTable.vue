@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import FoldButton from './FoldButton.vue';
 import { fetchMarioWorkerYaml, getYearSchedules } from '../utils/scheduleHelper';
 import type { YearSchedule } from '../utils/scheduleHelper';
 
@@ -17,6 +18,12 @@ const props = withDefaults(defineProps<Props>(), {
 const schedules = ref<YearSchedule[]>([]);
 const selectedYear = ref<string>('');
 const years = ref<string[]>([]);
+const scheduleContentHidden = ref(false);
+
+// 折叠/展开赛程内容
+function toggleScheduleContent() {
+  scheduleContentHidden.value = !scheduleContentHidden.value;
+}
 
 // 计算每个阶段的行数，用于rowspan
 function calculateRowspans(items: YearSchedule['items']) {
@@ -170,58 +177,61 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
     <div class="schedule-header">
       <h3 class="schedule-title">
         赛程安排
+        <FoldButton :is-folded="scheduleContentHidden" @toggle="toggleScheduleContent" />
       </h3>
     </div>
-    <div class="table-container">
-      <div class="table-wrapper shimmer-effect">
-        <table class="table-base schedule-table">
-        <thead>
-          <tr>
-            <th>比赛阶段</th>
-            <th>内容</th>
-            <th>开始时间</th>
-            <th>结束时间</th>
-            <th>链接</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="!scheduleWithRowspans.items || scheduleWithRowspans.items.length === 0">
-            <td colspan="5">无日程数据</td>
-          </tr>
-          <tr 
-            v-for="(item, index) in scheduleWithRowspans.items" 
-            :key="item.stage + item.content + (item.start||'') + index"
-            class="schedule-row"
-          >
-            <td 
-              v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
-              :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
-              class="stage-cell"
-            >
-              {{ item.stage }}
-            </td>
-            <td class="content-cell">{{ item.content }}</td>
-            <template v-if="item.start === item.end">
-              <td colspan="2" class="time-cell">{{ formatTime(item.start) }}</td>
-            </template>
-            <template v-else-if="item.start && item.end">
-              <td class="time-cell">{{ formatTime(item.start) }}</td>
-              <td class="time-cell">{{ formatTime(item.end) }}</td>
-            </template>
-            <template v-else>
-              <td colspan="2" class="time-cell">{{ formatTime(item.start) || formatTime(item.end) || '——' }}</td>
-            </template>
-            <td class="link-cell">
-              <template v-if="item.multipleLinks">
-                <div v-for="(link, idx) in filterMultipleLinks(item.multipleLinks, props.round)" :key="link + idx" class="multi-link-container">
-                  <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link, !!props.round)"></a>
-                </div>
-              </template>
-              <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="panel-collapse" :class="{'is-expanded': !scheduleContentHidden}">
+      <div class="table-container">
+        <div class="table-wrapper shimmer-effect">
+          <table class="table-base schedule-table">
+            <thead>
+              <tr>
+                <th>比赛阶段</th>
+                <th>内容</th>
+                <th>开始时间</th>
+                <th>结束时间</th>
+                <th>链接</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="!scheduleWithRowspans.items || scheduleWithRowspans.items.length === 0">
+                <td colspan="5">无日程数据</td>
+              </tr>
+              <tr 
+                v-for="(item, index) in scheduleWithRowspans.items" 
+                :key="item.stage + item.content + (item.start||'') + index"
+                class="schedule-row"
+              >
+                <td 
+                  v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
+                  :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
+                  class="stage-cell"
+                >
+                  {{ item.stage }}
+                </td>
+                <td class="content-cell">{{ item.content }}</td>
+                <template v-if="item.start === item.end">
+                  <td colspan="2" class="time-cell">{{ formatTime(item.start) }}</td>
+                </template>
+                <template v-else-if="item.start && item.end">
+                  <td class="time-cell">{{ formatTime(item.start) }}</td>
+                  <td class="time-cell">{{ formatTime(item.end) }}</td>
+                </template>
+                <template v-else>
+                  <td colspan="2" class="time-cell">{{ formatTime(item.start) || formatTime(item.end) || '——' }}</td>
+                </template>
+                <td class="link-cell">
+                  <template v-if="item.multipleLinks">
+                    <div v-for="(link, idx) in filterMultipleLinks(item.multipleLinks, props.round)" :key="link + idx" class="multi-link-container">
+                      <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link, !!props.round)"></a>
+                    </div>
+                  </template>
+                  <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -287,6 +297,21 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
 
 .multi-link-container:last-child {
   margin-bottom: 0;  /* 最后一个容器不需要底部间距 */
+}
+
+.panel-collapse {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.panel-collapse.is-expanded {
+  max-height: 2000px;
+  opacity: 1;
+  transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 </style>
