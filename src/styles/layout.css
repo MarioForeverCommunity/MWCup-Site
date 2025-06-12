@@ -175,11 +175,6 @@
   .main-content {
     margin-left: 250px;
   }
-  
-  .content-container {
-    margin: 15px;
-    padding: 25px var(--spacing-lg);
-  }
 }
 
 @media (max-width: 768px) {
@@ -210,8 +205,6 @@
   }
   
   .content-container {
-    margin: 10px;
-    padding: 20px 15px;
     min-height: auto;
   }
   
@@ -230,11 +223,6 @@
 }
 
 @media (max-width: 480px) {
-  .content-container {
-    margin: 5px;
-    padding: 15px 10px;
-  }
-  
   .content-panel {
     padding: var(--spacing-lg);
   }

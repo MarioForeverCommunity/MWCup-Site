@@ -630,8 +630,6 @@ function searchBySelectorAndKeyword() {
   box-shadow: var(--shadow-button);
 }
 
-
-
 .file-table {
   width: 100%;
   border-collapse: collapse;

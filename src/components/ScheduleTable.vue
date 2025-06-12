@@ -246,7 +246,7 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
 }
 
 .schedule-header h3 {
-  margin: 0 0 var(--spacing-lg) 0;
+  margin: 0;
   color: var(--text-secondary);
   font-size: 22px;
   border-bottom: 2px solid var(--primary-active);
