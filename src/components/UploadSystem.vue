@@ -51,9 +51,13 @@ const currentUrl = computed(() => urlMap[activeYear.value])
 // 判断是否显示iframe（只有比赛系统显示）
 const showIframe = computed(() => competitionYears.includes(activeYear.value))
 
-// 打开链接
+// 打开链接（比赛系统新窗口不带referrer，其他正常）
 const openUrl = () => {
-  window.open(currentUrl.value, '_blank')
+  if (showIframe.value) {
+    window.open(currentUrl.value, '_blank', 'noopener,noreferrer')
+  } else {
+    window.open(currentUrl.value, '_blank')
+  }
 }
 </script>
 
