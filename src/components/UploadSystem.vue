@@ -19,7 +19,7 @@ const isTotalArchive = computed(() => activeYear.value === '2012')
 // 动态按钮文字
 const buttonText = computed(() => {
   if (isTotalArchive.value) return '前往MW杯总网盘'
-  return showIframe.value ? '在新窗口打开比赛系统' : '前往本届MW杯网盘'
+  return showIframe.value ? '在新标签页打开上传系统' : '前往本届MW杯网盘'
 })
 
 // 下拉菜单选项（2012年特殊处理）
