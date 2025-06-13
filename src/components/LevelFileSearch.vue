@@ -41,7 +41,7 @@
   </div>
   <div v-if="searchResults && searchResults.length > 0" class="content-panel animate-fadeInUp">
     <div class="section-header">
-      <h3>找到的关卡文件 ({{ searchResults.length }} 个):</h3>
+      <h3>找到的关卡文件 ({{ searchResults.length }} 个)</h3>
     </div>
     <div class="table-wrapper">
       <table class="table-base file-table">
