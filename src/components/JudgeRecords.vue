@@ -201,7 +201,6 @@ onMounted(() => {
 <style scoped>
 /* 基础容器 */
 .judge-records {
-  padding: var(--spacing-sm);
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;

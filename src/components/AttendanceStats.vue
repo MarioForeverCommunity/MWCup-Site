@@ -277,7 +277,6 @@ onMounted(() => {
 <style scoped>
 /* 使用主题CSS变量和统一样式 */
 .attendance-stats {
-  padding: var(--spacing-sm);
   max-width: 1400px;
   margin: 0 auto;
   background: var(--bg-primary);

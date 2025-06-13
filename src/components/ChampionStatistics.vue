@@ -8,11 +8,11 @@
     {{ error }}
   </div>
 
-  <div v-else class="content-panel animate-fadeInUp">
+  <div v-else class="content-panel">
     <!-- 冠军列表 -->
-    <div class="section-header">
+    <div class="section-header animate-fadeInUp">
       <h3>历届决赛排名</h3>
-      <div class="table-wrapper">
+      <div class="table-wrapper animate-fadeInUp">
         <table class="table-base champions-table">
           <thead>
             <tr>

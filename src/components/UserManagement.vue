@@ -274,7 +274,6 @@ onMounted(() => {
 <style scoped>
 /* 主容器 */
 .user-management {
-  padding: var(--spacing-sm);
   max-width: 1400px;
   background: var(--bg-primary);
   border-radius: var(--border-radius);

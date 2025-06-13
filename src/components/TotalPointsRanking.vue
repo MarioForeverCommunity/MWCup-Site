@@ -427,7 +427,6 @@ export default defineComponent({
 <style scoped>
 /* 使用主题CSS变量和统一样式 */
 .total-points-ranking {
-  padding: var(--spacing-lg);
   max-width: 1400px;
   margin: 0 auto;
   background: var(--bg-primary);
@@ -584,12 +583,6 @@ export default defineComponent({
   
   .total-points {
     font-size: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .total-points-ranking {
-    padding: var(--spacing-sm);
   }
 }
 </style>
