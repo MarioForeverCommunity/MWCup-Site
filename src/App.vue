@@ -115,6 +115,11 @@ const scrollToTop = () => {
 const handleScroll = () => {
   showBackToTop.value = window.scrollY > 300
 }
+
+// 打开Mario Forever社区
+const openCommunity = () => {
+  window.open('https://www.marioforever.net/forum-50-1.html', '_blank')
+}
 </script>
 
 <template>
@@ -166,6 +171,13 @@ const handleScroll = () => {
         >
           <span class="nav-icon">📄</span>
           <span class="nav-text">规章标准</span>
+        </button>
+        <button 
+          @click="openCommunity"
+          class="nav-btn hover-scale"
+        >
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">前往社区</span>
         </button>
       </nav>
     </aside>
