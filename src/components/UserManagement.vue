@@ -274,7 +274,7 @@ onMounted(() => {
 <style scoped>
 /* 主容器 */
 .user-management {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   max-width: 1400px;
   background: var(--bg-primary);
   border-radius: var(--border-radius);
@@ -498,7 +498,6 @@ onMounted(() => {
   
   .summary-cards {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
   }
   
   .pagination-controls {

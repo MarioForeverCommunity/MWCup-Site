@@ -201,7 +201,7 @@ onMounted(() => {
 <style scoped>
 /* 基础容器 */
 .judge-records {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
@@ -382,10 +382,6 @@ onMounted(() => {
     min-width: 600px;
     white-space: nowrap;
   }
-
-  .judge-records {
-    padding: var(--spacing-md);
-  }
   
   .summary-cards {
     grid-template-columns: 1fr;
@@ -401,78 +397,9 @@ onMounted(() => {
   }
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.header h2 {
-  margin: 0;
-  color: #2c3e50;
-  font-size: 24px;
-}
-
-.filters {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.search-input, .sort-select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.search-input {
-  min-width: 200px;
-}
-
-.refresh-btn, .retry-btn {
-  padding: 8px 16px;
-  background: #9b59b6;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
-}
-
-.refresh-btn:hover:not(:disabled), .retry-btn:hover {
-  background: #8e44ad;
-}
-
-.refresh-btn:disabled {
-  background: #bdc3c7;
-  cursor: not-allowed;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #9b59b6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
-}
-
-.error {
-  text-align: center;
-  padding: 40px;
-  color: #e74c3c;
-}
-
-.stats-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+@media (max-width: 480px) {
+  .participation-years {
+    display: none;
+  }
 }
 </style>

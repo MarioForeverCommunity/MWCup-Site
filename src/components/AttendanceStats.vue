@@ -277,7 +277,7 @@ onMounted(() => {
 <style scoped>
 /* 使用主题CSS变量和统一样式 */
 .attendance-stats {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   max-width: 1400px;
   margin: 0 auto;
   background: var(--bg-primary);
@@ -481,10 +481,6 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
-
-  .attendance-stats {
-    padding: var(--spacing-md);
-  }
   
   .summary-cards {
     grid-template-columns: 1fr;
@@ -507,4 +503,5 @@ onMounted(() => {
     font-size: 8px;
   }
 }
+
 </style>

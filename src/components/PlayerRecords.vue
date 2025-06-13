@@ -294,7 +294,7 @@ onMounted(() => {
 <style scoped>
 /* 基础容器 */
 .player-records {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
@@ -468,13 +468,8 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .player-records {
-    padding: var(--spacing-md);
-  }
-  
   .summary-cards {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm);
+    grid-template-columns: 1fr;
   }
   
   .stat-card {
@@ -499,19 +494,6 @@ onMounted(() => {
 }
 
 @media (max-width: 480px) {
-  .summary-cards {
-    grid-template-columns: 1fr;
-  }
-  
-  .rate-display {
-    flex-direction: column;
-    gap: var(--spacing-xs);
-  }
-  
-  .rate-bar {
-    width: 100%;
-  }
-  
   .participation-years {
     display: none;
   }
