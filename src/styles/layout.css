@@ -228,10 +228,6 @@
     padding: 15px 10px;
   }
   
-  .content-panel {
-    padding: var(--spacing-lg);
-  }
-  
   .nav-btn {
     min-width: 100px;
     padding: 10px 12px;
