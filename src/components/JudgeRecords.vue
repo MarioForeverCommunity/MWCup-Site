@@ -77,8 +77,10 @@
                 <td class="action-cell">
                   <button 
                     @click="toggleDetails(record.judgeName)" 
-                    class="btn-outline hover-scale"
-                    :class="{ 'btn-active': expandedJudge === record.judgeName }"
+                    class="detail-btn hover-scale"
+                    :class="{
+                      'btn-secondary': expandedJudge === record.judgeName
+                    }"
                   >
                     {{ expandedJudge === record.judgeName ? '收起' : '详情' }}
                   </button>
@@ -213,8 +215,6 @@ onMounted(() => {
   gap: var(--spacing-xs);
 }
 
-/* 统计卡片 */
-
 /* 参赛信息 */
 .participation-display {
   text-align: center;
@@ -288,6 +288,37 @@ onMounted(() => {
   padding: var(--spacing-lg);
   margin: var(--spacing-md);
   box-shadow: var(--shadow-medium);
+}
+
+.detail-btn {
+  padding: 4px 8px;
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+  color: white;
+  border: none;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: var(--transition-normal);
+  min-width: 44px;
+  white-space: nowrap;
+}
+
+.detail-btn.btn-secondary {
+  background: var(--bg-button);
+  color: var(--text-primary);
+  border: 2px solid var(--primary-hover);
+}
+
+.detail-btn.btn-secondary:hover {
+  background: var(--bg-button);
+  filter: brightness(0.95);
+}
+
+.detail-btn:hover {
+  background: linear-gradient(135deg, var(--primary-active), var(--primary-dark));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-button);
 }
 
 /* 详情行样式 */

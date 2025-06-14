@@ -52,6 +52,5 @@ const onClick = () => {
 
 .fold-btn:hover {
   filter: brightness(0.95);
-  color: white;
 }
 </style>
