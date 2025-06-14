@@ -377,7 +377,7 @@ watch(() => [props.year, props.round], () => {
 }
 
 .panel-collapse.is-expanded {
-  max-height: 16000px; /* 设置足够大的值以容纳内容 */
+  max-height: 22000px; /* 设置足够大的值以容纳内容 */
   opacity: 1;
   transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
