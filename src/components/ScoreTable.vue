@@ -141,7 +141,7 @@
                     <template v-else>
                       <td class="judge-name">
                         <!-- 手动处理协商评分的评委 -->
-                          <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
+                        <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
                           <div 
                             v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())" 
                             :key="index"
@@ -161,14 +161,12 @@
                         <div v-else>
                           <!-- 显示评委名称，使用judgeName而不是judgeCode查询用户映射 -->
                           {{ record.judgeName.replace(/（[^）]*）/g, '').trim() }}
-                          <!-- 显示协商标签 -->
-                          <span v-if="record.isCollaborative" class="collaborative-tag">协商</span>
                           <!-- 只保留一个预备标签，优先重评，其次预备，其次大众 -->
                           <template v-if="!record.isRevoked">
                             <span v-if="isReEvaluationJudge(record.judgeCode, record)" class="re-evaluation-tag">重评</span>
+                            <span v-else-if="record.isBackup" class="backup-tag">预备</span>
+                            <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
                           </template>
-                          <span v-else-if="record.isBackup" class="backup-tag">预备</span>
-                          <span v-else-if="isPublicJudge(record.judgeCode)" class="public-tag">大众</span>
                         </div>
                       </td>
                       <td v-for="column in scoreData.columns" 
