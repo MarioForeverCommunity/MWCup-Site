@@ -250,13 +250,15 @@ export async function findLevelFileByPlayer(
 function extractRoundFromPath(path: string): { roundKey: string, roundName: string } | null {
   // 匹配常见的轮次模式
   const patterns = [
-    { pattern: /热身赛|练习赛|P1|P2/, key: 'P1', name: '热身赛' },
-    { pattern: /初赛|I\d+/, key: 'I1', name: '初赛' },
+    { pattern: /热身赛|P1/, key: 'P1', name: '热身赛' },
+    { pattern: /预选赛|P1/, key: 'P1', name: '预选赛' },
+    { pattern: /资格赛|P2/, key: 'P2', name: '资格赛' },
+    { pattern: /初赛|I\d+/, key: 'I', name: '初赛' },
     { pattern: /复赛|R\d*/, key: 'R', name: '复赛' },
     { pattern: /半决赛|S\d*/, key: 'S', name: '半决赛' },
     { pattern: /决赛|F/, key: 'F', name: '决赛' },
-    { pattern: /分组赛|G\d+/, key: 'G1', name: '分组赛' },
-    { pattern: /1\/4决赛|Q\d*/, key: 'Q', name: '1/4决赛' }
+    { pattern: /小组赛|G\d+/, key: 'G', name: '小组赛' },
+    { pattern: /四分之一决赛|Q\d*/, key: 'Q', name: '四分之一决赛' }
   ]
 
   for (const { pattern, key, name } of patterns) {
@@ -278,7 +280,7 @@ function getRoundDisplayName(roundKey: string): string {
     'I1': '初赛第一题', 'I2': '初赛第二题', 'I3': '初赛第三题', 'I4': '初赛第四题',
     'G1': '小组赛第一轮', 'G2': '小组赛第二轮', 'G3': '小组赛第三轮', 'G4': '小组赛第四轮',
     'Q': '四分之一决赛', 'Q1': '四分之一决赛第一轮', 'Q2': '四分之一决赛第二轮',
-    'R': '复赛', 'R1': '复赛第一轮', 'R2': '复赛第二轮', 'R3': '复赛第三轮',
+    'R': '复赛', 'R1': '复赛第一题', 'R2': '复赛第二题', 'R3': '复赛第三题',
     'S': '半决赛', 'S1': '半决赛第一轮', 'S2': '半决赛第二轮',
     'F': '决赛'
   }

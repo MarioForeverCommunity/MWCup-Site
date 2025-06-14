@@ -302,7 +302,7 @@ onMounted(() => {
 .details-header h4 {
   margin: 0 0 var(--spacing-lg) 0;
   color: var(--text-secondary);
-  font-size: 22px;
+  font-size: 18px;
   border-bottom: 2px solid var(--primary-active);
   padding-bottom: var(--spacing-sm);
 }

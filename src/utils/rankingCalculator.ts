@@ -5,6 +5,7 @@
 import { loadRoundScoreData, type PlayerScore } from './scoreCalculator';
 import * as YAML from 'js-yaml';
 import { Decimal } from 'decimal.js';
+import { getRoundChineseName } from './roundNames';
 import type { 
   LevelRankingItem, 
   MultiLevelRankingItem, 
@@ -75,32 +76,30 @@ function getEditionString(year: number): string {
 
 /**
  * 获取轮次名称
+ * 直接使用 roundNames.ts 中的 getRoundChineseName 函数
  */
-function getRoundName(roundKey: string, roundType: string): string {
-  const roundNameMap: { [key: string]: string } = {
-    'P1': '预选赛',
-    'P2': '资格赛',
-    'I1': '初赛第一题',
-    'I2': '初赛第二题',
-    'I3': '初赛第三题',
-    'I4': '初赛第四题',
-    'G1': '小组赛第一轮',
-    'G2': '小组赛第二轮',
-    'G3': '小组赛第三轮',
-    'G4': '小组赛第四轮',
-    'Q1': '四分之一决赛第一轮',
-    'Q2': '四分之一决赛第二轮',
-    'Q': '四分之一决赛',
-    'S1': '半决赛第一轮',
-    'S2': '半决赛第二轮',
-    'S': '半决赛',
-    'R1': '复赛第一题',
-    'R2': '复赛第二题',
-    'R3': '复赛第三题',
-    'R': '复赛',
-    'F': '决赛'
+function getRoundName(roundKey: string, _roundType: string, year?: number): string {
+  // _roundType 参数不使用但保留以维持函数签名兼容性
+  
+  // 构造必要的 roundData 对象
+  const roundData: any = {
+    year: year?.toString() || ''
   };
-  return roundNameMap[roundKey] || roundType;
+  
+  // 从 YAML 数据中获取轮次信息
+  if (yamlData && year) {
+    const yearStr = year.toString();
+    const roundInfo = yamlData?.season?.[yearStr]?.rounds?.[roundKey];
+    
+    if (roundInfo) {
+      // 对于 P1 轮次，获取 is_warmup 属性
+      if (roundKey === 'P1') {
+        roundData.is_warmup = !!roundInfo.is_warmup;
+      }
+    }
+  }
+  
+  return getRoundChineseName(roundKey, roundData);
 }
 
 /**
@@ -189,7 +188,7 @@ export async function calculateSingleLevelRanking(filters?: RankingFilters): Pro
             finalScore,
             year: level.year,
             edition: getEditionString(level.year),
-            round: getRoundName(level.roundKey, level.roundType),
+            round: getRoundName(level.roundKey, level.roundType, level.year),
             maxScore: maxScore.totalScore,
             scoreRate,
             playerCode: level.playerCode,
@@ -295,7 +294,7 @@ export async function calculateMultiLevelRanking(filters?: RankingFilters): Prom
             finalScore,
             year: item.year,
             edition: getEditionString(item.year),
-            round: getRoundName(item.roundKey, item.roundType),
+            round: getRoundName(item.roundKey, item.roundType, item.year),
             maxScore: maxScore.totalScore,
             scoreRate,
             playerCode: item.playerCode,
@@ -407,7 +406,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
             finalScore,
             year: level.year,
             edition: getEditionString(level.year),
-            round: getRoundName(level.roundKey, level.roundType),
+            round: getRoundName(level.roundKey, level.roundType, level.year),
             maxScore: maxScore.totalScore,
             scoreRate: finalScoreRate,
             playerCode: level.playerCode,

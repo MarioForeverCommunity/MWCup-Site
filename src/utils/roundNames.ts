@@ -7,7 +7,7 @@
  */
 export function getRoundChineseName(roundCode: string, roundData?: any): string {
   // 检查轮次数据是否有 deadlines（表示这是题目模式而不是轮次模式）
-  const hasDeadlines = roundData?.schedule?.deadlines || roundData?.deadlines
+  // const hasDeadlines = roundData?.schedule?.deadlines || roundData?.deadlines
   
   // 获取年份（从roundData中）
   const year = roundData?.year || ''
@@ -18,10 +18,10 @@ export function getRoundChineseName(roundCode: string, roundData?: any): string 
     'I2': year === '2012' ? '初赛第二轮' : '初赛第二题', 
     'I3': '初赛第三题',
     'I4': '初赛第四题',
-    'G1': hasDeadlines ? '小组赛第一题' : '小组赛第一轮',
-    'G2': hasDeadlines ? '小组赛第二题' : '小组赛第二轮',
-    'G3': hasDeadlines ? '小组赛第三题' : '小组赛第三轮',
-    'G4': hasDeadlines ? '小组赛第四题' : '小组赛第四轮',
+    'G1': year === '2019' ? '小组赛第一题' : '小组赛第一轮',
+    'G2': year === '2019' ? '小组赛第二题' : '小组赛第二轮',
+    'G3': year === '2019' ? '小组赛第三题' : '小组赛第三轮',
+    'G4': year === '2019' ? '小组赛第四题' : '小组赛第四轮',
     'Q1': '四分之一决赛第一轮',
     'Q2': '四分之一决赛第二轮',
     'Q': '四分之一决赛',
