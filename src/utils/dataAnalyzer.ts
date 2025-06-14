@@ -371,7 +371,7 @@ function getJudgeNameFromYaml(judgeCode: string, playerMap: any, playerCode?: st
 
 /**
  * 获取统一的用户标识符（用于数据合并）
- * 如果用户在users.csv中存在，返回用户序号；否则返回原始用户名
+ * 如果用户在users.csv中存在，将基于社区UID返回统一标识符；否则返回原始用户名
  */
 async function getUnifiedUserId(yamlUserName: string): Promise<string> {
   if (!yamlUserName) return yamlUserName;
@@ -391,8 +391,14 @@ async function getUnifiedUserId(yamlUserName: string): Promise<string> {
     });
     
     if (matchedUser) {
-      // 返回用户序号作为统一标识符
-      return `user_${matchedUser.序号}`;
+      // 检查是否有有效的社区UID
+      if (matchedUser.社区UID && matchedUser.社区UID !== '') {
+        // 根据社区UID生成统一标识符
+        return `community_${matchedUser.社区UID}`;
+      } else {
+        // 如果没有社区UID，则使用用户序号
+        return `user_${matchedUser.序号}`;
+      }
     }
     
     // 如果没有找到匹配的用户，返回原始名称
@@ -454,6 +460,64 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
   // 分析每个轮次的数据
   for (const { year, round } of rounds) {
     try {
+      // 特殊处理：2012年I2轮次，评分没有进行，使用关卡上传数据
+      if (year === 2012 && round === 'I2') {
+        try {
+          // 从关卡索引获取上传数据
+          const response = await fetch('/data/levels/index.json');
+          const levelData = await response.json();
+          
+          // 筛选2012年I2轮次的关卡
+          const i2Levels = levelData.filter((level: any) => 
+            level.year === 2012 && level.roundKey === 'I2'
+          );
+          
+          // 处理每个选手的上传数据，只计入关卡数量不计算分数
+          const processedPlayers = new Set<string>();
+          
+          for (const level of i2Levels) {
+            const playerName = level.playerName;
+            if (!playerName || processedPlayers.has(playerName)) continue;
+            
+            // 获取统一的用户标识符
+            const unifiedUserId = await getUnifiedUserId(playerName);
+            const userId = findUserIdByName(users, playerName);
+            if (!userId) continue;
+            
+            processedPlayers.add(playerName);
+            
+            // 初始化或更新选手记录
+            if (!playerRecords[unifiedUserId]) {
+              playerRecords[unifiedUserId] = {
+                userId,
+                participatedYears: [],
+                totalLevels: 0,
+                maxScore: 0,
+                maxScoreRate: 0,
+                bestStage: '',
+                bestRank: Infinity,
+                bestStageLevel: 0,
+                championCount: 0,
+                runnerUpCount: 0,
+                thirdPlaceCount: 0
+              };
+              playerMaxScoreInfo[unifiedUserId] = { maxScore: new Decimal(0), maxPossibleScore: 100 };
+            }
+            
+            const record = playerRecords[unifiedUserId];
+            if (!record.participatedYears.includes(year)) {
+              record.participatedYears.push(year);
+            }
+            
+            record.totalLevels++;
+          }
+          
+          continue; // 处理完2012年I2后跳到下一个轮次
+        } catch (error) {
+          console.error('处理2012年I2轮次关卡数据失败:', error);
+        }
+      }
+      
       const scoreData = await loadRoundScoreData(year.toString(), round, yamlData);
       if (!scoreData || scoreData.playerScores.length === 0) continue;
       
