@@ -130,6 +130,12 @@
                         class="canceled-score-cell">
                       成绩无效
                     </td>
+                    <!-- 处理无法运行的关卡 -->
+                    <td v-else-if="record.isUnworking"
+                        :colspan="scoreData.columns.length + 2"
+                        class="unworking-level-cell">
+                      关卡无法运行
+                    </td>
                     
                     <!-- 正常选手的评委和分数显示 -->
                     <template v-else>
@@ -229,6 +235,16 @@
                   <template v-if="scoreData.scoringScheme !== 'S'">
                     <td class="level-file">
                       <template v-if="player.playerCode.startsWith('~')">取消资格</template>
+                      <template v-else-if="player.records.length > 0 && player.records[0].isUnworking">
+                        <span 
+                          v-if="getPlayerLevelFile(player.playerCode)" 
+                          class="level-file-link unworking-level" 
+                          @click="downloadLevelFile(player.playerCode)"
+                        >
+                          {{ getPlayerLevelFileName(player.playerCode) }}（无法运行）
+                        </span>
+                        <span v-else class="unworking-level">{{ getPlayerLevelFileName(player.playerCode) }}（无法运行）</span>
+                      </template>
                       <template v-else>
                         <span 
                           v-if="getPlayerLevelFile(player.playerCode)" 
@@ -1188,6 +1204,10 @@ onMounted(() => {
   color: #495057;
 }
 
+.unworking-level {
+  font-style: italic;
+}
+
 .count, .sum, .average {
   text-align: center;
 }
@@ -1276,6 +1296,14 @@ onMounted(() => {
   color: #d9534f;
   text-align: center;
   background: rgba(255, 240, 235, 0.8);
+  font-weight: 500;
+}
+
+.unworking-level-cell {
+  font-style: italic;
+  color: #f5a623;
+  text-align: center;
+  background: rgba(255, 250, 235, 0.8);
   font-weight: 500;
 }
 

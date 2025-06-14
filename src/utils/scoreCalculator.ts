@@ -25,6 +25,7 @@ export interface ScoreRecord {
   scoringScheme?: string;
   isNoSubmission?: boolean;
   isCanceled?: boolean;
+  isUnworking?: boolean;  // 关卡无法运行
 }
 
 export interface PlayerScore {
@@ -107,10 +108,12 @@ export function parseCsvToScoreRecords(
     if (!SCORING_SCHEMES[scoringScheme]) {
       throw new Error(`未知的评分方案: ${scoringScheme}`);
     }
+    
 
     const playerMap = buildPlayerJudgeMap(yamlData, year, round);
     const records: ScoreRecord[] = [];
     const canceledPlayers: Set<string> = new Set();
+    const unworkingPlayers: Set<string> = new Set();
     
     // 解析每一行
     for (let i = 1; i < lines.length; i++) {
@@ -123,6 +126,12 @@ export function parseCsvToScoreRecords(
       // 标记成绩无效的选手
       if (originalPlayerValue && judgeCode === 'CANCELED') {
         canceledPlayers.add(originalPlayerValue);
+        continue;
+      }
+      
+      // 标记关卡无法运行的选手
+      if (originalPlayerValue && judgeCode === 'UNWORKING') {
+        unworkingPlayers.add(originalPlayerValue);
         continue;
       }
       
@@ -290,6 +299,46 @@ export function parseCsvToScoreRecords(
         totalSum: new Decimal(0),
         averageScore: new Decimal(0),
         validRecordsCount: 0
+      });
+    }
+  }
+  
+  // 为无法运行关卡的选手创建特殊记录
+  if (unworkingPlayers.size > 0) {
+    for (const playerCode of unworkingPlayers) {
+      // 根据CSV格式决定playerCode和playerName
+      let actualPlayerCode: string;
+      let playerName: string;
+      
+      if (isUsernameFormat) {
+        playerName = playerCode;
+        actualPlayerCode = playerCode;
+      } else {
+        actualPlayerCode = playerCode;
+        playerName = getPlayerName(actualPlayerCode, playerMap);
+      }
+      
+      // 创建一个关卡无法运行记录
+      const unworkingRecord: ScoreRecord = {
+        playerCode: actualPlayerCode,
+        judgeCode: "unworking",
+        originalJudgeCode: "UNWORKING",
+        playerName,
+        judgeName: "关卡无法运行",
+        scores: {},
+        totalScore: new Decimal(0),
+        isUnworking: true
+      };
+      
+      records.push(unworkingRecord);
+      // 添加到playerScores中，得分为0但计入排名
+      playerScores.push({
+        playerCode: actualPlayerCode,
+        playerName,
+        records: [unworkingRecord],
+        totalSum: new Decimal(0),
+        averageScore: new Decimal(0),
+        validRecordsCount: 0  // 设为0表示无有效评分，但仍计入排名
       });
     }
   }

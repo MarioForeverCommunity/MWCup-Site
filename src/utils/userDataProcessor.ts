@@ -145,11 +145,11 @@ export function isValidJudge(judgeCode: string): boolean {
   
   // 排除CANCELED评委
   if (judgeCode.toUpperCase().includes('CANCELED')) return false;
+  if (judgeCode.toUpperCase().includes('UNWORKING')) return false;
   
   // 处理带波浪号前缀的评委代号
   const cleanCode = judgeCode.replace(/^~/, '');
   if (cleanCode.startsWith('JZ')) return false;
-  if (cleanCode.toUpperCase().includes('CANCELED')) return false;
   
   return true;
 }

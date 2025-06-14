@@ -827,7 +827,7 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
     
     for (const playerIdentifier of playerIdentifiers) {
       if (!playerIdentifier) continue; // 跳过空值
-      const playerData = data.filter(row => row[playerIdentifierKey] === playerIdentifier && isValidJudge(row.评委));
+      const playerData = data.filter(row => row[playerIdentifierKey] === playerIdentifier);
       if (playerData.length > 0) {
         validSubmissions++;
       }
