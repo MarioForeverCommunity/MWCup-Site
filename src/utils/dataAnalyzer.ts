@@ -473,11 +473,6 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
       for (const playerScore of scoreData.playerScores) {
         const { playerCode, playerName, averageScore } = playerScore;
         
-        // 跳过成绩无效的选手
-        if (playerScore.records.some(r => r.isCanceled)) {
-          continue;
-        }
-        
         // 获取统一的用户标识符和首选名称
         const unifiedUserId = await getUnifiedUserId(playerName);
         const displayName = await getPreferredDisplayName(playerName);
@@ -486,15 +481,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
         const userId = findUserIdByName(users, playerName);
         if (!userId) continue;
         
-        playerScores.push({ 
-          playerCode, 
-          score: averageScore, 
-          unifiedUserId, 
-          displayName, 
-          userId 
-        });
-        
-        // 初始化或更新选手记录
+        // 初始化选手记录（无论是否有效都要先初始化）
         if (!playerRecords[unifiedUserId]) {
           playerRecords[unifiedUserId] = {
             userId,
@@ -512,6 +499,8 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           playerMaxScoreInfo[unifiedUserId] = { maxScore: new Decimal(0), maxPossibleScore: 100 };
         }
         
+        // 记录参与年份和总关卡数，无论成绩是否有效、关卡是否无法运行都算
+        // 只要选手上传了关卡（包括CANCELED和UNWORKING）
         const record = playerRecords[unifiedUserId];
         if (!record.participatedYears.includes(year)) {
           record.participatedYears.push(year);
@@ -519,7 +508,21 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
         
         record.totalLevels++;
         
-        // 更新最高得分信息
+        // 只有有效成绩才计入排名和最高分数据（排除被取消成绩的选手）
+        if (playerScore.records.some(r => r.isCanceled)) {
+          continue;
+        }
+        
+        // 添加到有效排名数据中
+        playerScores.push({ 
+          playerCode, 
+          score: averageScore, 
+          unifiedUserId, 
+          displayName, 
+          userId 
+        });
+        
+        // 更新最高得分信息（无法运行的关卡得分为0，不会影响最高分）
         const currentScore = playerScore.averageScore;
         if (currentScore.greaterThan(record.maxScore)) {
           record.maxScore = currentScore.toNumber();
