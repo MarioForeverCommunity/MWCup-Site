@@ -176,11 +176,10 @@ function getContentZh(mainStage: string, contentKey: string, season?: any) {
   return contentZh || '';
 }
 
-function getTidLink(tid: string, type: 'tieba' | 'archive' | 'mf' = 'tieba') {
+function getTidLink(tid: string, type: 'tieba' | 'mf' = 'tieba') {
   if (!tid) return '';
   if (type === 'mf') return `https://www.marioforever.net/thread-${tid}-1-1.html`;
-  if (type === 'archive') return `https://archive.marioforever.net/post/${tid}`;
-  return `https://tieba.baidu.com/p/${tid}`;
+  return `https://archive.marioforever.net/post/${tid}`;
 }
 
 // 获取内容的排序权重
@@ -201,7 +200,7 @@ function getContentWeight(content: string) {
 }
 
 // 获取 schedule 表结构
-export function getYearSchedules(doc: any, _tidType: 'tieba' | 'archive' | 'mf' = 'tieba'): YearSchedule[] {
+export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): YearSchedule[] {
   const result: YearSchedule[] = [];
   const seasonObj = extractSeasonData(doc);
   if (!seasonObj || typeof seasonObj !== 'object') return result;
