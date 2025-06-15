@@ -91,8 +91,10 @@
 import { ref, onMounted, watch } from 'vue'
 import { 
   fetchLevelFilesFromLocal,
+  matchPlayerName,
   type LevelFile
 } from '../utils/levelFileHelper'
+import { loadUserData } from '../utils/userDataProcessor'
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader'
 import { getRoundChineseName } from '../utils/roundNames'
 import { getGroupDisplayName } from '../utils/levelMatcher'
@@ -403,7 +405,11 @@ function searchBySelectorAndKeyword() {
   error.value = '';
   searchResults.value = [];
   searched.value = false;
-  fetchLevelFilesFromLocal().then(async files => {
+  
+  Promise.all([
+    fetchLevelFilesFromLocal(),
+    loadUserData()
+  ]).then(async ([files, users]) => {
     let results = files;
     // 先按筛选条件过滤（如果有）
     if (selectedYear.value) {
@@ -421,12 +427,13 @@ function searchBySelectorAndKeyword() {
       results = results.filter(file => {
         if (isExact) {
           return (file.name && file.name.toLowerCase() === lowerKeyword) ||
-                 (file.playerCode && file.playerCode.toLowerCase() === lowerKeyword);
+                 (file.playerCode && file.playerCode.toLowerCase() === lowerKeyword) ||
+                 matchPlayerName(file.playerName, processedKeyword, users, true);
         } else {
           return (
             (file.name && file.name.toLowerCase().includes(lowerKeyword)) ||
             (file.playerCode && file.playerCode.toLowerCase().includes(lowerKeyword)) ||
-            (file.playerName && file.playerName.toLowerCase().includes(lowerKeyword))
+            matchPlayerName(file.playerName, processedKeyword, users, false)
           );
         }
       });

@@ -1,4 +1,6 @@
 // 关卡文件信息类型定义
+import { loadUserData, type UserData } from './userDataProcessor';
+
 export interface MultiLevelFolder {
   folderName: string | null;   // 文件夹名称
   folderPath: string | null;   // 文件夹路径
@@ -95,6 +97,100 @@ export async function getLevelFilesByPlayerCode(
  */
 export async function getAllLevelFiles(): Promise<LevelFile[]> {
   return await fetchLevelFilesFromLocal();
+}
+
+/**
+ * 检查选手名是否匹配搜索关键词（包括别名匹配）
+ * @param playerName 选手名
+ * @param keyword 搜索关键词
+ * @param users 用户数据
+ * @param isExact 是否精确匹配
+ */
+export function matchPlayerName(
+  playerName: string | null, 
+  keyword: string, 
+  users: UserData[], 
+  isExact: boolean = false
+): boolean {
+  if (!playerName || !keyword) return false;
+  
+  const lowerKeyword = keyword.toLowerCase();
+  const lowerPlayerName = playerName.toLowerCase();
+  
+  // 直接匹配选手名
+  if (isExact) {
+    if (lowerPlayerName === lowerKeyword) return true;
+  } else {
+    if (lowerPlayerName.includes(lowerKeyword)) return true;
+  }
+  
+  // 查找该选手在用户数据中的记录
+  const userRecord = users.find(user => {
+    return user.百度用户名 === playerName || 
+           user.社区用户名 === playerName || 
+           user.社区曾用名 === playerName;
+  });
+  
+  if (!userRecord) return false;
+  
+  // 检查所有相关用户名
+  const namesToCheck = [
+    userRecord.百度用户名,
+    userRecord.社区用户名,
+    userRecord.社区曾用名
+  ].filter(name => name && name.trim());
+  
+  for (const name of namesToCheck) {
+    const lowerName = name.toLowerCase();
+    if (isExact) {
+      if (lowerName === lowerKeyword) return true;
+    } else {
+      if (lowerName.includes(lowerKeyword)) return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * 根据关键词搜索关卡文件（支持选手别名搜索）
+ * @param keyword 搜索关键词
+ * @param isExact 是否精确匹配
+ */
+export async function searchLevelFilesByKeyword(
+  keyword: string,
+  isExact: boolean = false
+): Promise<LevelFile[]> {
+  if (!keyword.trim()) return [];
+  
+  const [files, users] = await Promise.all([
+    fetchLevelFilesFromLocal(),
+    loadUserData()
+  ]);
+  
+  const processedKeyword = isExact ? keyword.slice(1, -1) : keyword;
+  const lowerKeyword = processedKeyword.toLowerCase();
+  
+  return files.filter(file => {
+    // 匹配文件名
+    if (file.name && file.name.toLowerCase().includes(lowerKeyword)) {
+      return true;
+    }
+    
+    // 匹配选手码
+    if (file.playerCode && (isExact ? 
+        file.playerCode.toLowerCase() === lowerKeyword : 
+        file.playerCode.toLowerCase().includes(lowerKeyword))) {
+      return true;
+    }
+    
+    // 匹配选手名（包括别名）
+    if (matchPlayerName(file.playerName, processedKeyword, users, isExact)) {
+      return true;
+    }
+    
+    return false;
+  });
 }
 
 /**
