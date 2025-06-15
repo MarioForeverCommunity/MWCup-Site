@@ -8,6 +8,7 @@ export interface UserData {
   社区用户名: string;
   社区UID: string;
   社区曾用名: string;
+  别名: string;
 }
 
 export interface PlayerRecord {
@@ -60,15 +61,26 @@ export async function loadUserData(): Promise<UserData[]> {
     
     // 跳过标题行
     const dataLines = lines.slice(1);
-    
     const users: UserData[] = dataLines.map(line => {
-      const [序号, 百度用户名, 社区用户名, 社区UID, 社区曾用名] = line.split(',').map(cell => cell.trim());
+      // 使用正则表达式来正确解析CSV，处理引号包围的字段
+      const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+      const parts = line.split(csvRegex).map(cell => {
+        let trimmed = cell.trim();
+        // 如果字段被双引号包围，移除引号
+        if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+          trimmed = trimmed.slice(1, -1);
+        }
+        return trimmed;
+      });
+      
+      const [序号, 百度用户名, 社区用户名, 社区UID, 社区曾用名, 别名] = parts;
       return {
         序号: parseInt(序号) || 0,
         百度用户名: 百度用户名 || '',
         社区用户名: 社区用户名 || '',
         社区UID: 社区UID || '',
-        社区曾用名: 社区曾用名 || ''
+        社区曾用名: 社区曾用名 || '',
+        别名: 别名 || ''
       };
     }).filter(user => user.序号 > 0);
 
@@ -91,6 +103,11 @@ export function findUserIdByName(users: UserData[], playerName: string): number 
     if (user.社区用户名 === playerName) return true;
     // 检查社区曾用名
     if (user.社区曾用名 === playerName) return true;
+    // 检查别名（支持多个别名，用逗号分隔）
+    if (user.别名) {
+      const aliases = user.别名.split(',').map(alias => alias.trim()).filter(alias => alias);
+      if (aliases.includes(playerName)) return true;
+    }
     return false;
   });
   

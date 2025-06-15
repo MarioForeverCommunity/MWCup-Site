@@ -164,16 +164,25 @@ const itemsPerPage = 20
 // 筛选后的用户
 const filteredUsers = computed(() => {
   let filtered = users.value
-
   // 搜索过滤
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(user => {
-      return user.序号.toString().includes(query) ||
-             user.百度用户名.toLowerCase().includes(query) ||
-             user.社区用户名.toLowerCase().includes(query) ||
-             user.社区UID.toLowerCase().includes(query) ||
-             user.社区曾用名.toLowerCase().includes(query)
+      // 检查基本字段
+      if (user.序号.toString().includes(query) ||
+          user.百度用户名.toLowerCase().includes(query) ||
+          user.社区用户名.toLowerCase().includes(query) ||
+          user.社区UID.toLowerCase().includes(query) ||
+          user.社区曾用名.toLowerCase().includes(query)) {
+        return true;
+      }
+      
+      // 检查别名（支持多个别名，用逗号分隔）
+      if (user.别名) {
+        const aliases = user.别名.split(',').map(alias => alias.trim()).filter(alias => alias);
+        return aliases.some(alias => alias.toLowerCase().includes(query));
+      }
+      return false;
     })
   }
 

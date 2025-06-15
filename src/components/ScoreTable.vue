@@ -280,7 +280,8 @@ import FoldButton from './FoldButton.vue'
 import { loadRoundScoreData, type RoundScoreData, type ScoreRecord, buildPlayerJudgeMap } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
-import { fetchLevelFilesFromLocal, type LevelFile } from '../utils/levelFileHelper'
+import { fetchLevelFilesFromLocal, type LevelFile, matchPlayerName } from '../utils/levelFileHelper'
+import { loadUserData, type UserData } from '../utils/userDataProcessor'
 import { Decimal } from 'decimal.js'
 
 // 通过 NoSubmissionRecord.d.ts 扩展了 ScoreRecord 类型，添加了 isNoSubmission 属性
@@ -308,10 +309,10 @@ const searchJudge = ref('')
 const scoreData = ref<RoundScoreData | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
-const roundDisplayName = ref<string>('')
 const userMapping = ref<UserMapping>({})
 const yamlData = ref<any>(null) // 存储原始YAML数据用于查找未上传选手
 const levelFiles = ref<LevelFile[]>([]) // 存储关卡文件数据
+const userData = ref<UserData[]>([]) // 存储用户数据用于别名匹配
 
 // 计算未上传关卡的选手
 const noSubmissionPlayers = computed(() => {
@@ -428,26 +429,57 @@ const filteredDetailRecords = computed(() => {
   
   // 合并原始评分记录和未提交关卡的选手记录
   let records = [...scoreData.value.allRecords, ...noSubmissionPlayers.value]
-  
+
   // 按选手名称搜索
   if (searchPlayer.value.trim()) {
-    const searchTerm = searchPlayer.value.trim().toLowerCase()
-    records = records.filter(record => 
-      record.playerName.toLowerCase().includes(searchTerm) ||
-      record.playerCode.toLowerCase().includes(searchTerm)
-    )
+    const searchTerm = searchPlayer.value.trim()
+    const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
+    const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
+    
+    records = records.filter(record => {
+      // 直接匹配选手名或选手码
+      if (isExact) {
+        if (record.playerName.toLowerCase() === processedKeyword.toLowerCase() ||
+            record.playerCode.toLowerCase() === processedKeyword.toLowerCase()) {
+          return true
+        }
+      } else {
+        if (record.playerName.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+            record.playerCode.toLowerCase().includes(processedKeyword.toLowerCase())) {
+          return true
+        }
+      }
+      
+      // 使用别名匹配
+      return matchPlayerName(record.playerName, processedKeyword, userData.value, isExact)
+    })
   }
   
   // 按评委名称搜索
   if (searchJudge.value.trim()) {
-    const searchTerm = searchJudge.value.trim().toLowerCase()
+    const searchTerm = searchJudge.value.trim()
+    const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
+    const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
+    
     records = records.filter(record => {
       // 对于未提交的记录，不进行评委筛选
       if (record.isNoSubmission) return false
       
-      // 搜索评委名称
-      return record.judgeName.toLowerCase().includes(searchTerm) ||
-             record.judgeCode.toLowerCase().includes(searchTerm)
+      // 直接匹配评委名称或评委代码
+      if (isExact) {
+        if (record.judgeName.toLowerCase() === processedKeyword.toLowerCase() ||
+            record.judgeCode.toLowerCase() === processedKeyword.toLowerCase()) {
+          return true
+        }
+      } else {
+        if (record.judgeName.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+            record.judgeCode.toLowerCase().includes(processedKeyword.toLowerCase())) {
+          return true
+        }
+      }
+      
+      // 使用别名匹配评委名称
+      return matchPlayerName(record.judgeName, processedKeyword, userData.value, isExact)
     })
   }
   
@@ -578,11 +610,27 @@ const filteredPlayerScores = computed(() => {
   
   // 按选手名称搜索
   if (searchPlayer.value.trim()) {
-    const searchTerm = searchPlayer.value.trim().toLowerCase()
-    players = players.filter(player => 
-      player.playerName.toLowerCase().includes(searchTerm) ||
-      player.playerCode.toLowerCase().includes(searchTerm)
-    )
+    const searchTerm = searchPlayer.value.trim()
+    const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
+    const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
+    
+    players = players.filter(player => {
+      // 直接匹配选手名或选手码
+      if (isExact) {
+        if (player.playerName.toLowerCase() === processedKeyword.toLowerCase() ||
+            player.playerCode.toLowerCase() === processedKeyword.toLowerCase()) {
+          return true
+        }
+      } else {
+        if (player.playerName.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+            player.playerCode.toLowerCase().includes(processedKeyword.toLowerCase())) {
+          return true
+        }
+      }
+      
+      // 使用别名匹配
+      return matchPlayerName(player.playerName, processedKeyword, userData.value, isExact)
+    })
   }
   
   // 首先把未上传的选手排到最后，其余按平均分从高到低排序
@@ -680,38 +728,13 @@ async function loadScoreData() {
     yamlData.value = yamlDoc // 保存原始的YAML数据，用于获取未上传选手
     const seasonData = extractSeasonData(yamlDoc)
     
-    // 加载用户映射数据
-    userMapping.value = await loadUserMapping()
-    
-    // 获取轮次显示名称
-    const roundData = seasonData[props.year]?.rounds?.[props.round]
-    if (props.round === 'P1') {
-      roundDisplayName.value = roundData?.is_warmup ? '热身赛' : '预选赛'
-    } else {
-      const roundNames: { [key: string]: string } = {
-        'P2': '资格赛',
-        'I1': '初赛第一轮',
-        'I2': '初赛第二轮', 
-        'I3': '初赛第三轮',
-        'I4': '初赛第四轮',
-        'G1': '小组赛第一轮',
-        'G2': '小组赛第二轮',
-        'G3': '小组赛第三轮',
-        'G4': '小组赛第四轮',
-        'Q1': '四分之一决赛第一轮',
-        'Q2': '四分之一决赛第二轮',
-        'Q': '四分之一决赛',
-        'R1': '复赛第一轮',
-        'R2': '复赛第二轮',
-        'R3': '复赛第三轮',
-        'R': '复赛',
-        'S1': '半决赛第一轮',
-        'S2': '半决赛第二轮',
-        'S': '半决赛',
-        'F': '决赛'
-      }
-      roundDisplayName.value = roundNames[props.round] || props.round
-    }
+    // 加载用户映射数据和用户数据
+    const [userMappingData, userDataResult] = await Promise.all([
+      loadUserMapping(),
+      loadUserData()
+    ])
+    userMapping.value = userMappingData
+    userData.value = userDataResult
     
     // 加载评分数据
     const data = await loadRoundScoreData(props.year, props.round, { season: seasonData })
