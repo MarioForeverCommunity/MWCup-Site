@@ -223,6 +223,8 @@ import {
   calculateOriginalScoreRanking,
   getAvailableYears
 } from '../utils/rankingCalculator'
+import { matchPlayerName } from '../utils/levelFileHelper'
+import { loadUserData } from '../utils/userDataProcessor'
 
 // 响应式状态
 const activeTab = ref<'single' | 'multi' | 'original'>('single')
@@ -233,6 +235,7 @@ const singleLevelRanking = ref<LevelRankingItem[]>([])
 const multiLevelRanking = ref<MultiLevelRankingItem[]>([])
 const originalScoreRanking = ref<OriginalScoreRankingItem[]>([])
 const availableYears = ref<number[]>([])
+const userDataCache = ref<any[]>([])
 
 // 过滤器
 const filters = reactive<RankingFilters>({
@@ -323,24 +326,26 @@ async function loadInitialData() {
     console.log('开始加载排名数据...')
     
     // 并行加载所有数据
-    const [years, singleData, multiData, originalData] = await Promise.all([
+    const [years, singleData, multiData, originalData, userData] = await Promise.all([
       getAvailableYears(),
       calculateSingleLevelRanking(),
       calculateMultiLevelRanking(),
-      calculateOriginalScoreRanking()
+      calculateOriginalScoreRanking(),
+      loadUserData()
     ])
     
     console.log('数据加载完成:', {
       years: years.length,
       singleData: singleData.length,
       multiData: multiData.length,
-      originalData: originalData.length
+      originalData: originalData.length,
+      userData: userData.length
     })
-    
-    availableYears.value = years
+      availableYears.value = years
     singleLevelRanking.value = singleData
     multiLevelRanking.value = multiData
     originalScoreRanking.value = originalData
+    userDataCache.value = userData
     
     // 如果没有数据，显示提示信息
     if (singleData.length === 0 && multiData.length === 0 && originalData.length === 0) {
@@ -390,10 +395,19 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
   filtered = filtered.filter(item => item.year !== 2012)
   
   if (filters.searchPlayer) {
-    const searchTerm = filters.searchPlayer.toLowerCase()
-    filtered = filtered.filter(item => 
-      item.author.toLowerCase().includes(searchTerm)
-    )
+    const searchTerm = filters.searchPlayer.trim()
+    const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
+    const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
+    
+    filtered = filtered.filter(item => {
+      if (isExact) {
+        return item.author.toLowerCase() === processedKeyword.toLowerCase() ||
+               matchPlayerName(item.author, processedKeyword, userDataCache.value, true)
+      } else {
+        return item.author.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+               matchPlayerName(item.author, processedKeyword, userDataCache.value, false)
+      }
+    })
   }
   
   if (filters.searchLevel) {
@@ -433,10 +447,19 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
   filtered = filtered.filter(item => item.year !== 2012)
   
   if (filters.searchPlayer) {
-    const searchTerm = filters.searchPlayer.toLowerCase()
-    filtered = filtered.filter(item => 
-      item.author.toLowerCase().includes(searchTerm)
-    )
+    const searchTerm = filters.searchPlayer.trim()
+    const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
+    const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
+    
+    filtered = filtered.filter(item => {
+      if (isExact) {
+        return item.author.toLowerCase() === processedKeyword.toLowerCase() ||
+               matchPlayerName(item.author, processedKeyword, userDataCache.value, true)
+      } else {
+        return item.author.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+               matchPlayerName(item.author, processedKeyword, userDataCache.value, false)
+      }
+    })
   }
   
   if (filters.searchLevel) {
@@ -476,10 +499,19 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: R
   filtered = filtered.filter(item => item.year !== 2012 && item.scoringScheme !== 'E')
   
   if (filters.searchPlayer) {
-    const searchTerm = filters.searchPlayer.toLowerCase()
-    filtered = filtered.filter(item => 
-      item.author.toLowerCase().includes(searchTerm)
-    )
+    const searchTerm = filters.searchPlayer.trim()
+    const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
+    const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
+    
+    filtered = filtered.filter(item => {
+      if (isExact) {
+        return item.author.toLowerCase() === processedKeyword.toLowerCase() ||
+               matchPlayerName(item.author, processedKeyword, userDataCache.value, true)
+      } else {
+        return item.author.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+               matchPlayerName(item.author, processedKeyword, userDataCache.value, false)
+      }
+    })
   }
   
   if (filters.searchLevel) {

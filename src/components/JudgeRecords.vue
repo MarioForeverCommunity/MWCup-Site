@@ -128,8 +128,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { analyzeJudgeRecords } from '../utils/dataAnalyzer'
 import { type JudgeRecord } from '../utils/userDataProcessor'
+import { matchPlayerName } from '../utils/levelFileHelper'
+import { loadUserData, type UserData } from '../utils/userDataProcessor'
 
 const records = ref<JudgeRecord[]>([])
+const users = ref<UserData[]>([])
 const loading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
@@ -139,13 +142,27 @@ const expandedJudge = ref<string | null>(null)
 // 筛选和排序后的记录
 const filteredRecords = computed(() => {
   let filtered = records.value
-
   // 搜索过滤
   if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(record => 
-      record.judgeName.toLowerCase().includes(query)
-    )
+    const query = searchQuery.value.trim()
+    const isExact = query.startsWith('"') && query.endsWith('"')
+    const processedKeyword = isExact ? query.slice(1, -1) : query
+    
+    filtered = filtered.filter(record => {
+      // 直接匹配评委名
+      if (isExact) {
+        if (record.judgeName.toLowerCase() === processedKeyword.toLowerCase()) {
+          return true
+        }
+      } else {
+        if (record.judgeName.toLowerCase().includes(processedKeyword.toLowerCase())) {
+          return true
+        }
+      }
+      
+      // 使用别名匹配
+      return matchPlayerName(record.judgeName, processedKeyword, users.value, isExact)
+    })
   }
 
   // 排序
@@ -186,8 +203,12 @@ const refreshData = async () => {
   expandedJudge.value = null
   
   try {
-    const judgeRecords = await analyzeJudgeRecords()
+    const [judgeRecords, userData] = await Promise.all([
+      analyzeJudgeRecords(),
+      loadUserData()
+    ])
     records.value = judgeRecords
+    users.value = userData
   } catch (err) {
     error.value = '加载数据失败: ' + (err instanceof Error ? err.message : '未知错误')
   } finally {

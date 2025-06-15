@@ -20,21 +20,20 @@
       <!-- 控制面板 -->
       <div class="control-panel">
         <div class="form-group">
-          <label class="form-label">筛选评委类型：</label>
-          <select v-model="filterJudgeType" class="form-control hover-scale">
-            <option value="all">全部</option>
-            <option value="normal">正常评分</option>
-            <option value="backup">预备评委</option>
-            <option value="collaborative">协商评分</option>
-            <option value="revoked">撤销评分</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label class="form-label">搜索选手：</label>
           <input 
             type="text" 
             v-model="searchPlayer" 
             placeholder="输入选手名称..."
+            class="form-control hover-scale"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">搜索评委：</label>
+          <input 
+            type="text" 
+            v-model="searchJudge" 
+            placeholder="输入评委名称..."
             class="form-control hover-scale"
           />
         </div>
@@ -296,7 +295,6 @@ const props = defineProps<{
 }>()
 
 // 控制状态
-const filterJudgeType = ref<'all' | 'normal' | 'backup' | 'collaborative' | 'revoked'>('all')
 const scoreContentHidden = ref(false)
 
 // 折叠/展开评分数据内容
@@ -305,6 +303,7 @@ const toggleScoreContent = () => {
 }
 
 const searchPlayer = ref('')
+const searchJudge = ref('')
 
 const scoreData = ref<RoundScoreData | null>(null)
 const loading = ref(false)
@@ -428,36 +427,7 @@ const filteredDetailRecords = computed(() => {
   if (!scoreData.value || !yamlData.value) return []
   
   // 合并原始评分记录和未提交关卡的选手记录
-  let records = [...scoreData.value.allRecords]
-  
-  // 根据筛选条件决定是否加入未提交记录
-  if (filterJudgeType.value === 'all' || filterJudgeType.value === 'normal') {
-    // 只有在显示全部或普通评分时才加入未提交记录
-    records = [...records, ...noSubmissionPlayers.value]
-  }
-  
-  // 按评委类型筛选
-  if (filterJudgeType.value !== 'all') {
-    records = records.filter(record => {
-      // 对未提交选手和成绩无效选手的特殊处理
-      if (record.isNoSubmission || record.isCanceled) {
-        return filterJudgeType.value === 'normal'
-      }
-      
-      switch (filterJudgeType.value) {
-        case 'normal':
-          return !record.isRevoked && !record.isBackup && !record.isCollaborative
-        case 'backup':
-          return record.isBackup && !record.isRevoked
-        case 'collaborative':
-          return record.isCollaborative && !record.isRevoked
-        case 'revoked':
-          return record.isRevoked
-        default:
-          return true
-      }
-    })
-  }
+  let records = [...scoreData.value.allRecords, ...noSubmissionPlayers.value]
   
   // 按选手名称搜索
   if (searchPlayer.value.trim()) {
@@ -466,6 +436,19 @@ const filteredDetailRecords = computed(() => {
       record.playerName.toLowerCase().includes(searchTerm) ||
       record.playerCode.toLowerCase().includes(searchTerm)
     )
+  }
+  
+  // 按评委名称搜索
+  if (searchJudge.value.trim()) {
+    const searchTerm = searchJudge.value.trim().toLowerCase()
+    records = records.filter(record => {
+      // 对于未提交的记录，不进行评委筛选
+      if (record.isNoSubmission) return false
+      
+      // 搜索评委名称
+      return record.judgeName.toLowerCase().includes(searchTerm) ||
+             record.judgeCode.toLowerCase().includes(searchTerm)
+    })
   }
   
   // 按YAML中的选手顺序对所有记录进行排序

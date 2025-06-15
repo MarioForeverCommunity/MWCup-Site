@@ -166,6 +166,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { analyzePlayerRecords } from '../utils/dataAnalyzer'
 import { loadUserData, type PlayerRecord, type UserData } from '../utils/userDataProcessor'
+import { matchPlayerName } from '../utils/levelFileHelper'
 
 const records = ref<PlayerRecord[]>([])
 const users = ref<UserData[]>([])
@@ -179,13 +180,30 @@ const itemsPerPage = 20
 // 筛选和排序后的记录
 const filteredRecords = computed(() => {
   let filtered = records.value
-
   // 搜索过滤
   if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
+    const query = searchQuery.value.trim()
+    const isExact = query.startsWith('"') && query.endsWith('"')
+    const processedKeyword = isExact ? query.slice(1, -1) : query
+    
     filtered = filtered.filter(record => {
-      const playerName = getPlayerName(record.userId).toLowerCase()
-      return playerName.includes(query) || record.userId.toString().includes(query)
+      const playerName = getPlayerName(record.userId)
+      
+      // 直接匹配选手名或用户ID
+      if (isExact) {
+        if (playerName.toLowerCase() === processedKeyword.toLowerCase() || 
+            record.userId.toString() === processedKeyword) {
+          return true
+        }
+      } else {
+        if (playerName.toLowerCase().includes(processedKeyword.toLowerCase()) || 
+            record.userId.toString().includes(processedKeyword)) {
+          return true
+        }
+      }
+      
+      // 使用别名匹配
+      return matchPlayerName(playerName, processedKeyword, users.value, isExact)
     })
   }
 

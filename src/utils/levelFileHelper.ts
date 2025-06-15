@@ -125,19 +125,19 @@ export function matchPlayerName(
   }
   
   // 查找该选手在用户数据中的记录
-  const userRecord = users.find(user => {
+  const playerRecord = users.find(user => {
     return user.百度用户名 === playerName || 
            user.社区用户名 === playerName || 
            user.社区曾用名 === playerName;
   });
   
-  if (!userRecord) return false;
+  if (!playerRecord) return false;
   
-  // 检查所有相关用户名
+  // 检查该用户记录的所有相关用户名是否匹配关键词
   const namesToCheck = [
-    userRecord.百度用户名,
-    userRecord.社区用户名,
-    userRecord.社区曾用名
+    playerRecord.百度用户名,
+    playerRecord.社区用户名,
+    playerRecord.社区曾用名
   ].filter(name => name && name.trim());
   
   for (const name of namesToCheck) {
@@ -146,6 +146,29 @@ export function matchPlayerName(
       if (lowerName === lowerKeyword) return true;
     } else {
       if (lowerName.includes(lowerKeyword)) return true;
+    }
+  }
+  
+  // 查找关键词是否匹配其他用户记录，如果匹配，检查是否有相同社区UID
+  const keywordMatchedUsers = users.filter(user => {
+    const names = [user.百度用户名, user.社区用户名, user.社区曾用名].filter(name => name && name.trim());
+    for (const name of names) {
+      const lowerName = name.toLowerCase();
+      if (isExact) {
+        if (lowerName === lowerKeyword) return true;
+      } else {
+        if (lowerName.includes(lowerKeyword)) return true;
+      }
+    }
+    return false;
+  });
+  
+  // 检查是否有匹配的用户与当前选手有相同的社区UID
+  for (const keywordUser of keywordMatchedUsers) {
+    if (playerRecord.社区UID && keywordUser.社区UID && 
+        playerRecord.社区UID.trim() && keywordUser.社区UID.trim() &&
+        playerRecord.社区UID === keywordUser.社区UID) {
+      return true;
     }
   }
   
