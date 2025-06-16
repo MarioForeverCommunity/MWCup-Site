@@ -651,7 +651,6 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
   }
   
   // 更新总分排行榜中的最佳排名
-  console.log('开始计算总分排行榜历届最佳排名...');
   try {
     const bestTotalPointsRankings = await calculateBestTotalPointsRanking();
     

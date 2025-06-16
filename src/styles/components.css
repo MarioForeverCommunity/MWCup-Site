@@ -131,7 +131,7 @@ button:hover:not(:disabled) {
 .form-control:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(255, 99, 71, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 99, 71, 0.2);
 }
 
 .form-control:hover:not(:focus) {

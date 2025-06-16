@@ -23,7 +23,6 @@ let yamlData: any | null = null;
  */
 async function loadBaseData() {
   if (!levelsData || !maxScoreData || !yamlData) {
-    console.log('开始加载基础数据...')
     
     const [levelsResponse, maxScoreResponse, yamlResponse] = await Promise.all([
       fetch('/data/levels/index.json'),
@@ -40,12 +39,6 @@ async function loadBaseData() {
     
     const yamlText = await yamlResponse.text();
     yamlData = YAML.load(yamlText);
-    
-    console.log('基础数据加载完成:', {
-      levels: levelsData?.length || 0,
-      maxScoreData: !!maxScoreData,
-      yamlData: !!yamlData
-    })
   }
 
   return { levelsData: levelsData!, maxScoreData: maxScoreData!, yamlData: yamlData! };

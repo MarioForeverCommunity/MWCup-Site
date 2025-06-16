@@ -126,7 +126,7 @@ function formatDate(isoDate: string): string {
 }
 
 // 提取比赛各阶段日期
-function extractDates(yearData: any, year: string) {
+function extractDates(yearData: any, _year: string) {
   const dates = {
     p1Start: '',
     p1End: '',

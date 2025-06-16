@@ -323,8 +323,6 @@ async function loadInitialData() {
     loading.value = true
     error.value = null
     
-    console.log('开始加载排名数据...')
-    
     // 并行加载所有数据
     const [years, singleData, multiData, originalData, userData] = await Promise.all([
       getAvailableYears(),
@@ -333,15 +331,8 @@ async function loadInitialData() {
       calculateOriginalScoreRanking(),
       loadUserData()
     ])
-    
-    console.log('数据加载完成:', {
-      years: years.length,
-      singleData: singleData.length,
-      multiData: multiData.length,
-      originalData: originalData.length,
-      userData: userData.length
-    })
-      availableYears.value = years
+
+    availableYears.value = years
     singleLevelRanking.value = singleData
     multiLevelRanking.value = multiData
     originalScoreRanking.value = originalData
@@ -644,7 +635,7 @@ function formatScore(score: number): string {
 .filter-group select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(255, 99, 71, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 99, 71, 0.2);
 }
 
 .filter-group input:hover:not(:focus),

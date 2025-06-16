@@ -97,7 +97,6 @@ async function loadDocumentContent() {
     }
   } catch (err) {
     error.value = '加载文档失败'
-    console.error('加载文档失败:', err)
   } finally {
     loading.value = false
   }
