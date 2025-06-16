@@ -281,7 +281,6 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
   font-size: 12px;
   font-weight: 500;
   transition: var(--transition-normal);
-  min-width: 50px;
   white-space: nowrap;
 }
 
