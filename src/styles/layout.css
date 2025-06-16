@@ -8,7 +8,6 @@
   --bg-line-trans: 0.1;
   min-height: 100vh;
   display: flex;
-  background: var(--bg-gradient);
   position: relative;
 }
 
@@ -68,7 +67,7 @@
   align-items: center;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 16px var(--spacing-lg);
-  border: 2px solid var(--primary-hover);
+  border: 1px solid var(--primary-hover);
   background: var(--bg-button);
   color: var(--primary-dark);
   border-radius: var(--radius-large);

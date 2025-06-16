@@ -119,14 +119,6 @@ const openUrl = () => {
   gap: 15px;
 }
 
-.module-title {
-  margin: 0 0 10px 0;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--border-color);
-  font-size: 24px;
-  color: var(--text-primary);
-}
-
 .year-selector {
   display: flex;
   gap: var(--spacing-sm);

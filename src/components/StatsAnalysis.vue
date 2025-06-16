@@ -13,14 +13,14 @@
         <div v-if="activeTab === 'ranking'" :key="'ranking'">
           <RankingModule />
         </div>
+        <div v-else-if="activeTab === 'holding'" :key="'holding'">
+          <ChampionStatistics />
+        </div>
         <div v-else-if="activeTab === 'totalpoints'" :key="'totalpoints'">
           <TotalPointsRanking />
         </div>
         <div v-else-if="activeTab === 'players'" :key="'players'">
           <PlayerRecords />
-        </div>
-        <div v-else-if="activeTab === 'champions'" :key="'champions'">
-          <ChampionStatistics />
         </div>
         <div v-else-if="activeTab === 'judges'" :key="'judges'">
           <JudgeRecords />
@@ -48,9 +48,9 @@ import UserManagement from './UserManagement.vue'
 
 const tabs = [
   { key: 'ranking', label: '关卡排名' },
+  { key: 'holding', label: '举办情况' },
   { key: 'totalpoints', label: '积分排行' },
   { key: 'players', label: '选手战绩' },
-  { key: 'champions', label: '冠军统计' },
   { key: 'judges', label: '评委数据' },
   { key: 'attendance', label: '出勤率统计' },
   { key: 'users', label: '用户一览' }, // 新增用户一览Tab

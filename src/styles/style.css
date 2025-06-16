@@ -16,7 +16,6 @@
 
   color-scheme: light;
   color: var(--text-primary);
-  background: var(--bg-gradient);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -39,6 +38,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: var(--bg-gradient);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: 100% 100%;
 }
 
 h1 {
@@ -83,17 +85,4 @@ button:focus-visible {
   padding: 0;
   text-align: left;
   min-height: 100vh;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: var(--text-primary);
-    background: var(--bg-gradient);
-  }
-  a:hover {
-    color: var(--primary-hover);
-  }
-  button {
-    background: var(--bg-button);
-  }
 }

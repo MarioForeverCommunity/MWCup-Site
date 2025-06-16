@@ -39,7 +39,7 @@ const onClick = () => {
 }
 
 .fold-btn.btn-primary {
-  border: 2px solid var(--border-medium);
+  border: 1px solid var(--border-medium);
   background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
   color: white;
 }
@@ -47,7 +47,7 @@ const onClick = () => {
 .fold-btn.btn-secondary {
   background: var(--bg-button);
   color: var(--text-primary);
-  border: 2px solid var(--primary-hover);
+  border: 1px solid var(--primary-hover);
 }
 
 .fold-btn:hover {

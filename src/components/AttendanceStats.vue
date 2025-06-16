@@ -263,7 +263,8 @@ const refreshData = async () => {
     attendanceData.value = data
     currentPage.value = 1
   } catch (err) {
-    error.value = '加载数据失败: ' + (err instanceof Error ? err.message : '未知错误')  } finally {
+    error.value = '加载数据失败: ' + (err instanceof Error ? err.message : '未知错误')
+  } finally {
     loading.value = false
   }
 }

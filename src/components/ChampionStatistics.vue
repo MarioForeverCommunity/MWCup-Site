@@ -11,18 +11,26 @@
   <div v-else class="content-panel">
     <!-- 冠军列表 -->
     <div class="section-header animate-fadeInUp">
-      <h3>历届决赛排名</h3>
+      <h3>历届MW杯举办情况</h3>
       <div class="table-wrapper animate-fadeInUp">
         <table class="table-base champions-table">
           <thead>
             <tr>
-              <th>年份</th>
+              <th>届次</th>
+              <th>主办人</th>
+              <th>总评委1</th>
+              <th>总评委2</th>
+              <th>预赛开始</th>
+              <th>预赛结束</th>
+              <th>资格赛开始</th>
+              <th>资格赛结束</th>
+              <th>正赛开始</th>
+              <th>正赛结束</th>
               <th>冠军</th>
               <th>亚军</th>
-              <th v-if="hasThirdPrize">季军</th>
-              <th v-if="hasFourthPrize">第四名</th>
-              <th>主办人</th>
-              <th>总评委</th>
+              <th>季军(2020~)/四强</th>
+              <th>第四名</th>
+              <th>上传地址</th>
             </tr>
           </thead>
           <tbody>
@@ -32,12 +40,28 @@
               class="champion-row"
             >
               <td class="year">{{ champion.year }}年第{{ getEditionNumber(champion.year) }}届</td>
+              <td class="host">{{ champion.host || '-' }}</td>
+              <td class="judges">{{ champion.chiefJudges?.[0] || '-' }}</td>
+              <td class="judges">{{ champion.chiefJudges?.[1] || '-' }}</td>
+              <td class="date">{{ champion.p1Start || '-' }}</td>
+              <td class="date">{{ champion.p1End || '-' }}</td>
+              <td class="date">{{ champion.p2Start || '-' }}</td>
+              <td class="date">{{ champion.p2End || '-' }}</td>
+              <td class="date">{{ champion.mainStart || '-' }}</td>
+              <td class="date">{{ champion.mainEnd || '-' }}</td>
               <td class="champion">{{ champion.first || '-' }}</td>
               <td class="second">{{ champion.second || '-' }}</td>
-              <td v-if="hasThirdPrize" class="third">{{ champion.third || '-' }}</td>
-              <td v-if="hasFourthPrize" class="fourth">{{ champion.fourth || '-' }}</td>
-              <td class="host">{{ champion.host || '-' }}</td>
-              <td class="judges">{{ champion.chiefJudges?.join('、') || '-' }}</td>
+              <td class="third">{{ champion.third || '-' }}</td>
+              <td class="fourth">{{ champion.fourth || '-' }}</td>
+              <td class="link">
+                <a v-if="urlMap[champion.year]" 
+                   :href="urlMap[champion.year]" 
+                   target="_blank" 
+                   class="url-btn hover-scale">
+                  前往
+                </a>
+                <span v-else>-</span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -47,9 +71,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
+
+// 网盘/上传系统URL映射
+const urlMap: Record<string, string> = {
+  '2025': 'https://mwcup2025.marioforever.net',
+  '2024': 'https://mwcup2024.marioforever.net',
+  '2023': 'https://mwcup2023.marioforever.net',
+  '2022': 'https://mwcup2022.marioforever.net',
+  '2021': 'http://2021mwcup.yspean.com/',
+  '2020': 'http://mwcup2020.yspean.com/',
+  '2019': 'http://mwcup2019.yspean.com/',
+  '2018': 'http://mwcup2018.yspean.com/',
+  '2017': 'http://2017mwcup.yspean.com/',
+  '2016': 'http://mwcup2016.yspean.com/',
+  '2015': 'http://mwcup2015.yspean.com/',
+  '2014': 'http://mwcup3--2014.yspean.com/',
+  '2013': 'http://2013mwcup.yspean.com/',
+  '2012': 'http://mwcup.yspean.com/'
+}
 import { loadRoundScoreData } from '../utils/scoreCalculator'
 import { Decimal } from 'decimal.js'
 
@@ -61,14 +103,129 @@ interface ChampionInfo {
   fourth?: string
   host?: string
   chiefJudges?: string[]
+  p1Start?: string  // 预赛开始日期
+  p1End?: string    // 预赛结束日期
+  p2Start?: string  // 资格赛开始日期
+  p2End?: string    // 资格赛结束日期
+  mainStart?: string // 正赛开始日期
+  mainEnd?: string   // 正赛结束日期
 }
 
 const champions = ref<ChampionInfo[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const hasThirdPrize = computed(() => champions.value.some(c => c.third))
-const hasFourthPrize = computed(() => champions.value.some(c => c.fourth))
+// 日期格式化函数：将ISO日期转换为中文格式
+function formatDate(isoDate: string): string {
+  if (!isoDate) return ''
+  const date = new Date(isoDate)
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${year}年${month}月${day}日`
+}
+
+// 提取比赛各阶段日期
+function extractDates(yearData: any, year: string) {
+  const dates = {
+    p1Start: '',
+    p1End: '',
+    p2Start: '',
+    p2End: '',
+    mainStart: '',
+    mainEnd: ''
+  }
+  
+  if (!yearData.rounds) return dates
+  
+  // 预赛P1日期
+  const p1Round = yearData.rounds.P1
+  if (p1Round?.schedule) {
+    // P1开始：match开始时间
+    if (p1Round.schedule.match?.start) {
+      dates.p1Start = formatDate(p1Round.schedule.match.start)
+    }
+    // P1结束：judging结束时间（如果没有judging.end，则使用judging.start）
+    if (p1Round.schedule.judging?.end) {
+      dates.p1End = formatDate(p1Round.schedule.judging.end)
+    } else if (p1Round.schedule.judging?.start) {
+      dates.p1End = formatDate(p1Round.schedule.judging.start)
+    } else if (p1Round.schedule.post_match_checkin?.start) {
+      dates.p1End = formatDate(p1Round.schedule.post_match_checkin.start)
+    }
+  }
+  
+  // 资格赛P2日期
+  const p2Round = yearData.rounds.P2
+  if (p2Round?.schedule) {
+    // P2开始：match开始时间
+    if (p2Round.schedule.match?.start) {
+      dates.p2Start = formatDate(p2Round.schedule.match.start)
+    }
+    // P2结束：judging结束时间（如果没有judging.end，则使用judging.start）
+    if (p2Round.schedule.judging?.end) {
+      dates.p2End = formatDate(p2Round.schedule.judging.end)
+    } else if (p2Round.schedule.judging?.start) {
+      dates.p2End = formatDate(p2Round.schedule.judging.start)
+    }
+  }
+  // 正赛开始：处理数组格式的G1/I1轮次
+  let mainStartFound = false
+  
+  // 查找G1或I1轮次（可能是数组格式）
+  const rounds = yearData.rounds
+  for (const roundKey of Object.keys(rounds)) {
+    const round = rounds[roundKey]
+    
+    // 检查是否是数组格式的轮次（如[G1, G2, G3, G4]或[I1, I2, I3]）
+    if (Array.isArray(roundKey) || roundKey.includes('[') || (round && round.schedule)) {
+      if (round.schedule?.topics) {
+        if (round.schedule.topics.G1?.time) {
+          dates.mainStart = formatDate(round.schedule.topics.G1.time)
+          mainStartFound = true
+          break
+        } else if (round.schedule.topics.I1?.time) {
+          dates.mainStart = formatDate(round.schedule.topics.I1.time)
+          mainStartFound = true
+          break
+        }
+      }
+      // 其他年份：使用match.start
+      else if (round.schedule) {
+        if (round.schedule.G1?.match?.start) {
+          dates.mainStart = formatDate(round.schedule.G1.match.start)
+          mainStartFound = true
+          break
+        } else if (round.schedule.I1?.match?.start) {
+          dates.mainStart = formatDate(round.schedule.I1.match.start)
+          mainStartFound = true
+          break
+        }
+      }
+    }
+  }
+  
+  // 如果没有找到G1或I1，查找其他可能的正赛开始轮次
+  if (!mainStartFound) {
+    for (const roundKey of Object.keys(rounds)) {
+      const round = rounds[roundKey]
+      if (roundKey.startsWith('G') || roundKey.startsWith('I')) {
+        if (round?.schedule?.match?.start) {
+          dates.mainStart = formatDate(round.schedule.match.start)
+          break
+        }
+      }
+    }
+  }
+  // 正赛结束：决赛F的judging结束时间
+  const finalRound = yearData.rounds.F
+  if (finalRound?.schedule?.judging?.end) {
+    dates.mainEnd = formatDate(finalRound.schedule.judging.end)
+  }
+  
+  return dates
+}
+
 async function loadChampions() {
   loading.value = true
   error.value = null
@@ -81,12 +238,18 @@ async function loadChampions() {
     for (const [year, yearData] of Object.entries(seasonData)) {
       if (typeof yearData === 'object' && yearData !== null) {
         const data = yearData as any
+        const dates = extractDates(data, year)
         
         const championInfo: ChampionInfo = {
           year,
           host: data.host,
-          chiefJudges: Array.isArray(data.chief_judge) ? data.chief_judge : 
-                       data.chief_judge ? [data.chief_judge] : undefined
+          chiefJudges: Array.isArray(data.chief_judge) ? data.chief_judge : data.chief_judge ? [data.chief_judge] : undefined,
+          p1Start: dates.p1Start,
+          p1End: dates.p1End,
+          p2Start: dates.p2Start,
+          p2End: dates.p2End,
+          mainStart: dates.mainStart,
+          mainEnd: dates.mainEnd
         }
           try {
           // 尝试加载并使用决赛评分数据
@@ -451,8 +614,7 @@ async function loadChampions() {
       }
     }
     
-    // 按年份降序排序
-    championList.sort((a, b) => parseInt(b.year) - parseInt(a.year))
+    championList.sort((a, b) => parseInt(a.year) - parseInt(b.year))
     champions.value = championList
     
   } catch (err) {
@@ -471,7 +633,7 @@ onMounted(() => {
 <style scoped>
 /* 组件特定样式 - 使用新的CSS类系统 */
 .champions-table {
-  width: 100%;
+  white-space: nowrap;
 }
 
 .year {
@@ -500,7 +662,11 @@ onMounted(() => {
 
 .judges {
   color: #e63fbc;
-  font-size: 14px;
+}
+
+.date {
+  color: #4a90e2;
+  white-space: nowrap;
 }
 
 /* 表格行动画效果 */
@@ -521,6 +687,26 @@ onMounted(() => {
   font-weight: 700;
 }
 
+.url-btn {
+  padding: 4px 8px;
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+  color: white;
+  border: none;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: var(--transition-normal);
+  min-width: 50px;
+  white-space: nowrap;
+}
+
+.url-btn:hover {
+  background: linear-gradient(135deg, var(--primary-active), var(--primary-dark));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-button);
+}
+
 @media (min-width: 768px) {
   .table-wrapper {
     display: flex;
@@ -533,16 +719,7 @@ onMounted(() => {
 @media (max-width: 768px) {
   .champions-table {
     font-size: 12px;
-    min-width: 800px; /* 确保表格有足够宽度触发横向滚动 */
     white-space: nowrap;
-  }
-  
-  .year {
-    font-size: 13px;
-  }
-  
-  .judges {
-    font-size: 12px;
   }
 }
 </style>

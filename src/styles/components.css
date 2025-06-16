@@ -32,7 +32,7 @@
   background: linear-gradient(135deg, rgba(255, 220, 200, 0.9), rgba(255, 200, 180, 0.8));
   font-weight: 600;
   color: var(--text-primary);
-  border-bottom: 2px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
 }
 
 .table-base tbody tr:hover {
@@ -54,6 +54,7 @@
 .btn-primary {
   background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
   color: white;
+  border: 1px solid var(--primary-hover);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -65,7 +66,7 @@
 .btn-secondary {
   background: var(--bg-button);
   color: var(--text-primary);
-  border: 2px solid var(--primary-hover);
+  border: 1px solid var(--primary-hover);
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -118,7 +119,7 @@ button:hover:not(:disabled) {
 /* === 表单控件样式 === */
 .form-control {
   padding: 8px 12px;
-  border: 2px solid var(--border-medium);
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-medium);
   font-size: 14px;
   background: var(--bg-input);

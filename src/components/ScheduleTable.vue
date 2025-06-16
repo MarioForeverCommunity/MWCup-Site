@@ -267,7 +267,7 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
 .stage-cell {
   font-weight: 600;
   background: rgba(255, 240, 230, 0.9);
-  border-right: 2px solid var(--border-medium);
+  border-right: 1px solid var(--border-medium);
   color: var(--text-primary);
 }
 

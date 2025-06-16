@@ -328,7 +328,7 @@ onMounted(() => {
 .detail-btn.btn-secondary {
   background: var(--bg-button);
   color: var(--text-primary);
-  border: 2px solid var(--primary-hover);
+  border: 1px solid var(--primary-hover);
 }
 
 .detail-btn.btn-secondary:hover {

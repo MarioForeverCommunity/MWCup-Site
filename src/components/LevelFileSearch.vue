@@ -137,7 +137,8 @@ async function loadYamlData() {
         .sort((a, b) => b - a) // 降序排列
     }
   } catch (err) {
-    console.error('Failed to load YAML data:', err)  }
+    console.error('Failed to load YAML data:', err)
+  }
 }
 
 function onYearChange() {

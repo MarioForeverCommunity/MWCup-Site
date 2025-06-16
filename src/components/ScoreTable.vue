@@ -1080,7 +1080,7 @@ onMounted(() => {
   background: linear-gradient(135deg, rgba(255, 220, 200, 0.9), rgba(255, 200, 180, 0.8));
   font-weight: 600;
   color: #2c3e50;
-  border-bottom: 2px solid rgba(255, 140, 105, 0.3);
+  border-bottom: 1px solid rgba(255, 140, 105, 0.3);
   text-align: center;
 }
 
@@ -1109,12 +1109,12 @@ onMounted(() => {
 .player-cell-merged {
   background: rgba(255, 240, 230, 0.8);
   vertical-align: middle;
-  border-right: 2px solid rgba(255, 140, 105, 0.3);
+  border-right: 1px solid rgba(255, 140, 105, 0.3);
 }
 
 .player-separator .separator-cell {
   background: rgba(255, 230, 210, 0.6);
-  border-bottom: 2px rgba(255, 140, 105, 0.3);
+  border-bottom: 1px rgba(255, 140, 105, 0.3);
   padding: 0;
   line-height: 2px;
   height: 2px;

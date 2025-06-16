@@ -631,7 +631,7 @@ function formatScore(score: number): string {
 .filter-group input,
 .filter-group select {
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 2px solid var(--border-medium);
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-medium);
   font-size: 14px;
   background: var(--bg-input);
