@@ -358,7 +358,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
           // 计算原始分（基础分的平均值，不包括加分项和扣分项）
           let originalScoreSum = 0;
           let validCount = 0;
-          // 2016Q2特殊：用于换算后的原始分
+          // 2013S1/2016Q2特殊：用于换算后的原始分
           let calculatedOriginalScoreSum = new Decimal(0);
           let calculatedValidCount = 0;
           for (const record of playerScore.records) {
@@ -373,6 +373,9 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
                   // 2016年Q2轮次的欣赏性得分需要乘以10/15
                   if (year === '2016' && round === 'Q2' && key === '欣赏性') {
                     calculatedScore = new Decimal(score).times(10).div(15);
+                  }
+                  if (year === '2013' && round === 'S1' && key === '娱乐性') {
+                    calculatedScore = new Decimal(score).times(80).div(60);
                   }
                   baseScore += score;
                   calculatedBaseScore = calculatedBaseScore.plus(calculatedScore);
@@ -391,7 +394,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
           const originalScoreRate = (originalScore / maxScore.baseScore) * 100;
           const finalScoreRate = (finalScore / maxScore.totalScore) * 100;
           let scoreChange: number;
-          if (year === '2016' && round === 'Q2') {
+          if ((year === '2016' && round === 'Q2') || (year === '2013' && round === 'S1')) {
             scoreChange = finalScoreRate - calculatedOriginalScore;
           } else {
             scoreChange = finalScoreRate - originalScoreRate;
@@ -419,7 +422,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
             originalRank: 0, // 将在后面设置
             scoreRateRank: 0, // 将在后面设置
             rankChange: 0, // 将在后面设置
-            originalScore: year === '2016' && round === 'Q2' ? calculatedOriginalScore : originalScore, // 2016Q2显示换算后的分数
+            originalScore: (year === '2016' && round === 'Q2') || (year === '2013' && round === 'S1') ? calculatedOriginalScore : originalScore, // 2016Q2/2013S1显示换算后的分数
             originalScoreRate, // 排名用未换算分
             scoreChange: Math.abs(scoreChange),
             changeType: scoreChange > 0 ? 'down' : scoreChange < 0 ? 'up' : 'same'
