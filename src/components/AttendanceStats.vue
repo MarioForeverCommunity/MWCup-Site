@@ -356,7 +356,6 @@ onMounted(() => {
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-small);
   font-weight: 600;
-  font-size: 0.9rem;
 }
 
 .round-name {

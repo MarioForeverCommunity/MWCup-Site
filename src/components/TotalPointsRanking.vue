@@ -450,9 +450,8 @@ export default defineComponent({
 .total-col { width: 120px; }
 
 .rank-number {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
-  font-size: 1rem;
 }
 
 .player-name {
@@ -473,7 +472,6 @@ export default defineComponent({
 .best-result {
   color: var(--primary-color);
   font-weight: 600;
-  font-size: 0.9rem;
   padding: var(--spacing-xs) var(--spacing-sm);
   background: var(--primary-color-light);
   border-radius: var(--radius-small);
@@ -481,9 +479,8 @@ export default defineComponent({
 }
 
 .total-points {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--success-color);
-  font-size: 1rem;
 }
 
 /* 排名特殊样式 */
@@ -574,15 +571,6 @@ export default defineComponent({
   
   .total-col {
     width: 80px;
-  }
-  
-  .best-result {
-    font-size: 0.8rem;
-    padding: 2px 6px;
-  }
-  
-  .total-points {
-    font-size: 1rem;
   }
 }
 </style>
