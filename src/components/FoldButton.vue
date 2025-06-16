@@ -38,6 +38,18 @@ const onClick = () => {
   margin-left: var(--spacing-sm);
 }
 
+.fold-btn.btn-primary {
+  border: 1px solid var(--border-medium);
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+  color: white;
+}
+
+.fold-btn.btn-secondary {
+  background: var(--bg-button);
+  color: var(--text-primary);
+  border: 1px solid var(--primary-hover);
+}
+
 .fold-btn:hover {
   filter: brightness(0.95);
 }
