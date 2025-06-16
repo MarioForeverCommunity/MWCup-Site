@@ -270,12 +270,12 @@ const tabs = computed(() => [
 ])
 
 // 并列排名算法，支持动态字段赋值
-function assignRankingWithTies<T extends Record<string, any>>(items: T[], rankField: string = 'rank') {
+function assignRankingWithTies<T extends Record<string, any>>(items: T[], rankField: string = 'rank', scoreField: string = 'scoreRate') {
   let lastScore = null
   let lastRank = 0
   let skip = 0
   for (let i = 0; i < items.length; i++) {
-    const currScore = Number(items[i].scoreRate)
+    const currScore = Number(items[i][scoreField])
     if (lastScore !== null && Math.abs(currScore - lastScore) < 1e-6) {
       (items[i] as any)[rankField] = lastRank
       skip++
@@ -303,12 +303,12 @@ const filteredMultiLevelRanking = computed(() => {
 
 const filteredOriginalScoreRanking = computed(() => {
   const arr = applyOriginalScoreFilters(originalScoreRanking.value, filters)
-  // 原始分排名
+  // 原始分排名 - 基于原始得分率
   arr.sort((a, b) => b.originalScoreRate - a.originalScoreRate)
-  assignRankingWithTies(arr, 'originalRank')
-  // 得分率排名
+  assignRankingWithTies(arr, 'originalRank', 'originalScoreRate')
+  // 得分率排名 - 基于最终得分率
   arr.sort((a, b) => b.scoreRate - a.scoreRate)
-  assignRankingWithTies(arr, 'scoreRateRank')
+  assignRankingWithTies(arr, 'scoreRateRank', 'scoreRate')
   return arr
 })
 
