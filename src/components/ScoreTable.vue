@@ -1230,7 +1230,6 @@ onMounted(() => {
 .average {
   font-weight: 600;
   color: #e74c3c;
-  font-size: 14px;
 }
 
 @media (min-width: 768px) {
