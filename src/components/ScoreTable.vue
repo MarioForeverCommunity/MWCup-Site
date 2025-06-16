@@ -1183,23 +1183,17 @@ onMounted(() => {
 }
 
 /* 完全重构撤销的评分行样式，以分离处理透明度 */
-.revoked-score {
-  background: rgba(248, 215, 218, 0.8);
-}
-
 /* 只有评分单元格和总分应用透明度和删除线 */
 .revoked-score .score-cell, 
 .revoked-score .judge-total {
   text-decoration: line-through;
-  opacity: 0.7;
 }
 
-/* 确保选手名称、评委名称和最终得分不会应用删除线效果 */
-.revoked-score .player-name,
-.revoked-score .judge-name,
-.revoked-score .final-score {
-  text-decoration: none;
-  opacity: 1;
+.revoked-score .score-cell, 
+.revoked-score .judge-total,
+.revoked-score .judge-name {
+  background: rgba(248, 215, 218, 0.8);
+  opacity: 0.7;
 }
 
 .rank {
