@@ -15,7 +15,6 @@
         </div>
         
         <div v-else-if="error" class="error-state">
-          <i class="error-icon">⚠️</i>
           <span>{{ error }}</span>
         </div>
         
@@ -183,7 +182,7 @@ async function loadSubjectContent() {
     if (response.ok) {
       subjectContent.value = await response.text()
     } else if (response.status === 404) {
-      error.value = '该轮次暂无试题文件'
+      error.value = '该轮次暂无试题'
     } else {
       error.value = '加载试题失败'
     }
@@ -238,10 +237,6 @@ watch(() => [props.year, props.round], () => {
   border-radius: var(--radius-large);
   background: var(--bg-panel);
   backdrop-filter: var(--blur-medium);
-}
-
-.error-icon {
-  font-size: 1.2rem;
 }
 
 .markdown-content {

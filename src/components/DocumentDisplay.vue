@@ -16,7 +16,6 @@
     </div>
     
     <div v-else-if="error" class="error-state">
-      <i class="error-icon">⚠️</i>
       <span>{{ error }}</span>
     </div>
     <div v-else-if="documentContent" class="document-content-wrapper">
@@ -173,10 +172,6 @@ if (availableDocs.length > 0) {
 
 .document-content-wrapper {
   position: relative;
-}
-
-.error-icon {
-  font-size: 1.2rem;
 }
 
 .markdown-content {
