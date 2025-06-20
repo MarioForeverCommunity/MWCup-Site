@@ -2864,6 +2864,7 @@ season:
   2025:
     scoring_scheme: E # 2025 年热身赛试行新的大众评分方案，csv格式为“选手码,评委,得体度,美观度,独特度,思辨度,完成度,合理度,有效度,参与度,耐玩度,成就度,加分项,扣分项,换算后大众评分”；本方案每关只有一位评委评分员
     smwp_version: 1.7.10
+    host: newlife2017
     rounds:
       P1:
         is_warmup: true
@@ -2899,3 +2900,28 @@ season:
             start: 2025-02-05T22:00
             end: 2025-02-09T22:00
             mf_tid: 3512
+          post_match_checkin:
+            start: 2025-06-20T20:00
+            end: 2025-07-16T16:00
+            mf_tid: 3604
+      P2:
+        players:
+        judges:
+        chief_judge: false
+        schedule:
+          registration:
+            start: 2025-06-20T20:00
+            end: 2025-07-04T16:00
+            mf_tid: 3603
+          match:
+            start: 2025-07-04T20:00
+            end: 2025-07-11T22:00
+            mf_tid: 
+          judging:
+            start: 2025-07-04T20:00
+            end: 2025-07-15T22:00
+            mf_tid: 
+          voting:
+            start: 2025-07-11T22:00
+            end: 2025-07-15T22:00
+            mf_tid: 
