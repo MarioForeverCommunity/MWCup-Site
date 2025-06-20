@@ -55,6 +55,7 @@ const contentOrder: Record<string, number> = {
   'match': 4,              // 比赛
   'deadlines': 5,           // 截止
   'judging': 5,           // 评分
+  'voting': 5.1,            // 大众评分
   'post_match_checkin': 6, // 晋级选手签到
   'promotion': 7,          // 晋级名单公布
 };
@@ -188,7 +189,6 @@ function getContentWeight(content: string) {
   if (content.includes('关上传截止')) return 4.5;
   if (content.includes('关评分截止')) return 4.7;
   if (content.startsWith('评分')) return 4.6;
-  if (content === '晋级名单公布') return 4.8;
   if (content.includes('题公布')) return 4.2;
   if (content === '比赛开始') return 4;
   
