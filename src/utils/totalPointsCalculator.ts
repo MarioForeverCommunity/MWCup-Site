@@ -161,7 +161,7 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
       totalPoints: new Decimal(Math.round(data.totalPoints * 10) / 10),
       participatedRounds: sortRounds(data.participatedRounds),
       validRoundsCount: data.participatedRounds.length,
-      bestResult: calculateBestResult(data.participatedRounds, data.roundScores),
+      bestResult: calculateBestResult(data.participatedRounds, data.roundScores, yamlData, year, playerName),
       playerCodes: data.playerCodes
     }))
     .sort((a, b) => {
@@ -244,9 +244,129 @@ function sortRounds(rounds: string[]): string[] {
 }
 
 /**
- * 根据参与轮次计算最好成绩
+ * 从YAML数据中获取选手真正晋级的最高阶段
+ * 这会考虑选手在YAML中出现但没有评分数据的轮次
  */
-function calculateBestResult(participatedRounds: string[], roundScores?: { [round: string]: any }): string {
+function getRealBestStageFromYaml(yamlData: any, year: string, playerName: string): string | null {
+  const seasonData = yamlData.season?.[year];
+  if (!seasonData?.rounds) return null;
+  
+  // 定义轮次优先级（从高到低）
+  const stageInfo = [
+    { rounds: ['F'], stageName: '决赛' },
+    { rounds: ['S', 'S1', 'S2'], stageName: '半决赛' },
+    { rounds: ['R', 'R1', 'R2', 'R3'], stageName: '复赛' },
+    { rounds: ['Q', 'Q1', 'Q2'], stageName: '四分之一决赛' },
+    { rounds: ['G1', 'G2', 'G3', 'G4'], stageName: '小组赛' },
+    { rounds: ['I1', 'I2', 'I3', 'I4'], stageName: '初赛' }
+  ];
+  
+  // 从最高阶段开始检查
+  for (const stage of stageInfo) {
+    for (const roundKey of stage.rounds) {
+      if (isPlayerInYamlRound(seasonData, roundKey, playerName)) {
+        return stage.stageName;
+      }
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * 检查选手是否在YAML的指定轮次中出现
+ */
+function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: string): boolean {
+  // 首先尝试直接查找轮次
+  let roundData = seasonData.rounds[roundKey];
+  
+  // 如果没有找到，检查多轮次键
+  if (!roundData) {
+    for (const [key, data] of Object.entries(seasonData.rounds)) {
+      // 检查方括号格式的多轮次键，如 [G1, G2, G3, G4]
+      if (key.startsWith('[') && key.endsWith(']')) {
+        try {
+          const parsedKey = JSON.parse(key);
+          if (Array.isArray(parsedKey) && parsedKey.includes(roundKey)) {
+            roundData = data;
+            break;
+          }
+        } catch {
+          // JSON解析失败，尝试手动解析
+          const rounds = key.slice(1, -1).split(',').map(r => r.trim());
+          if (rounds.includes(roundKey)) {
+            roundData = data;
+            break;
+          }
+        }
+      } else if (key.includes(',')) {
+        // 处理逗号分隔的轮次键
+        const rounds = key.split(',').map(r => r.trim());
+        if (rounds.includes(roundKey)) {
+          roundData = data;
+          break;
+        }
+      }
+    }
+  }
+  
+  if (!roundData?.players) return false;
+  
+  // 检查选手是否在该轮次的players中
+  if (Array.isArray(roundData.players)) {
+    return roundData.players.includes(playerName);
+  } else if (typeof roundData.players === 'object') {
+    // 检查是否为分组结构或扁平结构
+    const firstValue = Object.values(roundData.players)[0];
+    if (typeof firstValue === 'string') {
+      // 扁平结构：players: { '1': 用户名, '2': 用户名, ... }
+      return Object.values(roundData.players).includes(playerName);
+    } else {
+      // 分组结构：players: { A: { A1: 用户名, ... }, ... }
+      for (const groupData of Object.values(roundData.players)) {
+        if (typeof groupData === 'object' && groupData) {
+          if (Object.values(groupData).includes(playerName)) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * 根据参与轮次计算最好成绩
+ * 优先使用YAML中的晋级信息，如果没有则使用实际参与轮次
+ */
+function calculateBestResult(participatedRounds: string[], roundScores?: { [round: string]: any }, yamlData?: any, year?: string, playerName?: string): string {
+  // 如果提供了YAML数据，尝试从中获取选手的真实晋级情况
+  if (yamlData && year && playerName) {
+    const realBestStage = getRealBestStageFromYaml(yamlData, year, playerName);
+    if (realBestStage) {
+      // 如果是决赛，尝试获取具体排名
+      if (realBestStage === '决赛' && roundScores && roundScores['F']) {
+        const finalRoundData = roundScores['F'];
+        if (finalRoundData.rank !== undefined) {
+          const rank = finalRoundData.rank;
+          if (rank === 1) return '决赛/冠军';
+          if (rank === 2) return '决赛/亚军';
+          if (rank === 3) return '决赛/季军';
+          if (rank === 4) return '决赛/4强';
+        }
+        if (finalRoundData.ranking !== undefined) {
+          const rank = finalRoundData.ranking;
+          if (rank === 1) return '决赛/冠军';
+          if (rank === 2) return '决赛/亚军';
+          if (rank === 3) return '决赛/季军';
+          if (rank === 4) return '决赛/4强';
+        }
+      }
+      return realBestStage;
+    }
+  }
+  
   // 如果没有参与任何轮次，返回特殊标识
   if (participatedRounds.length === 0) {
     return '仅报名'; // 将在formatResultDisplay中替换为小组赛/XX强或初赛/XX强
@@ -593,7 +713,8 @@ async function calculateFinalRankings(year: string, yamlData: any, playerDataByN
   try {
     // 加载决赛评分数据
     const scoreData = await loadRoundScoreData(year, 'F', yamlData);
-    if (scoreData?.playerScores?.length > 0) {      // 按平均分排序，兼容Decimal类型
+    if (scoreData?.playerScores?.length > 0) {
+      // 按平均分排序，兼容Decimal类型
       const sortedPlayers = [...scoreData.playerScores].sort(
         (a, b) => Number(b.averageScore ?? 0) - Number(a.averageScore ?? 0)
       );

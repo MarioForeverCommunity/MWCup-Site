@@ -20,6 +20,9 @@ export interface PlayerRecord {
   bestStage: string;
   bestRank: number;
   bestStageLevel: number;  // 添加数值型的最佳阶段等级
+  bestStageYear?: number;  // 最佳战绩所在年份
+  bestStageRound?: string; // 最佳战绩所在轮次
+  bestStageRank?: number;  // 最佳战绩轮次内的排名（用于决赛具体排名）
   championCount: number;
   runnerUpCount: number;
   thirdPlaceCount: number;

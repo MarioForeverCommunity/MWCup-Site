@@ -255,40 +255,6 @@ onMounted(() => {
   line-height: 1.2;
 }
 
-/* 分页控件 */
-.pagination-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-lg);
-  padding: var(--spacing-lg);
-  background: var(--bg-card);
-  border-radius: var(--radius-large);
-  box-shadow: var(--shadow-soft);
-}
-
-.page-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--text-base);
-  color: var(--text-secondary);
-}
-
-.current-page {
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.page-separator {
-  color: var(--border-dark);
-}
-
-.total-pages {
-  color: var(--text-secondary);
-}
-
 .records-table {
   width: 100%;
   border-collapse: collapse;
@@ -359,6 +325,7 @@ onMounted(() => {
   padding-bottom: var(--spacing-sm);
 }
 
+/* 年度详情样式 */
 .yearly-data {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

@@ -497,6 +497,9 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
                 bestStage: '',
                 bestRank: Infinity,
                 bestStageLevel: 0,
+                bestStageYear: undefined,
+                bestStageRound: undefined,
+                bestStageRank: undefined,
                 championCount: 0,
                 runnerUpCount: 0,
                 thirdPlaceCount: 0
@@ -556,6 +559,9 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
             bestStage: '',
             bestRank: Infinity,
             bestStageLevel: 0,
+            bestStageYear: undefined,
+            bestStageRound: undefined,
+            bestStageRank: undefined,
             championCount: 0,
             runnerUpCount: 0,
             thirdPlaceCount: 0
@@ -607,6 +613,9 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           if (stageLevel > record.bestStageLevel) {
             record.bestStage = getStageName(stageLevel);
             record.bestStageLevel = stageLevel;
+            record.bestStageYear = year;
+            record.bestStageRound = round;
+            record.bestStageRank = rank;
           }
           
           playerStageResults.push({
@@ -650,14 +659,28 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
     if (record.bestRank === Infinity) record.bestRank = 0;
   }
   
-  // 更新总分排行榜中的最佳排名
+  // 更新总分排行榜中的最佳排名和战绩
   try {
     const bestTotalPointsRankings = await calculateBestTotalPointsRanking();
+    const bestTotalPointsRankingsByRank = await calculateBestTotalPointsRankingByRank();
     
     for (const [unifiedUserId, record] of Object.entries(playerRecords)) {
-      const bestTotalPointsRank = bestTotalPointsRankings[unifiedUserId];
-      if (bestTotalPointsRank && bestTotalPointsRank > 0) {
-        record.bestRank = bestTotalPointsRank;
+      // 用于"最佳战绩"列：使用决赛名次优先逻辑
+      const bestTotalPointsInfo = bestTotalPointsRankings[unifiedUserId];
+      if (bestTotalPointsInfo && bestTotalPointsInfo.rank > 0) {
+        // 使用决赛名次优先的最佳战绩
+        record.bestStage = bestTotalPointsInfo.bestResult;
+        record.bestStageYear = bestTotalPointsInfo.year;
+        // 保留冠亚季军统计，只重置阶段相关字段
+        record.bestStageLevel = 0;
+        record.bestStageRound = undefined;
+        record.bestStageRank = undefined;
+      }
+      
+      // 用于"最高总积分排名"列：纯粹按总积分排名
+      const bestRankInfo = bestTotalPointsRankingsByRank[unifiedUserId];
+      if (bestRankInfo && bestRankInfo.rank > 0) {
+        record.bestRank = bestRankInfo.rank;
       }
     }
   } catch (error) {
@@ -665,9 +688,11 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
   }
 
   // --- 修正最佳战绩为YAML中晋级的最高轮次 ---
-  if (yamlData && yamlData.season) {    const userBestStageLevel: { [unifiedUserId: string]: { stageLevel: number; stage: string } } = {};
-    for (const [_yearStr, yearData] of Object.entries(yamlData.season)) {
+  if (yamlData && yamlData.season) {
+    const userBestStageLevel: { [unifiedUserId: string]: { stageLevel: number; stage: string; year: number; round: string } } = {};
+    for (const [yearStr, yearData] of Object.entries(yamlData.season)) {
       if (!yearData || typeof yearData !== 'object' || !('rounds' in yearData)) continue;
+      const year = parseInt(yearStr);
       const roundsData = (yearData as any).rounds;
       for (const [roundKey, roundDataRaw] of Object.entries(roundsData)) {
         const roundData = roundDataRaw as any;
@@ -703,7 +728,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           for (const playerName of playerNames) {
             const unifiedUserId = await getUnifiedUserId(playerName as string);
             if (!userBestStageLevel[unifiedUserId] || stageLevel > userBestStageLevel[unifiedUserId].stageLevel) {
-              userBestStageLevel[unifiedUserId] = { stageLevel, stage: getStageName(stageLevel) };
+              userBestStageLevel[unifiedUserId] = { stageLevel, stage: getStageName(stageLevel), year, round };
             }
           }
         }
@@ -713,7 +738,17 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
     for (const [unifiedUserId, best] of Object.entries(userBestStageLevel)) {
       if (playerRecords[unifiedUserId]) {
         playerRecords[unifiedUserId].bestStageLevel = best.stageLevel;
-        playerRecords[unifiedUserId].bestStage = best.stage;
+        // 只在bestStage为空、无、未知、仅报名时才覆盖，保留冠亚季军等精确信息
+        if (!playerRecords[unifiedUserId].bestStage ||
+            playerRecords[unifiedUserId].bestStage === '无' ||
+            playerRecords[unifiedUserId].bestStage === '未知' ||
+            playerRecords[unifiedUserId].bestStage === '仅报名') {
+          playerRecords[unifiedUserId].bestStage = best.stage;
+          playerRecords[unifiedUserId].bestStageYear = best.year;
+          playerRecords[unifiedUserId].bestStageRound = best.round;
+        }
+        // YAML数据中没有排名信息，保持undefined
+        playerRecords[unifiedUserId].bestStageRank = undefined;
       }
     }
   }
@@ -949,10 +984,58 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
 }
 
 /**
- * 计算选手在总分排行榜中的历届最佳排名
+ * 判断哪个战绩更好（返回true表示result1更好）
+ * 决赛成绩优先级：冠军 > 亚军 > 季军 > 4强 > 其他决赛成绩
+ * 对于决赛外的其他阶段，仍按总积分排名优先
  */
-async function calculateBestTotalPointsRanking(): Promise<{ [unifiedUserId: string]: number }> {
-  const bestRankings: { [unifiedUserId: string]: number } = {};
+function isBetterResult(result1: string, rank1: number, year1: number, result2: string, rank2: number, year2: number): boolean {
+  const isResult1Final = result1.includes('决赛');
+  const isResult2Final = result2.includes('决赛');
+  
+  // 如果两个都是决赛成绩，按决赛内部排名比较
+  if (isResult1Final && isResult2Final) {
+    const getFinalRank = (result: string): number => {
+      if (result.includes('冠军')) return 1;
+      if (result.includes('亚军')) return 2;
+      if (result.includes('季军')) return 3;
+      if (result.includes('4强')) return 4;
+      return 999; // 其他决赛成绩排在最后
+    };
+    
+    const finalRank1 = getFinalRank(result1);
+    const finalRank2 = getFinalRank(result2);
+    
+    if (finalRank1 !== finalRank2) {
+      return finalRank1 < finalRank2; // 决赛排名越小越好
+    }
+    
+    // 决赛排名相同时，比较总积分排名
+    if (rank1 !== rank2) {
+      return rank1 < rank2;
+    }
+    
+    // 都相同时选择更近的年份
+    return year1 > year2;
+  }
+  
+  // 如果只有一个是决赛成绩，决赛成绩更好
+  if (isResult1Final && !isResult2Final) return true;
+  if (!isResult1Final && isResult2Final) return false;
+  
+  // 如果都不是决赛成绩，按原有逻辑：总积分排名优先
+  if (rank1 !== rank2) {
+    return rank1 < rank2;
+  }
+  
+  // 排名相同时选择更近的年份
+  return year1 > year2;
+}
+
+/**
+ * 计算选手在总分排行榜中的历届最佳排名（纯按总积分排名，不考虑决赛名次优先）
+ */
+async function calculateBestTotalPointsRankingByRank(): Promise<{ [unifiedUserId: string]: { rank: number; year: number; bestResult: string } }> {
+  const bestRankings: { [unifiedUserId: string]: { rank: number; year: number; bestResult: string } } = {};
   const yamlData = await fetchMarioWorkerYaml();
   
   // 遍历所有年份（从2013年开始）
@@ -970,9 +1053,63 @@ async function calculateBestTotalPointsRanking(): Promise<{ [unifiedUserId: stri
           // 获取统一的用户标识符
           const unifiedUserId = await getUnifiedUserId(player.playerName);
           
-          // 更新该选手的最佳排名
-          if (!bestRankings[unifiedUserId] || ranking < bestRankings[unifiedUserId]) {
-            bestRankings[unifiedUserId] = ranking;
+          // 纯粹按总积分排名优先：排名越小越好，排名相同时选择更近的年份
+          const shouldUpdate = !bestRankings[unifiedUserId] || 
+            ranking < bestRankings[unifiedUserId].rank ||
+            (ranking === bestRankings[unifiedUserId].rank && year > bestRankings[unifiedUserId].year);
+          
+          if (shouldUpdate) {
+            bestRankings[unifiedUserId] = {
+              rank: ranking,
+              year: year,
+              bestResult: player.bestResult
+            };
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`跳过年份 ${year}, 总分排行榜加载失败:`, error);
+    }
+  }
+  
+  return bestRankings;
+}
+
+/**
+ * 计算选手在总分排行榜中的历届最佳排名及其对应的战绩信息
+ */
+async function calculateBestTotalPointsRanking(): Promise<{ [unifiedUserId: string]: { rank: number; year: number; bestResult: string } }> {
+  const bestRankings: { [unifiedUserId: string]: { rank: number; year: number; bestResult: string } } = {};
+  const yamlData = await fetchMarioWorkerYaml();
+  
+  // 遍历所有年份（从2013年开始）
+  const currentYear = new Date().getFullYear();
+  for (let year = 2013; year <= currentYear; year++) {
+    try {
+      const totalPointsData = await loadTotalPointsData(year.toString(), yamlData);
+      
+      if (totalPointsData.hasData && totalPointsData.players.length > 0) {
+        // 为每个选手计算其在该年度的排名
+        for (let index = 0; index < totalPointsData.players.length; index++) {
+          const player = totalPointsData.players[index];
+          const ranking = index + 1; // 排名从1开始
+          
+          // 获取统一的用户标识符
+          const unifiedUserId = await getUnifiedUserId(player.playerName);
+          
+          // 判断是否应该更新最佳战绩
+          const shouldUpdate = !bestRankings[unifiedUserId] || 
+            isBetterResult(
+              player.bestResult, ranking, year,
+              bestRankings[unifiedUserId].bestResult, bestRankings[unifiedUserId].rank, bestRankings[unifiedUserId].year
+            );
+          
+          if (shouldUpdate) {
+            bestRankings[unifiedUserId] = {
+              rank: ranking,
+              year: year,
+              bestResult: player.bestResult
+            };
           }
         }
       }
