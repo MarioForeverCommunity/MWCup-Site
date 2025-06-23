@@ -637,7 +637,11 @@ onMounted(() => {
 }
 
 .year {
-  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--primary-color), #ff8a65);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
 }
 
 .champion {
@@ -678,15 +682,6 @@ onMounted(() => {
   background-color: rgba(255, 99, 71, 0.05);
 }
 
-/* 年份列特殊样式 */
-.year {
-  background: linear-gradient(135deg, var(--primary-color), #ff8a65);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 600;
-}
-
 .url-btn {
   padding: 4px 8px;
   background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
@@ -710,7 +705,6 @@ onMounted(() => {
   .table-wrapper {
     display: flex;
     justify-content: center;
-    width: 100%;
   }
 }
 
