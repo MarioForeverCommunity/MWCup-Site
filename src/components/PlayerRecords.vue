@@ -134,7 +134,7 @@
                 <td colspan="10">
                   <div class="yearly-details">
                     <div class="details-header">
-                      <h4>{{ getPlayerName(record.userId) }} 的年度详细战绩</h4>
+                      <h4>{{ getPlayerName(record.userId) }} 的年度详细战绩（正赛）</h4>
                     </div>
                     <div class="yearly-data">
                       <div 
