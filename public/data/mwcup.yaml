@@ -2906,7 +2906,10 @@ season:
             mf_tid: 3604
       P2:
         players:
+          '10': TNT与爬行者
         judges:
+          J1: 玛丽的死对头
+          J2: 蓝太阳
         chief_judge: false
         schedule:
           registration:
@@ -2916,11 +2919,11 @@ season:
           match:
             start: 2025-07-04T20:00
             end: 2025-07-11T22:00
-            mf_tid: 
+            mf_tid: 3615
           judging:
             start: 2025-07-04T20:00
             end: 2025-07-15T22:00
-            mf_tid: 
+            mf_tid: 3616
           voting:
             start: 2025-07-11T22:00
             end: 2025-07-15T22:00
