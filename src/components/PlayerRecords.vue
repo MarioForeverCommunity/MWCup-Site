@@ -17,7 +17,7 @@
             <option value="totalLevels">按关卡数排序</option>
             <option value="participatedYears">按参赛届数排序</option>
             <option value="bestRank">按最高总积分排名排序</option>
-            <option value="championCount">按冠军次数排序</option>
+            <option value="championCount">按冠亚季军次数排序</option>
           </select>
         </div>
       </div>
@@ -379,7 +379,10 @@ const filteredRecords = computed(() => {
         if (b.bestRank === 0) return -1
         return a.bestRank - b.bestRank
       case 'championCount':
-        return b.championCount - a.championCount
+        // 按冠亚季军次数排序，优先冠军，其次亚军，再其次季军
+        const aTotal = (a.championCount || 0) * 10000 + (a.runnerUpCount || 0) * 100 + (a.thirdPlaceCount || 0)
+        const bTotal = (b.championCount || 0) * 10000 + (b.runnerUpCount || 0) * 100 + (b.thirdPlaceCount || 0)
+        return bTotal - aTotal
       default:
         return 0
     }
