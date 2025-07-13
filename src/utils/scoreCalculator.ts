@@ -639,8 +639,15 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
       // 方案E：每个选手只有一条记录，直接用该行的totalScore和换算后大众评分加权
       const record = validRecords[0];
       const judgeScore = record.totalScore;
-      const publicScore = record.scores['换算后大众评分'] || new Decimal(0);
-      let avg = judgeScore.times(0.75).plus(publicScore.times(0.25));
+      const publicScoreRaw = record.scores['换算后大众评分'];
+      let avg: Decimal;
+      if (publicScoreRaw === undefined || publicScoreRaw === null || (publicScoreRaw instanceof Decimal && publicScoreRaw.isNaN())) {
+        // 为空时，最终得分为评委评分
+        avg = judgeScore;
+      } else {
+        const publicScore = publicScoreRaw;
+        avg = judgeScore.times(0.75).plus(publicScore.times(0.25));
+      }
       averageScore = avg.toDecimalPlaces(1);
       totalSum = judgeScore;
     } else {
