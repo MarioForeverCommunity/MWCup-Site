@@ -678,23 +678,25 @@ function ensureNonNegativeScore(score: Decimal): Decimal {
  */
 function determineDisplayColumns(headers: string[], records: ScoreRecord[]): string[] {
   const displayColumns: string[] = [];
-    for (const header of headers) {
+  for (const header of headers) {
     if (header === '选手码' || header === '选手用户名' || header === '评委') {
       continue; // 这些列不在scores中，单独处理
     }
-    
+    // "换算后大众评分"始终保留
+    if (header === '换算后大众评分') {
+      displayColumns.push(header);
+      continue;
+    }
     // 检查这一列是否有非空值
     const hasValue = records.some(record => 
       record.scores[header] !== undefined && 
       record.scores[header] !== null &&
       !(record.scores[header] instanceof Decimal && record.scores[header].isZero())
     );
-    
     if (hasValue) {
       displayColumns.push(header);
     }
   }
-  
   return displayColumns;
 }
 

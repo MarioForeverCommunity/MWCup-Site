@@ -86,9 +86,12 @@
               <tr v-else>
                 <th>选手</th>
                 <th>评委</th>
-                <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>
-                <th>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '总分' }}</th>
-                <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
+                <template v-for="column in (scoreData?.columns || []) as string[]" :key="column">
+                  <th v-if="scoreData?.scoringScheme !== 'E' || column !== '换算后大众评分'">{{ column }}</th>
+                </template>
+                <th>{{ scoreData?.scoringScheme === 'E' ? '评委评分' : '总分' }}</th>
+                <th v-if="scoreData?.scoringScheme === 'E'">换算后大众评分</th>
+                <th>最终得分<span v-if="scoreData?.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
               </tr>
             </thead>
             <tbody>
@@ -168,12 +171,14 @@
                           </template>
                         </div>
                       </td>
-                      <td v-for="column in scoreData.columns" 
-                          :key="column" 
-                          class="score-cell">
-                        {{ formatScore(record.scores[column]) }}
+                      <template v-for="column in (scoreData?.columns || []) as string[]" :key="column">
+                        <td class="score-cell" v-if="scoreData?.scoringScheme !== 'E' || column !== '换算后大众评分'">
+                          {{ formatScore(record.scores[column]) }}
+                        </td>
+                      </template
                       </td>
                       <td class="judge-total">{{ formatScore(record.totalScore) }}</td>
+                      <td v-if="scoreData.scoringScheme === 'E'" class="public-score">{{ formatScore(record.scores['换算后大众评分']) }}</td>
                     </template>
                     <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
                       {{ getPlayerAverageScore(record.playerCode) }}
