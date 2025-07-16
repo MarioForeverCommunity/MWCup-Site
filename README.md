@@ -9,11 +9,11 @@
 - **评分查询**: 按轮次查询比赛评分结果和统计数据
 - **关卡查询**: 搜索和浏览参赛关卡文件
 - **冠军统计**: 查看历届冠军获奖情况统计
-- **📊 关卡排名**: 全新的排名系统，支持多种排名模式
+- **关卡排名**: 全新的排名系统，支持多种排名模式
 
-### 🎯 排名系统
+### 📊 排名系统
 - **单关排名**: 基于得分率的单个关卡排名
-- **多关排名**: MultiLevel 文件夹的综合排名
+- **多关排名**: 多关题目的关卡排名
 - **原始得分率排名**: 对比原始分与最终分的排名变化
 
 ### 🔍 筛选功能
@@ -53,9 +53,9 @@ npm run dev
 npm run build
 ```
 
-### 预览生产版本
+### 部署生产版本
 ```bash
-npm run preview
+npm run deploy
 ```
 
 ## 项目结构
@@ -63,12 +63,24 @@ npm run preview
 ```
 src/
 ├── components/          # Vue 组件
-│   ├── RankingModule.vue    # 排名模块
+│   ├── AttendanceStats.vue  # 出勤率模块
+│   ├── ChampionStatistics.vue  # 冠军统计 & 举办情况
+│   ├── DocumentDisplay.vue  # 赛事文档显示模块
+│   ├── FoldButton.vue       # 折叠展开按钮
+│   ├── JudgeRecords.vue     # 评委数据
+│   ├── LevelFileSearch.vue  # 关卡搜索
+│   ├── PlayerRecords.vue    # 选手战绩
+│   ├── RankingModule.vue    # 关卡排名
+│   ├── RoundSelector.vue    # 轮次选择模块
 │   ├── ScheduleTable.vue    # 赛程表
-│   ├── RoundSelector.vue    # 轮次选择器
-│   ├── ChampionStatistics.vue # 冠军统计
-│   └── LevelFileSearch.vue  # 关卡搜索
+│   ├── ScoreTable.vue       # 分轮次评分数据
+│   ├── StatsAnalysis.vue    # 数据统计 Tab
+│   ├── SubjectDisplay.vue   # 比赛试题显示
+│   ├── TotalPointsRanking.vue  # 积分排行
+│   ├── UploadSystem.vue     # 上传系统 iframe
+│   └── UserManagement.vue   # 用户一览
 ├── styles/             # 样式文件
+│   ├── style.css           # 主样式文件
 │   ├── theme.css           # 主题配色
 │   ├── components.css      # 通用组件样式
 │   ├── layout.css          # 布局样式
@@ -76,16 +88,32 @@ src/
 ├── types/              # TypeScript 类型定义
 │   └── ranking.ts          # 排名相关类型
 ├── utils/              # 工具函数
-│   ├── rankingCalculator.ts # 排名计算器
-│   ├── scoreCalculator.ts   # 评分计算器
-│   └── scheduleYaml.ts      # 赛程数据处理
+│   ├── dataAnalyzer.ts      # 数据统计分析
+│   ├── editionHelper.ts     # 届数计算
+│   ├── levelFileHelper.ts   # 关卡索引读取
+│   ├── levelMatcher.ts      # 获取分组的显示名称
+│   ├── rankingCalculator.ts # 排名计算
+│   ├── resultFormatter.ts   # 战绩格式处理
+│   ├── roundNames.ts        # 轮次名称映射
+│   ├── scheduleHelper.ts    # 赛程数据处理
+│   ├── scoreCalculator.ts   # 评分计算
+│   ├── totalPointsCalculator.ts  # 积分排行计算
+│   ├── userDataProcessor.ts # 用户数据处理
+│   ├── userMapper.ts        # 用户映射
+│   └── yamlLoader.ts        # YAML 解析
 └── App.vue             # 主应用组件
 ```
 
 ## 数据格式
 
 项目使用以下数据源：
+- `public/data/docs/*.md` - 赛事文档
 - `public/data/levels/index.json` - 关卡索引
 - `public/data/scores/*.csv` - 各轮次评分数据
+- `public/data/subjects/*.md` - 比赛试题
 - `public/data/maxScore.json` - 满分配置
 - `public/data/mwcup.yaml` - 比赛配置
+- `public/data/specialLevels.json` - 特殊关卡映射
+- `public/data/users.csv` - 用户列表
+- `public/data/validLevel.json` - 初赛有效关卡数据
+
