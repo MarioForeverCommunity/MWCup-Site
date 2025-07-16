@@ -2928,3 +2928,70 @@ season:
             start: 2025-07-11T22:00
             end: 2025-07-15T22:00
             mf_tid: 3620
+      [I1, I2, I3]:
+        players:
+          A:
+            A1: zqh——123
+            A2: TNT与爬行者
+            A3: 绿色的糖果
+          B:
+            B1: 有名氏
+            B2: AngryStar6K
+            B3: 一只果果果果果
+            B4: 超级玛丽迷01
+        judges:
+          A:
+            J1: 蓝太阳
+          B:
+            J1: 玛丽的死对头
+        schedule:
+          draw:
+            time: 2025-07-16T18:00
+            mf_tid: 3638
+          match:
+            start: 2025-07-16T20:00
+            deadlines:
+              - 2025-07-23T22:00
+              - 2025-07-27T22:00
+            mf_tid:
+              I1: 3631
+              I2: 3632
+              I3: 3633
+          judging:
+            start: 2025-07-16T20:00
+            end: 2025-08-01T22:00
+            mf_tid:
+              I1: 3634
+              I2: 3636
+              I3: 3637
+          voting:
+            start: 2025-07-27T22:00
+            end: 2025-08-01T22:00
+            mf_tid: 
+          promotion:
+            time: 2025-08-02T16:00
+            mf_tid: 
+      F:
+        players:
+          S: 
+          M: 
+          W: 
+          P: 
+        judges:
+          J1: 
+          J2: 
+        schedule:
+          draw:
+            time: 2025-08-02T18:00
+          match:
+            start: 2025-08-02T20:00
+            end: 2025-08-09T22:00
+            mf_tid: 
+          judging:
+            start: 2025-08-02T20:00
+            end: 2025-08-13T22:00
+            mf_tid: 
+          voting:
+            start: 2025-08-09T22:00
+            end: 2025-08-13T22:00
+            mf_tid: 

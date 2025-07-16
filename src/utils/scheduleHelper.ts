@@ -103,7 +103,7 @@ function getStageZh(mainStage: string, season?: any) {
   return stageMap[mainStage] || mainStage;
 }
 
-function getContentZh(mainStage: string, contentKey: string, season?: any) {
+function getContentZh(mainStage: string, contentKey: string, season?: any, scheduleObj?: any) {
   
   // 处理deadline的情况
   const deadlineMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-deadline(\d+)$/);
@@ -131,7 +131,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: any) {
     return stageMap['promotion'];
   }
 
-  // 处理带有批量轮次的情况（如 I1,I2,I3,I4-I1）
+  // 处理批量轮次的情况（如 I1,I2,I3,I4-I1）
   const batchMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-([A-Za-z]+)(\d+)?$/);
   if (batchMatch) {
     const [, , action, num] = batchMatch;
@@ -153,6 +153,27 @@ function getContentZh(mainStage: string, contentKey: string, season?: any) {
       return judging?.deadlines ? '评分开始' : '评分';
     } else if (action === 'draw') {
       return '抽签';
+    }
+  }
+
+  // 判断批量合并轮次的评分/大众评分（不显示第几轮）
+  if (contentKey === 'judging' || contentKey === 'voting') {
+    // mainStage 含逗号，说明是批量轮次
+    if (mainStage.includes(',')) {
+      return contentKey === 'judging' ? '评分' : '大众评分';
+    }
+    // mainStage 形如 I1-judging，判断 scheduleObj 里是否有 I2-judging、I3-judging
+    if (scheduleObj && typeof scheduleObj === 'object') {
+      const mainMatch = mainStage.match(/^([GIQSR])(\d+)$/);
+      if (mainMatch) {
+        const prefix = mainMatch[1];
+        // 找出所有同类型 key
+        const similarKeys = Object.keys(scheduleObj).filter(k => k.startsWith(prefix) && k.endsWith('-' + contentKey));
+        // 如果只有当前 key，说明是批量合并
+        if (similarKeys.length === 1) {
+          return contentKey === 'judging' ? '评分' : '大众评分';
+        }
+      }
     }
   }
 
@@ -385,7 +406,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
         contentKey = m[2];
       }
       const stageZh = getStageZh(mainStage, season);
-      const contentZh = contentKey === 'draw' ? '抽签' : getContentZh(mainStage, contentKey, season);
+      const contentZh = contentKey === 'draw' ? '抽签' : getContentZh(mainStage, contentKey, season, schedule);
 
       if (typeof value === 'object' && value !== null) {
         const v = value as Record<string, any>;
