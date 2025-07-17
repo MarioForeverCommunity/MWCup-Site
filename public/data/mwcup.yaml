@@ -2864,6 +2864,7 @@ season:
   2025:
     scoring_scheme: E # 2025 年热身赛试行新的大众评分方案，csv格式为“选手码,评委,得体度,美观度,独特度,思辨度,完成度,合理度,有效度,参与度,耐玩度,成就度,加分项,扣分项,换算后大众评分”；本方案每关只有一位评委评分员
     host: newlife2017
+    chief_judge: false
     rounds:
       P1:
         is_warmup: true
@@ -2882,7 +2883,6 @@ season:
           J1: 我懂你不懂的lz
           J2: 玛丽的死对头
           J3: ƒresh★LAKE
-        chief_judge: false
         schedule:
           registration:
             start: 2025-01-15T20:00
@@ -2911,7 +2911,6 @@ season:
         judges:
           J1: 玛丽的死对头
           J2: 蓝太阳
-        chief_judge: false
         schedule:
           registration:
             start: 2025-06-20T20:00
