@@ -323,7 +323,11 @@ export function parseCsvToScoreRecords(
         records: [canceledRecord],
         totalSum: new Decimal(0),
         averageScore: new Decimal(0),
-        validRecordsCount: 0
+        validRecordsCount: 0,
+        publicScore: new Decimal(0),
+        finalScore: new Decimal(0),
+        judgeAverage: new Decimal(0),
+        judgeSum: new Decimal(0)
       });
     }
   }
@@ -363,7 +367,11 @@ export function parseCsvToScoreRecords(
         records: [unworkingRecord],
         totalSum: new Decimal(0),
         averageScore: new Decimal(0),
-        validRecordsCount: 0  // 设为0表示无有效评分，但仍计入排名
+        validRecordsCount: 0,  // 设为0表示无有效评分，但仍计入排名
+        publicScore: new Decimal(0),
+        finalScore: new Decimal(0),
+        judgeAverage: new Decimal(0),
+        judgeSum: new Decimal(0)
       });
     }
   }
@@ -662,6 +670,27 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
       }
     } else if (scoringScheme === 'E') {
       // 方案E：计算所有评委总分的平均分
+      const isCanceled = validRecords.some(r => r.isCanceled);
+      const isUnworking = validRecords.some(r => r.isUnworking);
+      
+      // 对于成绩无效或关卡无法运行的记录，所有分数设为0
+      if (isCanceled || isUnworking) {
+        const playerScore: PlayerScore = {
+          playerCode,
+          playerName: validRecords[0]?.playerName || playerCode,
+          records: validRecords,
+          totalSum: new Decimal(0),
+          averageScore: new Decimal(0),
+          validRecordsCount: 0,
+          publicScore: new Decimal(0),
+          finalScore: new Decimal(0),
+          judgeAverage: new Decimal(0),
+          judgeSum: new Decimal(0)
+        };
+        playerScores.push(playerScore);
+        continue;
+      }
+      
       const judgeScores = validRecords.map(r => r.totalScore);
       const judgeSum = judgeScores.reduce((sum, score) => sum.plus(score), new Decimal(0));
       const judgeAverage = judgeScores.length > 0 
@@ -820,6 +849,21 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
       
       // 更新playerScores中的publicScore和finalScore
       scoreData.playerScores = scoreData.playerScores.map(ps => {
+        // 检查是否有无效或无法运行的记录
+        const hasInvalidRecord = ps.records.some(r => r.isCanceled || r.isUnworking);
+        
+        if (hasInvalidRecord) {
+          // 如果存在无效记录，所有分数设为0
+          return {
+            ...ps,
+            publicScore: new Decimal(0),
+            finalScore: new Decimal(0),
+            averageScore: new Decimal(0),
+            judgeAverage: new Decimal(0),
+            judgeSum: new Decimal(0)
+          };
+        }
+        
         const publicScore = publicScoreMap.get(ps.playerCode) || new Decimal(0);
         const judgeAverage = ps.judgeAverage || new Decimal(0);
         const finalScore = judgeAverage.times(0.75).plus(publicScore.times(0.25)).toDecimalPlaces(1);
