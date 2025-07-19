@@ -360,7 +360,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
               let baseScore = 0;
               let calculatedBaseScore = new Decimal(0);
               for (const [key, value] of Object.entries(record.scores)) {
-                if (key !== '加分项' && key !== '换算后大众评分') {
+                if (key !== '加分项') {
                   let score = typeof value === 'number' ? value : Number(value);
                   let calculatedScore = new Decimal(score);
                   // 2016年Q2轮次的欣赏性得分需要乘以10/15

@@ -312,10 +312,9 @@ function downloadLevel(file: LevelFile) {
 
 /**
  * 判断某年P1是否为热身赛
- * 2013-2015、2017、2018、2020-2025年P1为热身赛，其余为预选赛
  */
 function isWarmupRound(year: number, roundKey: string): boolean {
-  const warmupYears = [2013, 2014, 2015, 2017, 2018, 2020, 2021, 2022, 2023, 2024, 2025];
+  const warmupYears = [2013, 2016, 2020, 2022, 2023, 2024, 2025];
   return roundKey === 'P1' && warmupYears.includes(year);
 }
 

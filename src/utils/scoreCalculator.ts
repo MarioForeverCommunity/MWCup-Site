@@ -36,6 +36,30 @@ export interface PlayerScore {
   averageScore: Decimal;  // 修改为Decimal类型
   validRecordsCount: number;
   displayRank?: number; // 并列排名显示用，可选
+  publicScore?: Decimal; // 大众评分
+  finalScore?: Decimal;  // 最终得分（评委分×75% + 大众分×25%）
+  judgeAverage?: Decimal; // 评委平均分（仅方案E使用）
+  judgeSum?: Decimal;    // 评委总分（仅方案E使用）
+}
+
+export interface PublicVoteRecord {
+  playerCode: string;
+  voterName: string;
+  appreciation: number; // 欣赏性 (0-10)
+  innovation: number;   // 创新性 (0-10)
+  design: number;       // 设计性 (0-10)
+  gameplay: number;     // 游戏性 (0-10)
+  bonus: number;        // 附加分 (0-5)
+  penalty?: number;     // 扣分 (可选)
+  totalScore: number;   // 计算后的总分
+}
+
+export interface PlayerPublicScore {
+  playerCode: string;
+  playerName: string;
+  votes: PublicVoteRecord[];
+  finalPublicScore: number; // 最终大众评分
+  validVotesCount: number;
 }
 
 export interface RoundScoreData {
@@ -45,6 +69,7 @@ export interface RoundScoreData {
   columns: string[];
   playerScores: PlayerScore[];
   allRecords: ScoreRecord[];
+  publicScores?: PlayerPublicScore[]; // 大众评分数据 (仅scoring_scheme E)
 }
 
 /**
@@ -174,7 +199,7 @@ export function parseCsvToScoreRecords(
               bonusPoints = numValue;
             } else if (header === '扣分项') {
               penaltyPoints = numValue;
-            } else if (header !== '换算后大众评分') {
+            } else {
               totalScore = totalScore.plus(numValue);
             }
           }
@@ -363,6 +388,7 @@ export function parseCsvToScoreRecords(
 
 /**
  * 解析CSV行，处理引号包围的内容
+ */
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
@@ -384,7 +410,6 @@ function parseCSVLine(line: string): string[] {
   result.push(current);
   return result;
 }
-*/
 
 /**
  * 解析评委代码
@@ -636,20 +661,29 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
         totalSum = weightedScores.reduce((a, b) => a.plus(b.score), new Decimal(0));
       }
     } else if (scoringScheme === 'E') {
-      // 方案E：每个选手只有一条记录，直接用该行的totalScore和换算后大众评分加权
-      const record = validRecords[0];
-      const judgeScore = record.totalScore;
-      const publicScoreRaw = record.scores['换算后大众评分'];
-      let avg: Decimal;
-      if (publicScoreRaw === undefined || publicScoreRaw === null || (publicScoreRaw instanceof Decimal && publicScoreRaw.isNaN())) {
-        // 为空时，最终得分为评委评分
-        avg = judgeScore;
-      } else {
-        const publicScore = publicScoreRaw;
-        avg = judgeScore.times(0.75).plus(publicScore.times(0.25));
-      }
-      averageScore = avg.toDecimalPlaces(1);
-      totalSum = judgeScore;
+      // 方案E：计算所有评委总分的平均分
+      const judgeScores = validRecords.map(r => r.totalScore);
+      const judgeSum = judgeScores.reduce((sum, score) => sum.plus(score), new Decimal(0));
+      const judgeAverage = judgeScores.length > 0 
+        ? judgeSum.div(judgeScores.length).toDecimalPlaces(1)
+        : new Decimal(0);
+      
+      // 创建PlayerScore对象，publicScore和finalScore将在加载大众评分后设置
+      const playerScore: PlayerScore = {
+        playerCode,
+        playerName: validRecords[0]?.playerName || playerCode,
+        records: validRecords,
+        totalSum: judgeSum,        // 保存评委总分
+        averageScore: judgeAverage, // 初始为评委平均分，加载大众评分后会更新为最终得分
+        validRecordsCount: validRecords.length,
+        publicScore: new Decimal(0), // 初始为0，加载大众评分后会更新
+        finalScore: new Decimal(0),  // 初始为0，加载大众评分后会更新
+        judgeAverage,                // 保存评委平均分
+        judgeSum                     // 保存评委总分
+      };
+      
+      playerScores.push(playerScore);
+      continue;
     } else {
       // 其他评分方案的正常计算
       totalSum = validRecords.reduce((sum, record) => sum.plus(record.totalScore), new Decimal(0));
@@ -688,11 +722,6 @@ function determineDisplayColumns(headers: string[], records: ScoreRecord[]): str
   for (const header of headers) {
     if (header === '选手码' || header === '选手用户名' || header === '评委') {
       continue; // 这些列不在scores中，单独处理
-    }
-    // "换算后大众评分"始终保留
-    if (header === '换算后大众评分') {
-      displayColumns.push(header);
-      continue;
     }
     // 检查这一列是否有非空值
     const hasValue = records.some(record => 
@@ -747,9 +776,9 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   if (!roundData) {
     throw new Error(`找不到${year}年${getRoundChineseName(round, { ...roundData, year: String(year) })}的比赛数据`);
   }
-    // 加载用户映射
+  // 加载用户映射
   // const userMapping = await loadUserMapping();
-    // 首先检查是否为特殊的总分制评分
+  // 首先检查是否为特殊的总分制评分
   const directScores = handleDirectScores(yamlData, year, round);
   if (directScores) {
     return directScores;
@@ -774,7 +803,38 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
       throw new Error(`评分文件 ${year}${round}.csv 为空`);
     }
     
-    return parseCsvToScoreRecords(csvText, yamlData, year, round);
+    const scoreData = parseCsvToScoreRecords(csvText, yamlData, year, round);
+    
+    // 方案E：加载大众评分数据
+    if (scoreData.scoringScheme === 'E') {
+      const publicScores = await loadPublicVotingData(year, round, yamlData);
+      scoreData.publicScores = publicScores;
+      
+      // 创建玩家代码到大众评分的映射
+      const publicScoreMap = new Map<string, Decimal>();
+      if (publicScores && publicScores.length > 0) {
+        publicScores.forEach(ps => {
+          publicScoreMap.set(ps.playerCode, new Decimal(ps.finalPublicScore));
+        });
+      }
+      
+      // 更新playerScores中的publicScore和finalScore
+      scoreData.playerScores = scoreData.playerScores.map(ps => {
+        const publicScore = publicScoreMap.get(ps.playerCode) || new Decimal(0);
+        const judgeAverage = ps.judgeAverage || new Decimal(0);
+        const finalScore = judgeAverage.times(0.75).plus(publicScore.times(0.25)).toDecimalPlaces(1);
+        
+        return {
+          ...ps,
+          publicScore,
+          finalScore,
+          // 更新averageScore为最终得分，用于排序和显示
+          averageScore: finalScore
+        };
+      });
+    }
+    
+    return scoreData;
   } catch (error) {
     console.error(`加载 ${year}${round} 评分数据失败:`, error);
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -785,9 +845,176 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
 }
 
 /**
+ * 加载大众评分数据 (仅用于scoring_scheme E)
+ */
+export async function loadPublicVotingData(year: string, round: string, yamlData: any): Promise<PlayerPublicScore[]> {
+  try {
+    const response = await fetch(`/data/votes/${year}${round}.csv`);
+    if (!response.ok) {
+      console.warn(`大众评分数据文件不存在: ${year}${round}.csv`);
+      return [];
+    }
+    
+    const csvText = await response.text();
+    return await parsePublicVotingCsv(csvText, yamlData, year, round);
+  } catch (error) {
+    console.warn('加载大众评分数据失败:', error);
+    return [];
+  }
+}
+
+/**
+ * 解析大众评分CSV数据
+ */
+async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string, round: string): Promise<PlayerPublicScore[]> {
+  const lines = csvText.trim().split('\n');
+  if (lines.length === 0) return [];
+  
+  const headers = lines[0].split(',').map(h => h.trim());
+  const playerCodeIndex = headers.findIndex(h => h === '选手码');
+  const voterIndex = headers.findIndex(h => h === '大众评分员');
+  const appreciationIndex = headers.findIndex(h => h === '欣赏性');
+  const innovationIndex = headers.findIndex(h => h === '创新性');
+  const designIndex = headers.findIndex(h => h === '设计性');
+  const gameplayIndex = headers.findIndex(h => h === '游戏性');
+  const bonusIndex = headers.findIndex(h => h === '附加分');
+  const penaltyIndex = headers.findIndex(h => h === '扣分');
+  
+  if ([playerCodeIndex, voterIndex, appreciationIndex, innovationIndex, designIndex, gameplayIndex, bonusIndex].some(i => i === -1)) {
+    throw new Error('大众评分CSV格式错误：缺少必要列');
+  }
+  
+  // 加载maxScore.json获取附加分设置
+  let maxScores: any = {};
+  try {
+    const response = await fetch('/data/maxScore.json');
+    if (response.ok) {
+      const data = await response.json();
+      maxScores = data[year]?.[round] || {};
+    }
+  } catch (error) {
+    console.warn('加载maxScore.json失败:', error);
+  }
+  
+  // 获取附加分满分设置，优先使用maxScore.json中的配置
+  const bonusFullScore = maxScores.bonus_score || 5;
+  
+  const votes: PublicVoteRecord[] = [];
+  const playerMap = buildPlayerJudgeMap(yamlData, year, round);
+  
+  for (let i = 1; i < lines.length; i++) {
+    const cells = parseCSVLine(lines[i]);
+    if (cells.length < headers.length) continue;
+    
+    const playerCode = cells[playerCodeIndex]?.trim();
+    const voterName = cells[voterIndex]?.trim();
+    const appreciation = parseFloat(cells[appreciationIndex]) || 0;
+    const innovation = parseFloat(cells[innovationIndex]) || 0;
+    const design = parseFloat(cells[designIndex]) || 0;
+    const gameplay = parseFloat(cells[gameplayIndex]) || 0;
+    const bonus = parseFloat(cells[bonusIndex]) || 0;
+    const penalty = penaltyIndex !== -1 ? (parseFloat(cells[penaltyIndex]) || 0) : 0;
+    
+    if (!playerCode || !voterName) continue;
+    
+    // 计算总分：欣赏性×1.5 + 创新性×1.5 + 设计性×3 + 游戏性×4
+    let totalScore = new Decimal(appreciation * 1.5)
+      .plus(innovation * 1.5)
+      .plus(design * 3)
+      .plus(gameplay * 4);
+    
+    // 处理附加分
+    let adjustedBonus = new Decimal(bonus);
+    if (bonusFullScore === 8) {
+      adjustedBonus = adjustedBonus.times(1.6);
+    } else if (bonusFullScore === 10) {
+      adjustedBonus = adjustedBonus.times(2);
+    }
+    
+    // 应用附加分和扣分
+    totalScore = totalScore.plus(adjustedBonus).minus(penalty || 0);
+    
+    // 确保总分不为负并四舍五入到1位小数
+    if (totalScore.isNegative()) {
+      totalScore = new Decimal(0);
+    } else {
+      totalScore = totalScore.toDecimalPlaces(1);
+    }
+    
+    votes.push({
+      playerCode,
+      voterName,
+      appreciation,
+      innovation,
+      design,
+      gameplay,
+      bonus,
+      penalty: penalty > 0 ? penalty : undefined,
+      totalScore: totalScore.toNumber()
+    });
+  }
+  
+  // 按选手分组并计算最终大众评分
+  const playerScores = new Map<string, PlayerPublicScore>();
+  
+  for (const vote of votes) {
+    if (!playerScores.has(vote.playerCode)) {
+      const playerName = getPlayerName(vote.playerCode, playerMap);
+      playerScores.set(vote.playerCode, {
+        playerCode: vote.playerCode,
+        playerName,
+        votes: [],
+        finalPublicScore: 0,
+        validVotesCount: 0
+      });
+    }
+    
+    const playerScore = playerScores.get(vote.playerCode)!;
+    playerScore.votes.push(vote);
+  }
+  
+  // 计算每个选手的最终大众评分
+  for (const playerScore of playerScores.values()) {
+    const validVotes = playerScore.votes.filter(v => v.totalScore > 0);
+    const scores = validVotes.map(v => v.totalScore);
+    
+    // 确保在计算最终评分时进行四舍五入到1位小数
+    const rawScore = calculateFinalPublicScore(scores);
+    playerScore.finalPublicScore = new Decimal(rawScore).toDecimalPlaces(1).toNumber();
+    playerScore.validVotesCount = validVotes.length;
+  }
+  
+  return Array.from(playerScores.values());
+}
+
+/**
+ * 计算最终大众评分
+ */
+function calculateFinalPublicScore(scores: number[]): number {
+  if (scores.length === 0) return 0;
+  
+  const sortedScores = [...scores].sort((a, b) => a - b);
+  
+  if (sortedScores.length <= 4) {
+    // 4人及以下：直接平均
+    return sortedScores.reduce((sum, score) => sum + score, 0) / sortedScores.length;
+  } else if (sortedScores.length === 5) {
+    // 5人：最高和最低按一半计算
+    const lowest = sortedScores[0] / 2;
+    const highest = sortedScores[4] / 2;
+    const middle = sortedScores.slice(1, 4).reduce((sum, score) => sum + score, 0);
+    return (lowest + middle + highest) / 4;
+  } else {
+    // 6人及以上：去掉最高和最低
+    const middle = sortedScores.slice(1, -1);
+    return middle.reduce((sum, score) => sum + score, 0) / middle.length;
+  }
+}
+
+/**
  * 处理特殊的总分制评分（如2015年半决赛）
  */
-function handleDirectScores(yamlData: any, year: string, round: string): RoundScoreData | null {
+export function handleDirectScores(yamlData: any, year: string, round: string): RoundScoreData | null {
   const seasonData = yamlData.season[year];
   const roundData = seasonData?.rounds?.[round];
     if (roundData?.scoring_scheme === 'S' && roundData?.scores) {

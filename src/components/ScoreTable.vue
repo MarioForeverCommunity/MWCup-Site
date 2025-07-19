@@ -115,7 +115,7 @@
 
       <!-- 详细评分表 -->
       <div class="detailed-scores">
-        <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
+        <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} ({{ filteredDetailRecords.length }} 条记录)</h4>
         <p class="scheme-info">
           评分标准: 
           <template v-if="getSchemeLink(scoreData.scoringScheme)">
@@ -141,7 +141,6 @@
             {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
           </template>
         </p>
-        <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
         <div class="table-wrapper">
           <table class="table-base score-table">
             <thead>
@@ -161,12 +160,9 @@
               <tr v-else>
                 <th>选手</th>
                 <th>评委</th>
-                <template v-for="column in (scoreData?.columns || []) as string[]" :key="column">
-                  <th v-if="scoreData?.scoringScheme !== 'E' || column !== '换算后大众评分'">{{ column }}</th>
-                </template>
-                <th>{{ scoreData?.scoringScheme === 'E' ? '评委评分' : '总分' }}</th>
-                <th v-if="scoreData?.scoringScheme === 'E'">换算后大众评分</th>
-                <th>最终得分<span v-if="scoreData?.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
+                <th v-for="column in scoreData.columns" :key="column">{{ column }}</th>
+                <th>总分</th>
+                <th>{{ scoreData.scoringScheme === 'E' ? '评委最终得分' : '最终得分' }}</th>
               </tr>
             </thead>
             <tbody>
@@ -246,14 +242,12 @@
                           </template>
                         </div>
                       </td>
-                      <template v-for="column in (scoreData?.columns || []) as string[]" :key="column">
-                        <td class="score-cell" v-if="scoreData?.scoringScheme !== 'E' || column !== '换算后大众评分'">
-                          {{ formatScore(record.scores[column]) }}
-                        </td>
-                      </template
+                      <td v-for="column in scoreData.columns" 
+                          :key="column" 
+                          class="score-cell">
+                        {{ formatScore(record.scores[column]) }}
                       </td>
                       <td class="judge-total">{{ formatScore(record.totalScore) }}</td>
-                      <td v-if="scoreData.scoringScheme === 'E'" class="public-score">{{ formatScore(record.scores['换算后大众评分']) }}</td>
                     </template>
                     <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
                       {{ getPlayerAverageScore(record.playerCode) }}
@@ -268,10 +262,60 @@
             </tbody>
           </table>
         </div>
+        
+        <!-- 大众评分表 (仅评分方案E) -->
+        <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0" class="public-scores">
+          <h4>大众评分 ({{ scoreData.publicScores.length }} 名选手)</h4>
+          <div class="table-wrapper">
+            <table class="table-base score-table">
+              <thead>
+                <tr>
+                  <th>选手</th>
+                  <th>大众评分员</th>
+                  <th>欣赏性</th>
+                  <th>创新性</th>
+                  <th>设计性</th>
+                  <th>游戏性</th>
+                  <th>附加分</th>
+                  <th v-if="hasPublicPenalty">扣分</th>
+                  <th>总分</th>
+                  <th>大众最终得分</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="(playerPublicScore, playerIndex) in filteredPublicScores" :key="playerPublicScore.playerCode">
+                  <template v-for="(vote, voteIndex) in playerPublicScore.votes" :key="`${playerPublicScore.playerCode}-${vote.voterName}`">
+                    <tr>
+                      <!-- 只在该选手的第一行显示选手信息，并合并行 -->
+                      <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length + 1" class="player-name player-cell-merged">
+                        <span v-if="playerPublicScore.playerCode !== playerPublicScore.playerName && !playerPublicScore.playerCode.startsWith('~')" class="player-code">{{ playerPublicScore.playerCode }}</span>
+                        <span class="player-name-text">{{ playerPublicScore.playerName }}</span>
+                      </td>
+                      <td class="voter-name">{{ vote.voterName }}</td>
+                      <td class="score-cell">{{ vote.appreciation }}</td>
+                      <td class="score-cell">{{ vote.innovation }}</td>
+                      <td class="score-cell">{{ vote.design }}</td>
+                      <td class="score-cell">{{ vote.gameplay }}</td>
+                      <td class="score-cell">{{ vote.bonus }}</td>
+                      <td v-if="hasPublicPenalty" class="score-cell">{{ vote.penalty || 0 }}</td>
+                      <td class="score-cell">{{ formatScore(vote.totalScore) }}</td>
+                      <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="final-score">{{ formatScore(playerPublicScore.finalPublicScore) }}</td>
+                    </tr>
+                  </template>
+                  <!-- 添加选手间分隔线 -->
+                  <tr v-if="playerIndex < filteredPublicScores.length - 1" class="player-separator">
+                    <td :colspan="hasPublicPenalty ? 10 : 9" class="separator-cell"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
         <!-- 总分排名表 -->
         <div class="player-totals">
           <h4>总分排名 ({{ filteredPlayerScores.length }} 名选手)</h4>
-          <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 换算后大众评分×25%</p>
+          <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 大众评分×25%</p>
           <div class="table-wrapper">
             <table class="table-base total-table">
               <thead>
@@ -287,7 +331,7 @@
                   <th v-if="scoreData.scoringScheme !== 'E'">有效评分次数</th>
                   <template v-if="scoreData.scoringScheme === 'E'">
                     <th>评委评分</th>
-                    <th>换算后大众评分</th>
+                    <th>大众评分</th>
                   </template>
                   <template v-else>
                     <th>总分之和</th>
@@ -337,13 +381,23 @@
                     <template v-if="scoreData.scoringScheme === 'E'">
                       <td class="judge-total">
                         <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
-                        <template v-else>{{ formatScore(player.totalSum) }}</template>
+                        <template v-else>{{ formatScore(player.records[0]?.totalScore) }}</template>
                       </td>
-                      <td class="public-score">{{ formatScore(player.records[0]?.scores['换算后大众评分']) }}</td>
+                      <td class="public-score">
+                        <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
+                        <template v-else>{{ formatScore(player.publicScore) }}</template>
+                      </td>
                     </template>
                     <td v-else class="sum">{{ formatScore(player.totalSum) }}</td>
                   </template>
-                  <td class="average">{{ formatScore(player.averageScore) }}</td>
+                  <td class="average">
+                    <template v-if="scoreData.scoringScheme === 'E'">
+                      {{ formatScore(player.finalScore) }}
+                    </template>
+                    <template v-else>
+                      {{ formatScore(player.averageScore) }}
+                    </template>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -362,7 +416,13 @@ function toChineseNumber(num: number): string {
 }
 import { ref, watch, onMounted, computed } from 'vue'
 import FoldButton from './FoldButton.vue'
-import { loadRoundScoreData, type RoundScoreData, type ScoreRecord, buildPlayerJudgeMap } from '../utils/scoreCalculator'
+import { 
+  loadRoundScoreData, 
+  type RoundScoreData, 
+  type ScoreRecord, 
+  buildPlayerJudgeMap,
+  type PlayerScore,
+} from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
@@ -1040,6 +1100,25 @@ function isReEvaluationJudge(judgeCode: string, record: any): boolean {
   );
 }
 
+// 计算是否有大众评分的扣分（用于显示扣分列）
+const hasPublicPenalty = computed(() => {
+  if (!scoreData.value || !scoreData.value.publicScores) return false;
+  return scoreData.value.publicScores.some(
+    (player) => player.votes && player.votes.some(v => v.penalty !== undefined && Number(v.penalty) !== 0)
+  );
+});
+
+// 过滤和排序大众评分数据，按选手名/码分组
+const filteredPublicScores = computed(() => {
+  if (!scoreData.value || !scoreData.value.publicScores) return [];
+  // 可根据需要添加筛选或排序逻辑，这里默认按 playerCode 升序
+  return scoreData.value.publicScores.slice().sort((a, b) => {
+    if (a.playerCode < b.playerCode) return -1;
+    if (a.playerCode > b.playerCode) return 1;
+    return 0;
+  });
+});
+
 // 格式化分数显示
 const formatScore = (score: number | Decimal | null | undefined): string => {
   if (score === null || score === undefined) return '-'
@@ -1224,7 +1303,7 @@ const filteredPlayerScores = computed(() => {
   if (!scoreData.value || !yamlData.value) return []
   
   // 基于现有的选手分数
-  let players = [...scoreData.value.playerScores]
+  let players = [...scoreData.value.playerScores];
   
   // 为未上传关卡的选手创建成绩记录
   const noSubmissionPlayerScores = noSubmissionPlayers.value.map(record => {
@@ -1234,12 +1313,14 @@ const filteredPlayerScores = computed(() => {
       records: [record], // 只有一条"未上传"的记录
       totalSum: new Decimal(0),
       averageScore: new Decimal(0), // 未上传关卡选手的平均分为0
-      validRecordsCount: 0 // 有效记录数为0
-    }
-  })
+      validRecordsCount: 0, // 有效记录数为0
+      publicScore: new Decimal(0), // 大众评分为0
+      finalScore: new Decimal(0)    // 最终得分为0
+    } as PlayerScore;
+  });
   
   // 合并已有成绩和未上传关卡的选手
-  players = [...players, ...noSubmissionPlayerScores]
+  players = [...players, ...noSubmissionPlayerScores];
   
   // 按选手名称搜索
   if (searchPlayer.value.trim()) {
@@ -1266,18 +1347,18 @@ const filteredPlayerScores = computed(() => {
     })
   }
   
-  // 首先把未上传的选手排到最后，其余按平均分从高到低排序
+  // 首先把未上传的选手排到最后，其余按最终得分从高到低排序
   players = [...players].sort((a, b) => {
     const aNoSubmission = a.validRecordsCount === 0 && getPlayerLevelFileName(a.playerCode) === '未上传';
     const bNoSubmission = b.validRecordsCount === 0 && getPlayerLevelFileName(b.playerCode) === '未上传';
     if (aNoSubmission && !bNoSubmission) return 1;
     if (!aNoSubmission && bNoSubmission) return -1;
-    // 其余正常排序
-    // 兼容Decimal和number
-    const aScore = a.averageScore instanceof Decimal ? a.averageScore : new Decimal(a.averageScore)
-    const bScore = b.averageScore instanceof Decimal ? b.averageScore : new Decimal(b.averageScore)
-    return bScore.comparedTo(aScore)
-  })
+    
+    // 使用最终得分排序
+    const aScore = a.finalScore || new Decimal(0);
+    const bScore = b.finalScore || new Decimal(0);
+    return bScore.comparedTo(aScore);
+  });
   
   // 然后，对于同分数的选手，按YAML中的选手顺序排序
   try {
@@ -1433,10 +1514,15 @@ function getPlayerAverageScore(playerCode: string): string {
   const playerScore = scoreData.value.playerScores.find(p => p.playerCode === playerCode);
   if (!playerScore) return '-';
   
+  // 对于评分方案E，使用judgeAverage（评委平均分）
+  const scoreToUse = scoreData.value.scoringScheme === 'E' && playerScore.judgeAverage !== undefined 
+    ? playerScore.judgeAverage 
+    : playerScore.averageScore;
+  
   // 创建Decimal对象，兼容两种类型
-  const decimal = typeof playerScore.averageScore === 'object' && 'toFixed' in playerScore.averageScore 
-    ? playerScore.averageScore
-    : new Decimal(playerScore.averageScore);
+  const decimal = typeof scoreToUse === 'object' && 'toFixed' in scoreToUse 
+    ? scoreToUse
+    : new Decimal(scoreToUse);
     
   // 规范化显示格式
   const formattedScore = decimal.toFixed(2)
@@ -1916,6 +2002,19 @@ onMounted(() => {
 
 .score-cell {
   text-align: center;
+}
+
+.public-scores {
+  margin-bottom: var(--spacing-xl);
+}
+
+.public-scores h4 {
+  text-align: center;
+  margin: var(--spacing-lg) 0;
+  color: var(--text-secondary);
+  font-size: 18px;
+  border-bottom: 2px solid var(--primary-active);
+  padding-bottom: var(--spacing-sm);
 }
 
 .final-score {
