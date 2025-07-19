@@ -58,7 +58,12 @@
                   </th>
                 </template>
                 <th v-if="['2019','2020','2021'].includes(year)">超时扣分</th>
-                <th>总积分</th>
+                <th>总得分</th>
+                <!-- 2018年单循环赛制特有列 -->
+                <th v-if="year === '2018'">胜</th>
+                <th v-if="year === '2018'">平</th>
+                <th v-if="year === '2018'">负</th>
+                <th v-if="year === '2018'">总积分</th>
                 <th class="rank-col">小组内排名</th>
                 <th class="rank-col">总排名</th>
                 <th>是否晋级</th>
@@ -87,6 +92,11 @@
                         {{ player.timeoutPenalty ? '-' + formatScore(player.timeoutPenalty) : '-' }}
                       </td>
                       <td class="total-score">{{ formatScore(player.totalScore) }}</td>
+                      <!-- 2018年单循环赛制数据列 -->
+                      <td v-if="year === '2018'" class="win-count">{{ player.wins || 0 }}</td>
+                      <td v-if="year === '2018'" class="draw-count">{{ player.draws || 0 }}</td>
+                      <td v-if="year === '2018'" class="loss-count">{{ player.losses || 0 }}</td>
+                      <td v-if="year === '2018'" class="match-points">{{ player.matchPoints || 0 }}</td>
                       <td class="rank-col">{{ player.groupRank }}</td>
                       <td class="rank-col">{{ player.totalRank }}</td>
                       <td :class="{'advanced': isPlayerAdvanced(player.playerName)}">{{ isPlayerAdvanced(player.playerName) ? '是' : '否' }}</td>
@@ -443,6 +453,60 @@ async function calculateOverallRoundData() {
     return null
   }
 
+  // 2018年特殊处理：单循环积分制
+  const is2018RoundRobin = props.year === '2018';
+
+  // 2018年对阵表定义
+  const roundRobinMatches = {
+    'A': [
+      [['A1', 'A2'], ['A3', 'A4']], // 第一轮
+      [['A1', 'A3'], ['A2', 'A4']], // 第二轮
+      [['A1', 'A4'], ['A2', 'A3']]  // 第三轮
+    ],
+    'B': [
+      [['B1', 'B4'], ['B2', 'B3']], // 第一轮
+      [['B1', 'B3'], ['B2', 'B4']], // 第二轮
+      [['B1', 'B2'], ['B3', 'B4']]  // 第三轮
+    ],
+    'C': [
+      [['C1', 'C4'], ['C2', 'C3']], // 第一轮
+      [['C1', 'C2'], ['C3', 'C4']], // 第二轮
+      [['C1', 'C3'], ['C2', 'C4']]  // 第三轮
+    ],
+    'D': [
+      [['D1', 'D2'], ['D3', 'D4']], // 第一轮
+      [['D1', 'D3'], ['D2', 'D4']], // 第二轮
+      [['D1', 'D4'], ['D2', 'D3']]  // 第三轮
+    ]
+  };
+
+  // 胜平负判定函数
+  function determineMatchResult(scoreA: number, scoreB: number): { resultA: 'win' | 'draw' | 'loss', resultB: 'win' | 'draw' | 'loss', pointsA: number, pointsB: number } {
+    // 特殊情况：0分判负
+    if (scoreA === 0 && scoreB === 0) {
+      return { resultA: 'loss', resultB: 'loss', pointsA: 0, pointsB: 0 };
+    }
+    if (scoreA === 0) {
+      return { resultA: 'loss', resultB: 'win', pointsA: 0, pointsB: 2 };
+    }
+    if (scoreB === 0) {
+      return { resultA: 'win', resultB: 'loss', pointsA: 2, pointsB: 0 };
+    }
+    
+    // 正常判定：分差大于1分
+    const diff = Math.abs(scoreA - scoreB);
+    if (diff > 1) {
+      if (scoreA > scoreB) {
+        return { resultA: 'win', resultB: 'loss', pointsA: 2, pointsB: 0 };
+      } else {
+        return { resultA: 'loss', resultB: 'win', pointsA: 0, pointsB: 2 };
+      }
+    } else {
+      // 平局：分差不超过1分
+      return { resultA: 'draw', resultB: 'draw', pointsA: 1, pointsB: 1 };
+    }
+  }
+
   // 查找当前轮次所属的轮次组
   let matchedRoundGroup: [string, any] | undefined;
   for (const [key, value] of Object.entries(season.rounds)) {
@@ -595,9 +659,54 @@ async function calculateOverallRoundData() {
       }));
     }
 
+    // 2018年单循环赛制：计算胜平负统计和对阵积分
+    let wins = 0, draws = 0, losses = 0, matchPoints = 0;
+    let headToHeadPoints: Record<string, number> = {}; // 相互战绩积分
+    
+    if (is2018RoundRobin && group) {
+      const groupMatches = roundRobinMatches[group as keyof typeof roundRobinMatches];
+      if (groupMatches) {
+        // 遍历3轮比赛
+        groupMatches.forEach((roundMatches, roundIndex) => {
+          roundMatches.forEach(([playerA, playerB]) => {
+            if (playerA === playerCode || playerB === playerCode) {
+              const opponent = playerA === playerCode ? playerB : playerA;
+              const myScore = roundScores[roundIndex] instanceof Decimal ? 
+                (roundScores[roundIndex] as Decimal).toNumber() : Number(roundScores[roundIndex]);
+              
+              // 获取对手得分
+              const opponentRoundData = multiRoundScores.value[roundCodes[roundIndex]];
+              const opponentPlayer = opponentRoundData?.playerScores.find(p => p.playerCode === opponent);
+              const opponentScore = opponentPlayer ? opponentPlayer.averageScore.toNumber() : 0;
+              
+              // 判定比赛结果（注意：第一个参数是我的得分，第二个参数是对手得分）
+              const result = determineMatchResult(myScore, opponentScore);
+              const myResult = result.resultA; // 我的结果总是 resultA，因为 myScore 传给了 scoreA
+              const myPoints = result.pointsA; // 我的积分总是 pointsA
+              
+              // 统计胜平负
+              if (myResult === 'win') wins++;
+              else if (myResult === 'draw') draws++;
+              else losses++;
+              
+              // 累计对阵积分
+              matchPoints += myPoints;
+              
+              // 记录相互战绩积分（用于排名）
+              if (!headToHeadPoints[opponent]) headToHeadPoints[opponent] = 0;
+              headToHeadPoints[opponent] += myPoints;
+            }
+          });
+        });
+      }
+    }
+
     // 计算总积分
     let totalScore: Decimal;
-    if (is2019) {
+    if (is2018RoundRobin) {
+      // 2018年：总得分（不是对阵积分）
+      totalScore = roundScores.reduce((acc: Decimal, curr) => acc.plus(curr instanceof Decimal ? curr : new Decimal(curr)), new Decimal(0));
+    } else if (is2019) {
       // 2019年小组赛，使用重构后的计算函数
       totalScore = await calculate2019TotalScore(playerDataForCalculator, yamlData.value);
     } else if (isShowValidLevel) {
@@ -623,7 +732,13 @@ async function calculateOverallRoundData() {
       roundScores,
       validRounds,
       timeoutPenalty,
-      totalScore
+      totalScore,
+      // 2018年单循环赛制字段
+      wins,
+      draws,
+      losses,
+      matchPoints,
+      headToHeadPoints
     }
   });
 
@@ -649,26 +764,52 @@ async function calculateOverallRoundData() {
       sameRankCount++;
     }
 
-    // 计算小组内排名（也考虑并列情况）
+    // 计算小组内排名
     const groupPlayers = arr.filter(p => p.group === player.group);
     let groupRank = 1;
-    let groupSameRankCount = 0;
-    let lastGroupScore = groupPlayers[0]?.totalScore;
+    
+    if (is2018RoundRobin) {
+      // 2018年小组排名规则：总积分>总得分>相互战绩积分
+      const sortedGroupPlayers = [...groupPlayers].sort((a, b) => {
+        // 1. 总积分（对阵积分）多者，名次列前
+        if (a.matchPoints !== b.matchPoints) {
+          return b.matchPoints - a.matchPoints;
+        }
+        
+        // 2. 相同总积分下，总得分多者，名次列前
+        const scoreDiff = b.totalScore.minus(a.totalScore).toNumber();
+        if (Math.abs(scoreDiff) > 0.001) {
+          return scoreDiff;
+        }
+        
+        // 3. 相同总积分和总得分下，在相互之间的比赛中总积分多者，名次列前
+        // 计算两人之间的相互战绩积分
+        const aVsB = a.headToHeadPoints[b.playerCode] || 0;
+        const bVsA = b.headToHeadPoints[a.playerCode] || 0;
+        return bVsA - aVsB;
+      });
+      
+      groupRank = sortedGroupPlayers.findIndex(p => p.playerCode === player.playerCode) + 1;
+    } else {
+      // 其他年份的小组排名逻辑（按总得分）
+      let groupSameRankCount = 0;
+      let lastGroupScore = groupPlayers[0]?.totalScore;
 
-    for (let i = 0; i < groupPlayers.length; i++) {
-      const currentPlayer = groupPlayers[i];
-      if (currentPlayer.playerCode === player.playerCode) {
+      for (let i = 0; i < groupPlayers.length; i++) {
+        const currentPlayer = groupPlayers[i];
+        if (currentPlayer.playerCode === player.playerCode) {
+          if (!currentPlayer.totalScore.equals(lastGroupScore)) {
+            groupRank += groupSameRankCount + 1;
+          }
+          break;
+        }
         if (!currentPlayer.totalScore.equals(lastGroupScore)) {
           groupRank += groupSameRankCount + 1;
+          groupSameRankCount = 0;
+          lastGroupScore = currentPlayer.totalScore;
+        } else if (i > 0) {
+          groupSameRankCount++;
         }
-        break;
-      }
-      if (!currentPlayer.totalScore.equals(lastGroupScore)) {
-        groupRank += groupSameRankCount + 1;
-        groupSameRankCount = 0;
-        lastGroupScore = currentPlayer.totalScore;
-      } else if (i > 0) {
-        groupSameRankCount++;
       }
     }
 
@@ -702,7 +843,11 @@ async function calculateOverallRoundData() {
   if (['2019','2020','2021'].includes(props.year)) {
     totalColumns += 1; // 超时扣分列
   }
-  totalColumns += 4; // 总分 + 小组排名 + 总排名 + 是否晋级
+  totalColumns += 1; // 总得分列
+  if (props.year === '2018') {
+    totalColumns += 4; // 2018年：胜 + 平 + 负 + 总积分
+  }
+  totalColumns += 3; // 小组排名 + 总排名 + 是否晋级
 
   return {
     roundCodes,
@@ -1699,6 +1844,31 @@ onMounted(() => {
   height: 2px;
 }
 
+.total-score {
+  font-weight: 600;
+}
+
+/* 2018年单循环赛制列样式 */
+.win-count {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.draw-count {
+  color: #ffc107;
+  font-weight: 600;
+}
+
+.loss-count {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.match-points {
+  color: #007bff;
+  font-weight: 600;
+}
+
 /* 表格和数据显示相关样式 */
 .player-code {
   display: inline-block;
@@ -1737,7 +1907,7 @@ onMounted(() => {
 }
 
 .backup-tag {
-  background-color: #6c757d;
+  background-color: #eba510;
 }
 
 .public-tag {
