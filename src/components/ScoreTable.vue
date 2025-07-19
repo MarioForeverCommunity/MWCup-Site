@@ -115,7 +115,7 @@
 
       <!-- 详细评分表 -->
       <div class="detailed-scores">
-        <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} ({{ filteredDetailRecords.length }} 条记录)</h4>
+        <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }}</h4>
         <p class="scheme-info">
           评分标准: 
           <template v-if="getSchemeLink(scoreData.scoringScheme)">
@@ -265,7 +265,7 @@
         
         <!-- 大众评分表 (仅评分方案E) -->
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0" class="public-scores">
-          <h4>大众评分 ({{ scoreData.publicScores.length }} 名选手)</h4>
+          <h4>大众评分</h4>
           <div class="table-wrapper">
             <table class="table-base score-table">
               <thead>
@@ -314,7 +314,7 @@
         
         <!-- 总分排名表 -->
         <div class="player-totals">
-          <h4>总分排名 ({{ filteredPlayerScores.length }} 名选手)</h4>
+          <h4>总分排名</h4>
           <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 大众评分×25%</p>
           <div class="table-wrapper">
             <table class="table-base total-table">

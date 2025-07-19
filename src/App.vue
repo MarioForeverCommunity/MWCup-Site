@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import packageJson from '../package.json'
 import RoundSelector from './components/RoundSelector.vue'
 import LevelFileTest from './components/LevelFileSearch.vue'
 import UploadSystem from './components/UploadSystem.vue'
@@ -180,6 +181,19 @@ const openCommunity = () => {
           <span class="nav-text">前往社区</span>
         </button>
       </nav>
+      <footer class="sidebar-footer">
+        <div class="footer-content">
+          <span class="version-info">网站版本：v{{ packageJson.version }}</span>
+          <span class="divider"> | </span>
+          <a 
+            href="https://github.com/MarioForeverCommunity/MWCup-Site" 
+            target="_blank" 
+            class="source-link"
+          >
+            本站源码
+          </a>
+        </div>
+      </footer>
     </aside>
     <!-- 遮罩层，移动端且菜单展开时显示 -->
     <div 
@@ -259,10 +273,40 @@ const openCommunity = () => {
   transition: all 0.3s ease;
 }
 
+/* 侧边栏底部样式 */
+.sidebar-footer {
+  margin-top: auto;
+  padding-bottom: 1rem; /* 添加底边距 */
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+}
+
+.divider {
+  color: rgba(0, 0, 0, 0.2);
+  user-select: none;
+}
+
 /* 侧边栏动画 */
 @media (min-width: 768px) {
   .sidebar {
     animation: slideInLeft 0.5s ease-out;
+    display: flex;
+    flex-direction: column;
   }
 
   .sidebar-mask {
@@ -395,14 +439,16 @@ const openCommunity = () => {
 
   .sidebar {
     position: fixed;
-    left: 0;
     top: 0;
-    height: 100vh;
+    left: 0;
     width: 250px;
-    z-index: 1001; /* 提高侧边栏层级，确保在遮罩层之上 */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 1001;
     transform: translateX(0);
     transition: transform 0.3s ease-in-out;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
   }
 
   .sidebar-nav {
@@ -463,6 +509,8 @@ const openCommunity = () => {
     width: 100%;
     text-align: center;
   }
+
+  /* 移动视图下使用全局定义的sidebar-footer样式 */
 
   .sidebar-mask {
     display: block;
