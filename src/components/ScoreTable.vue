@@ -38,6 +38,71 @@
           />
         </div>
       </div>
+      <!-- 赛况总表 -->
+      <div v-if="overallRoundData" class="overall-status">
+        <h4>赛况总表</h4>
+        <div class="table-wrapper">
+          <table class="table-base overall-table">
+            <thead>
+              <tr>
+                <th>所在小组</th>
+                <th>选手</th>
+                <template v-if="overallRoundData?.roundCodes">
+                  <template v-for="(roundCode, index) in overallRoundData.roundCodes" :key="roundCode">
+                    <th>第{{ toChineseNumber(index + 1) }}{{ year === '2012' ? '轮' : isTopicMode(roundCode) ? '题' : '轮' }}得分</th>
+                  </template>
+                </template>
+                <template v-if="overallRoundData?.isShowValidLevel && overallRoundData?.validLevelColumns">
+                  <th v-for="(col, index) in overallRoundData.validLevelColumns" :key="'valid-'+index">
+                    {{ col.label }}
+                  </th>
+                </template>
+                <th v-if="['2019','2020','2021'].includes(year)">超时扣分</th>
+                <th>总积分</th>
+                <th class="rank-col">小组内排名</th>
+                <th class="rank-col">总排名</th>
+                <th>是否晋级</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-if="overallRoundData?.groups && overallRoundData?.groupedPlayers">
+                <template v-for="(group, groupIndex) in overallRoundData.groupOrder" :key="group">
+                  <template v-for="(player, idx) in overallRoundData.groupedPlayers[group]" :key="player.playerCode">
+                    <tr>
+                      <!-- 小组列：只在第一个选手显示，合并单元格 -->
+                      <td v-if="idx === 0" :rowspan="overallRoundData.groupedPlayers[group].length" class="player-cell-merged">{{ group }}</td>
+                      <td class="player-name">
+                        <span class="player-code">{{ player.playerCode }}</span>
+                        <span class="player-name-text">{{ player.playerName }}</span>
+                      </td>
+                      <td v-for="(score, index) in player.roundScores" :key="index">
+                        {{ formatScore(score) }}
+                      </td>
+                      <template v-if="overallRoundData?.isShowValidLevel">
+                        <td v-for="(validInfo, index) in player.validRounds || []" :key="'valid-'+index" :class="{'valid-level': validInfo?.valid}">
+                          {{ validInfo?.label }}<span v-if="validInfo?.exclamation" class="exclamation-mark">（超时）</span>
+                        </td>
+                      </template>
+                      <td v-if="['2019','2020','2021'].includes(year)" class="penalty">
+                        {{ player.timeoutPenalty ? '-' + formatScore(player.timeoutPenalty) : '-' }}
+                      </td>
+                      <td class="total-score">{{ formatScore(player.totalScore) }}</td>
+                      <td class="rank-col">{{ player.groupRank }}</td>
+                      <td class="rank-col">{{ player.totalRank }}</td>
+                      <td :class="{'advanced': isPlayerAdvanced(player.playerName)}">{{ isPlayerAdvanced(player.playerName) ? '是' : '否' }}</td>
+                    </tr>
+                  </template>
+                  <!-- 添加小组间的分隔线 -->
+                  <tr v-if="groupIndex < overallRoundData.groupOrder.length - 1" class="group-separator">
+                    <td :colspan="overallRoundData.totalColumns" class="separator-cell"></td>
+                  </tr>
+                </template>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- 详细评分表 -->
       <div class="detailed-scores">
         <h4>详细评分 ({{ filteredDetailRecords.length }} 条记录)</h4>
@@ -280,14 +345,26 @@
 </template>
 
 <script setup lang="ts">
+// 中文数字转换工具
+function toChineseNumber(num: number): string {
+  const cnNums = ['零','一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
+  return cnNums[num] || num.toString();
+}
 import { ref, watch, onMounted, computed } from 'vue'
 import FoldButton from './FoldButton.vue'
 import { loadRoundScoreData, type RoundScoreData, type ScoreRecord, buildPlayerJudgeMap } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
+
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
 import { fetchLevelFilesFromLocal, type LevelFile, matchPlayerName } from '../utils/levelFileHelper'
 import { loadUserData, type UserData } from '../utils/userDataProcessor'
 import { Decimal } from 'decimal.js'
+import { 
+  calculate2019TotalScore, 
+  calculateValidLevelTotalScore, 
+  get2019ValidLevelInfo
+} from '../utils/totalPointsCalculator';
+import { getPreliminaryValidInfoEnhanced } from '../utils/preliminaryValidInfoHelper';
 
 // 通过 NoSubmissionRecord.d.ts 扩展了 ScoreRecord 类型，添加了 isNoSubmission 属性
 import '../NoSubmissionRecord.d.ts'
@@ -311,13 +388,353 @@ const toggleScoreContent = () => {
 const searchPlayer = ref('')
 const searchJudge = ref('')
 
+// 移除未使用的接口定义
+
 const scoreData = ref<RoundScoreData | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const userMapping = ref<UserMapping>({})
 const yamlData = ref<any>(null) // 存储原始YAML数据用于查找未上传选手
+// 移除validLevelData，改用totalPointsCalculator中的逻辑
+
+// 新增：多轮次评分数据缓存
+const multiRoundScores = ref<Record<string, RoundScoreData | null>>({})
+const multiRoundLoading = ref(false)
+
+// 加载所有子轮次评分数据
+async function loadAllRounds(year: string, roundGroupKey: string, yaml: any) {
+  multiRoundLoading.value = true
+  const roundCodes = roundGroupKey.replace(/\[|\]/g, '').split(',').map(r => r.trim())
+  const result: Record<string, RoundScoreData | null> = {}
+  for (const roundCode of roundCodes) {
+    try {
+      result[roundCode] = await loadRoundScoreData(year, roundCode, yaml)
+    } catch (e) {
+      result[roundCode] = null
+    }
+  }
+  multiRoundScores.value = result
+  multiRoundLoading.value = false
+}
+
+// 检查是否是题目模式
+function isTopicMode(roundCode: string): boolean {
+  const year = props.year
+  if (year === '2012') return false
+  return roundCode.startsWith('I') || (year === '2019' && roundCode.startsWith('G'))
+}
+
+// getPlayerGroup 函数已移除，相关功能已迁移到其他位置
 const levelFiles = ref<LevelFile[]>([]) // 存储关卡文件数据
 const userData = ref<UserData[]>([]) // 存储用户数据用于别名匹配
+
+// 赛况总表数据
+// 将overallRoundData改为异步计算
+const overallRoundData = ref<any>(null)
+const overallDataLoading = ref(false)
+
+// 异步计算赛况总表数据
+async function calculateOverallRoundData() {
+  if (!scoreData.value || !yamlData.value) return null
+
+  // 检查是否是多轮次比赛阶段
+  const season = yamlData.value.season[props.year]
+  if (!season || !season.rounds || props.year === '2012') {
+    return null
+  }
+
+  // 查找当前轮次所属的轮次组
+  let matchedRoundGroup: [string, any] | undefined;
+  for (const [key, value] of Object.entries(season.rounds)) {
+    let roundCodes: string[] = [];
+    if (key.includes('[') && key.includes(']')) {
+      roundCodes = key.replace(/\[|\]/g, '').split(',').map(r => r.trim());
+    } else if (key.includes(',')) {
+      roundCodes = key.split(',').map(r => r.trim());
+    } else {
+      roundCodes = [key.trim()];
+    }
+    if (roundCodes.includes(props.round)) {
+      matchedRoundGroup = [key, value];
+      break;
+    }
+  }
+
+  // 判断匹配到的轮次组是否为多轮次（数组轮次）
+  const isMultiRound = matchedRoundGroup && 
+    (matchedRoundGroup[0].includes('[') && matchedRoundGroup[0].includes(']') || 
+     matchedRoundGroup[0].includes(','));
+
+  // 只有多轮次才显示赛况总表
+  if (!isMultiRound) return null;
+
+  const rounds = matchedRoundGroup
+  if (!rounds) return null
+
+  const roundGroupKey = rounds[0];
+  const roundCodes = roundGroupKey.replace(/\[|\]/g, '').split(',').map(r => r.trim());
+
+  // 获取所有选手（包括未上传）
+  const playerMapResult = buildPlayerJudgeMap(yamlData.value, props.year, roundGroupKey);
+  const allPlayerCodes = Object.keys(playerMapResult.players);
+
+  // 是否是deadline模式
+  let hasDeadlines = false;
+  if (rounds[1] && typeof rounds[1] === 'object') {
+    const roundObj = rounds[1] as any;
+    if (roundObj.schedule && typeof roundObj.schedule === 'object' && 'deadlines' in roundObj.schedule) {
+      hasDeadlines = Boolean(roundObj.schedule.deadlines);
+    } else if ('deadlines' in roundObj) {
+      hasDeadlines = Boolean(roundObj.deadlines);
+    }
+  }
+
+  // 处理选手数据
+  const groupMap: Record<string, string[]> = {}
+  // 2020年及以后的初赛轮次显示有效题目列
+  const isShowValidLevel = ['2020', '2021', '2022', '2023', '2024'].includes(props.year) && roundCodes.some(code => code.startsWith('I'));
+  const is2019 = props.year === '2019' && roundCodes.some(code => code.startsWith('G'));
+  
+  // 有效题目列内容（2020年及以后初赛）
+  // 注意：这里应该基于deadline数量来确定列数，而不是题目数量
+  let validLevelColumns: { roundIndex: number, label: string }[] = [];
+  if (isShowValidLevel) {
+    // 先获取一个示例选手的deadline信息来确定列数
+    // 这里暂时使用固定值，后续会在选手数据处理中动态调整
+    const preliminaryRoundCount = props.year === '2021' ? 3 : 2; // 基于deadline数量
+    validLevelColumns = Array.from({ length: preliminaryRoundCount }, (_, i) => ({
+      roundIndex: i + 1,
+      label: `第${toChineseNumber(i + 1)}轮有效题目`
+    }));
+  }
+
+  // 异步处理每个选手的数据
+  const playerDataPromises = allPlayerCodes.map(async playerCode => {
+    // 基础信息
+    const playerName = (playerMapResult.players as Record<string, string>)[playerCode] || playerCode;
+    const group = playerMapResult.playerGroups ? playerMapResult.playerGroups[playerCode] : '';
+    
+    // 每题得分：遍历每个子轮次，查找该选手在该轮的评分数据
+    let roundScores: (Decimal | number)[] = roundCodes.map(roundCode => {
+      const roundData = multiRoundScores.value[roundCode];
+      if (!roundData) return new Decimal(0);
+      const player = roundData.playerScores.find(p => p.playerCode === playerCode);
+      return player ? player.averageScore : new Decimal(0);
+    });
+
+    // 构造playerData格式供totalPointsCalculator使用
+    const playerDataForCalculator = {
+      playerCodes: [playerCode],
+      roundScores: roundCodes.reduce((acc: Record<string, any>, roundCode: string, idx) => {
+        const score = roundScores[idx];
+        acc[roundCode] = {
+          averageScore: score instanceof Decimal ? score.toNumber() : Number(score)
+        };
+        return acc;
+      }, {}),
+      participatedRounds: roundCodes.filter((_, idx) => {
+        const score = roundScores[idx];
+        return (score instanceof Decimal ? score.toNumber() : Number(score)) > 0;
+      })
+    };
+
+    // 获取有效题目信息和超时扣分
+    let validRounds: { round: string, valid: boolean, label: string, exclamation: boolean }[] | undefined;
+    // 仅2019~2021年有超时扣分
+    let timeoutPenalty = 0;
+    const yearNum = parseInt(props.year);
+    
+    if (is2019) {
+      // 2019年小组赛
+      const validInfo = await get2019ValidLevelInfo(playerDataForCalculator, yamlData.value);
+      timeoutPenalty = validInfo.timeoutPenalty;
+      
+      // 构造validRounds显示信息
+      validRounds = roundCodes.map(roundCode => {
+        const isSelected = validInfo.validRounds.includes(roundCode);
+        const hasScore = (roundScores[roundCodes.indexOf(roundCode)] as Decimal).toNumber() > 0;
+        return {
+          round: roundCode,
+          valid: isSelected,
+          label: hasScore ? roundCode : '未上传',
+          exclamation: isSelected && timeoutPenalty > 0
+        };
+      });
+    } else if (isShowValidLevel) {
+      // 2020-2024年及以后初赛
+      const validInfo = await getPreliminaryValidInfoEnhanced(props.year, playerDataForCalculator, yamlData.value);
+      // 仅2020、2021年有超时扣分，2022及以后恒为0
+      if (yearNum === 2020 || yearNum === 2021) {
+        timeoutPenalty = validInfo.timeoutPenalty;
+      } else {
+        timeoutPenalty = 0;
+      }
+      
+      // 构造validRounds显示信息（基于轮次选择）
+      // 根据年份确定应该显示的轮次数：2021年为3轮，其他为2轮
+      const expectedRoundCount = yearNum === 2021 ? 3 : 2;
+      validRounds = Array.from({ length: expectedRoundCount }, (_, index) => {
+        const roundSelection = validInfo.roundSelections[index];
+        const selectedTopic = roundSelection?.selectedTopic;
+        const hasScore = selectedTopic && playerDataForCalculator.roundScores[selectedTopic]?.averageScore > 0;
+        
+        return {
+          round: `round${index + 1}`, // 轮次标识
+          valid: Boolean(selectedTopic), // 是否有选中的题目
+          label: selectedTopic ? (
+            hasScore ? `第${toChineseNumber(parseInt(selectedTopic.replace('I', '')))}题` : '未上传'
+          ) : '未上传',
+          exclamation: roundSelection?.isTimeout || false
+        };
+      });
+      
+      // 同时更新validLevelColumns以匹配期望的轮次数
+      validLevelColumns = Array.from({ length: expectedRoundCount }, (_, i) => ({
+        roundIndex: i + 1,
+        label: `第${toChineseNumber(i + 1)}轮有效题目`
+      }));
+    }
+
+    // 计算总积分
+    let totalScore: Decimal;
+    if (is2019) {
+      // 2019年小组赛，使用重构后的计算函数
+      totalScore = await calculate2019TotalScore(playerDataForCalculator, yamlData.value);
+    } else if (isShowValidLevel) {
+      // 2020-2024年初赛，使用重构后的计算函数
+      totalScore = await calculateValidLevelTotalScore(props.year, playerDataForCalculator, yamlData.value);
+    } else {
+      // 其它情况，简单相加
+      totalScore = roundScores.reduce((acc: Decimal, curr) => acc.plus(curr instanceof Decimal ? curr : new Decimal(curr)), new Decimal(0));
+    }
+
+    // 记录到小组
+    if (group) {
+      if (!groupMap[group]) {
+        groupMap[group] = []
+      }
+      groupMap[group].push(playerCode)
+    }
+
+    return {
+      playerCode,
+      playerName,
+      group,
+      roundScores,
+      validRounds,
+      timeoutPenalty,
+      totalScore
+    }
+  });
+
+  // 等待所有异步操作完成
+  const playerData = await Promise.all(playerDataPromises);
+
+  // 计算排名（考虑并列名次）
+  let sortedPlayers = [...playerData]
+    .sort((a, b) => b.totalScore.minus(a.totalScore).toNumber());
+
+  // 计算总排名（处理并列情况）
+  let currentRank = 1;
+  let sameRankCount = 0;
+  let lastScore = sortedPlayers[0]?.totalScore;
+
+  const rankedPlayers = sortedPlayers.map((player, idx, arr) => {
+    // 如果当前分数与前一个分数不同，更新排名
+    if (!player.totalScore.equals(lastScore)) {
+      currentRank += sameRankCount + 1;
+      sameRankCount = 0;
+      lastScore = player.totalScore;
+    } else if (idx > 0) {
+      sameRankCount++;
+    }
+
+    // 计算小组内排名（也考虑并列情况）
+    const groupPlayers = arr.filter(p => p.group === player.group);
+    let groupRank = 1;
+    let groupSameRankCount = 0;
+    let lastGroupScore = groupPlayers[0]?.totalScore;
+
+    for (let i = 0; i < groupPlayers.length; i++) {
+      const currentPlayer = groupPlayers[i];
+      if (currentPlayer.playerCode === player.playerCode) {
+        if (!currentPlayer.totalScore.equals(lastGroupScore)) {
+          groupRank += groupSameRankCount + 1;
+        }
+        break;
+      }
+      if (!currentPlayer.totalScore.equals(lastGroupScore)) {
+        groupRank += groupSameRankCount + 1;
+        groupSameRankCount = 0;
+        lastGroupScore = currentPlayer.totalScore;
+      } else if (i > 0) {
+        groupSameRankCount++;
+      }
+    }
+
+    return {
+      ...player,
+      totalRank: currentRank,
+      groupRank,
+      isNoSubmission: player.roundScores.every(score => (score instanceof Decimal ? score.equals(0) : score === 0))
+    };
+  });
+
+  // 按小组组织选手数据
+  const groupedPlayers: Record<string, any[]> = {}
+  // 保持原始顺序：遍历allPlayerCodes，按顺序分组
+  allPlayerCodes.forEach(playerCode => {
+    const player = rankedPlayers.find(p => p.playerCode === playerCode);
+    if (!player) return;
+    const group = player.group || '未分组';
+    if (!groupedPlayers[group]) {
+      groupedPlayers[group] = [];
+    }
+    groupedPlayers[group].push(player);
+  });
+
+  // 计算总列数
+  let totalColumns = 2; // 所在小组 + 选手姓名
+  totalColumns += roundCodes.length; // 各轮次得分列
+  if (isShowValidLevel) {
+    totalColumns += validLevelColumns.length; // 有效题目列
+  }
+  if (['2019','2020','2021'].includes(props.year)) {
+    totalColumns += 1; // 超时扣分列
+  }
+  totalColumns += 4; // 总分 + 小组排名 + 总排名 + 是否晋级
+
+  return {
+    roundCodes,
+    hasDeadlines,
+    players: rankedPlayers,
+    groups: Object.keys(groupedPlayers).sort(),
+    groupedPlayers,
+    groupOrder: Object.keys(groupedPlayers).sort(),
+    isShowValidLevel,
+    validLevelColumns,
+    totalColumns
+  }
+}
+
+// 监听数据变化，重新计算赛况总表
+watch([scoreData, yamlData, multiRoundScores], async () => {
+  if (scoreData.value && yamlData.value && Object.keys(multiRoundScores.value).length > 0) {
+    overallDataLoading.value = true
+    try {
+      overallRoundData.value = await calculateOverallRoundData()
+    } catch (error) {
+      console.error('计算赛况总表数据失败:', error)
+      overallRoundData.value = null
+    } finally {
+      overallDataLoading.value = false
+    }
+  } else {
+    // 当条件不满足时，清空赛况总表数据，避免残留
+    overallRoundData.value = null
+    overallDataLoading.value = false
+  }
+}, { deep: true })
 
 // 计算未上传关卡的选手
 const noSubmissionPlayers = computed(() => {
@@ -389,6 +806,72 @@ const noSubmissionPlayers = computed(() => {
     return [];
   }
 });
+
+// 判断选手是否晋级到下一阶段
+function isPlayerAdvanced(playerName: string): boolean {
+  if (!yamlData.value || !props.year || !props.round) return false;
+
+  // 获取当前年份的数据
+  const seasonData = yamlData.value.season[props.year];
+  if (!seasonData?.rounds) return false;
+
+  // 查找当前轮次所属的轮次组和下一个轮次组
+  const rounds = Object.keys(seasonData.rounds);
+  let currentRoundIndex = -1;
+  
+  // 查找包含当前轮次的轮次组
+  for (let i = 0; i < rounds.length; i++) {
+    const roundKey = rounds[i];
+    
+    // 检查是否是数组轮次（包含方括号和逗号）
+    if (roundKey.includes('[') && roundKey.includes(']')) {
+      const roundCodes = roundKey.replace(/\[|\]/g, '').split(',').map(r => r.trim());
+      if (roundCodes.includes(props.round)) {
+        currentRoundIndex = i;
+        break;
+      }
+    } else if (roundKey.includes(',')) {
+      const roundCodes = roundKey.split(',').map(r => r.trim());
+      if (roundCodes.includes(props.round)) {
+        currentRoundIndex = i;
+        break;
+      }
+    } else if (roundKey === props.round) {
+      currentRoundIndex = i;
+      break;
+    }
+  }
+  
+  // 如果找不到当前轮次或是最后一轮，返回false
+  if (currentRoundIndex === -1 || currentRoundIndex === rounds.length - 1) return false;
+  
+  // 获取下一轮的数据
+  const nextRoundKey = rounds[currentRoundIndex + 1];
+  const nextRoundData = seasonData.rounds[nextRoundKey];
+  
+  // 如果没有下一轮的数据，返回false
+  if (!nextRoundData?.players) return false;
+  
+  // 检查选手是否在下一轮的players列表中
+  // 遍历所有组和位置
+  if (Array.isArray(nextRoundData.players)) {
+    // 特殊格式：players是数组
+    return nextRoundData.players.includes(playerName);
+  } else {
+    // 标准格式：players是对象的嵌套结构
+    for (const group of Object.values(nextRoundData.players)) {
+      if (typeof group === 'object' && group !== null) {
+        for (const position of Object.values(group)) {
+          if (position === playerName) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  
+  return false;
+}
 
 // 使用 userMapper.ts 中的 getUserDisplayName 函数来获取评委和选手的名称
 
@@ -721,6 +1204,7 @@ const filteredPlayerScoresWithRank = computed(() => {
 
 async function loadScoreData() {
   if (!props.year || !props.round) {
+    console.warn('年份或轮次为空，停止加载')
     return
   }
   
@@ -732,8 +1216,8 @@ async function loadScoreData() {
     const yamlDoc = await fetchMarioWorkerYaml()
     yamlData.value = yamlDoc // 保存原始的YAML数据，用于获取未上传选手
     const seasonData = extractSeasonData(yamlDoc)
-    
-    // 加载用户映射数据和用户数据
+
+        // 加载用户映射数据和用户数据
     const [userMappingData, userDataResult] = await Promise.all([
       loadUserMapping(),
       loadUserData()
@@ -924,8 +1408,47 @@ function downloadLevelFile(playerCode: string): void {
   }
 }
 
-// 监听props变化
-watch(() => [props.year, props.round], loadScoreData, { immediate: true })
+// 监听props变化，加载所有子轮次评分数据
+watch(
+  () => [props.year, props.round, yamlData.value],
+  async ([year, round, yaml]) => {
+    if (!yaml) return;
+    // 查找当前轮次所属的多轮次key
+    const season = yaml?.season?.[year];
+    if (!season || !season.rounds) return;
+    let roundGroupKey = '';
+    let isMultiRound = false;
+    for (const [key] of Object.entries(season.rounds)) {
+      let roundCodes: string[] = [];
+      // 只有key以[开头且以]结尾，或key包含逗号且不是P1/P2等，才算多轮次
+      if ((key.startsWith('[') && key.endsWith(']')) || (key.includes(',') && !['P1','P2','F','S','Q','R'].includes(key))) {
+        roundCodes = key.replace(/\[|\]/g, '').split(',').map(r => r.trim());
+        isMultiRound = true;
+      } else {
+        roundCodes = [key.trim()];
+      }
+      if (roundCodes.includes(round)) {
+        roundGroupKey = key;
+        break;
+      }
+    }
+    if (isMultiRound && roundGroupKey) {
+      await loadAllRounds(year, roundGroupKey, yaml);
+    } else {
+      // 切换到单轮次或P1/P2时，清空多轮次评分数据
+      multiRoundScores.value = {};
+    }
+  },
+  { immediate: true }
+)
+
+// 新增：监听轮次/年份变化，刷新scoreData
+watch(
+  () => [props.year, props.round],
+  () => {
+    loadScoreData();
+  }
+)
 
 onMounted(() => {
   loadScoreData()
@@ -963,6 +1486,49 @@ onMounted(() => {
   color: var(--text-secondary);
   font-size: 13px;
   text-align: center;
+}
+
+/* 赛况总表样式 */
+.overall-status {
+  margin-bottom: var(--spacing-xl);
+}
+
+.overall-status h4 {
+  text-align: center;
+  margin: var(--spacing-lg) 0;
+  color: var(--text-secondary);
+  font-size: 18px;
+  border-bottom: 2px solid var(--primary-active);
+  padding-bottom: var(--spacing-sm);
+}
+
+.overall-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.overall-table th,
+.overall-table td {
+  padding: var(--spacing-sm);
+  text-align: center;
+}
+
+.overall-table td.valid-level {
+  color: var(--success);
+}
+
+.overall-table td.penalty {
+  color: var(--danger);
+}
+
+/* 有效题目和感叹号标记样式 */
+.valid-level {
+  color: var(--text-success);
+  font-weight: 500;
+}
+
+.exclamation-mark {
+  font-size: 0.8em;
 }
 
 .scoring-note {
@@ -1118,6 +1684,14 @@ onMounted(() => {
 }
 
 .player-separator .separator-cell {
+  background: rgba(255, 230, 210, 0.6);
+  border-bottom: 1px rgba(255, 140, 105, 0.3);
+  padding: 0;
+  line-height: 2px;
+  height: 2px;
+}
+
+.group-separator .separator-cell {
   background: rgba(255, 230, 210, 0.6);
   border-bottom: 1px rgba(255, 140, 105, 0.3);
   padding: 0;
