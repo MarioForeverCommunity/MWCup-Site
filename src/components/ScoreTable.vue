@@ -278,7 +278,7 @@
                   <th>游戏性</th>
                   <th>附加分</th>
                   <th v-if="hasPublicPenalty">扣分</th>
-                  <th>总分</th>
+                  <th>换算后总分</th>
                   <th>大众最终得分</th>
                 </tr>
               </thead>
