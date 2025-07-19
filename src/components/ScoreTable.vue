@@ -266,6 +266,7 @@
         <!-- 大众评分表 (仅评分方案E) -->
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0" class="public-scores">
           <h4>大众评分</h4>
+          <p class="scoring-note">注：基础分按欣赏性得分×1.5、创新性得分×1.5、设计性得分×3、游戏性得分×4的方式计算</p>
           <div class="table-wrapper">
             <table class="table-base score-table">
               <thead>
