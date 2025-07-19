@@ -1071,6 +1071,9 @@ function isPlayerAdvanced(playerName: string): boolean {
             return true;
           }
         }
+      } else if (group === playerName) {
+        // 兼容决赛这种结构
+        return true;
       }
     }
   }
