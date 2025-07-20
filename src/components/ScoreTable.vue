@@ -39,7 +39,7 @@
         </div>
       </div>
       <!-- 赛况总表 -->
-      <div v-if="overallRoundData" class="overall-status">
+      <div v-if="filteredOverallRoundData" class="overall-status">
         <h4>赛况总表</h4>
         <div class="table-wrapper">
           <table class="table-base overall-table">
@@ -47,13 +47,13 @@
               <tr>
                 <th>所在小组</th>
                 <th>选手</th>
-                <template v-if="overallRoundData?.roundCodes">
-                  <template v-for="(roundCode, index) in overallRoundData.roundCodes" :key="roundCode">
+                <template v-if="filteredOverallRoundData?.roundCodes">
+                  <template v-for="(roundCode, index) in filteredOverallRoundData.roundCodes" :key="roundCode">
                     <th>第{{ toChineseNumber(index + 1) }}{{ year === '2012' ? '轮' : isTopicMode(roundCode) ? '题' : '轮' }}得分</th>
                   </template>
                 </template>
-                <template v-if="overallRoundData?.isShowValidLevel && overallRoundData?.validLevelColumns">
-                  <th v-for="(col, index) in overallRoundData.validLevelColumns" :key="'valid-'+index">
+                <template v-if="filteredOverallRoundData?.isShowValidLevel && filteredOverallRoundData?.validLevelColumns">
+                  <th v-for="(col, index) in filteredOverallRoundData.validLevelColumns" :key="'valid-'+index">
                     {{ col.label }}
                   </th>
                 </template>
@@ -70,12 +70,12 @@
               </tr>
             </thead>
             <tbody>
-              <template v-if="overallRoundData?.groups && overallRoundData?.groupedPlayers">
-                <template v-for="(group, groupIndex) in overallRoundData.groupOrder" :key="group">
-                  <template v-for="(player, idx) in overallRoundData.groupedPlayers[group]" :key="player.playerCode">
+              <template v-if="filteredOverallRoundData?.groups && filteredOverallRoundData?.groupedPlayers">
+                <template v-for="(group, groupIndex) in filteredOverallRoundData.groupOrder" :key="group">
+                  <template v-for="(player, idx) in filteredOverallRoundData.groupedPlayers[group]" :key="player.playerCode">
                     <tr>
                       <!-- 小组列：只在第一个选手显示，合并单元格 -->
-                      <td v-if="idx === 0" :rowspan="overallRoundData.groupedPlayers[group].length" class="player-cell-merged">{{ group }}</td>
+                      <td v-if="idx === 0" :rowspan="filteredOverallRoundData.groupedPlayers[group].length" class="player-cell-merged">{{ group }}</td>
                       <td class="player-name">
                         <span class="player-code">{{ player.playerCode }}</span>
                         <span class="player-name-text">{{ player.playerName }}</span>
@@ -83,7 +83,7 @@
                       <td v-for="(score, index) in player.roundScores" :key="index">
                         {{ formatScore(score) }}
                       </td>
-                      <template v-if="overallRoundData?.isShowValidLevel">
+                      <template v-if="filteredOverallRoundData?.isShowValidLevel">
                         <td v-for="(validInfo, index) in player.validRounds || []" :key="'valid-'+index" :class="{'valid-level': validInfo?.valid}">
                           {{ validInfo?.label }}<span v-if="validInfo?.exclamation" class="exclamation-mark">（超时）</span>
                         </td>
@@ -284,7 +284,7 @@
                 </tr>
               </thead>
               <tbody>
-                <template v-for="(playerPublicScore, playerIndex) in filteredPublicScores" :key="playerPublicScore.playerCode">
+                <template v-for="(playerPublicScore, playerIndex) in filteredPublicScoresWithSearch" :key="playerPublicScore.playerCode">
                   <template v-for="(vote, voteIndex) in playerPublicScore.votes" :key="`${playerPublicScore.playerCode}-${vote.voterName}`">
                     <tr>
                       <!-- 只在该选手的第一行显示选手信息，并合并行 -->
@@ -300,7 +300,12 @@
                       <td class="score-cell">{{ vote.bonus }}</td>
                       <td v-if="hasPublicPenalty" class="score-cell">{{ vote.penalty || 0 }}</td>
                       <td class="score-cell">{{ formatScore(vote.totalScore) }}</td>
-                      <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="final-score">{{ formatScore(playerPublicScore.finalPublicScore) }}</td>
+                      <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="final-score">
+                        {{ formatScore(playerPublicScore.finalPublicScore) }}
+                        <span v-if="searchJudge && searchJudge.trim()" class="filtered-count">
+                          ({{ playerPublicScore.votes.length }}位评委)
+                        </span>
+                      </td>
                     </tr>
                   </template>
                   <!-- 添加选手间分隔线 -->
@@ -1123,6 +1128,62 @@ const filteredPublicScores = computed(() => {
   });
 });
 
+// 应用选手和评委搜索过滤的公共评分
+const filteredPublicScoresWithSearch = computed(() => {
+  let result = [...filteredPublicScores.value];
+  
+  // 选手筛选
+  if (searchPlayer.value.trim()) {
+    const searchTerm = searchPlayer.value.trim();
+    const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"');
+    const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm;
+    
+    result = result.filter(p => {
+      // 直接匹配选手名或选手码
+      if (isExact) {
+        return p.playerName.toLowerCase() === processedKeyword.toLowerCase() ||
+               p.playerCode.toLowerCase() === processedKeyword.toLowerCase();
+      } else {
+        return p.playerName.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+               p.playerCode.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+               matchPlayerName(p.playerName, processedKeyword, userData.value, false);
+      }
+    });
+  }
+  
+  // 评委筛选
+  if (searchJudge.value.trim()) {
+    const searchTerm = searchJudge.value.trim().toLowerCase();
+    const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"');
+    const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm;
+    
+    result = result.map(player => {
+      if (!player.votes) return player;
+      
+      // 筛选该选手的投票记录
+      const filteredVotes = player.votes.filter(vote => {
+        if (isExact) {
+          return vote.voterName.toLowerCase() === processedKeyword;
+        } else {
+          return vote.voterName.toLowerCase().includes(processedKeyword);
+        }
+      });
+      
+      // 返回包含筛选后投票的选手副本
+      return {
+        ...player,
+        votes: filteredVotes,
+        // 如果有筛选，更新最终得分为筛选后的平均值（如果适用）
+        finalPublicScore: filteredVotes.length > 0 
+          ? filteredVotes.reduce((sum, vote) => sum + (vote.totalScore || 0), 0) / filteredVotes.length
+          : 0
+      };
+    }).filter(player => player.votes.length > 0); // 只保留有匹配投票记录的选手
+  }
+  
+  return result;
+});
+
 // 格式化分数显示
 const formatScore = (score: number | Decimal | null | undefined): string => {
   if (score === null || score === undefined) return '-'
@@ -1431,6 +1492,45 @@ const filteredPlayerScoresWithRank = computed(() => {
   assignRankingWithTiesForTotal(arr, 'averageScore', 'displayRank')
   return arr
 })
+
+// 筛选赛况总表数据
+const filteredOverallRoundData = computed(() => {
+  if (!overallRoundData.value) return null;
+  
+  // 如果没有搜索词，直接返回原始数据
+  if (!searchPlayer.value.trim()) return overallRoundData.value;
+  
+  const searchTerm = searchPlayer.value.trim();
+  const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"');
+  const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm;
+  
+  // 创建深拷贝以避免修改原始数据
+  const filteredData = JSON.parse(JSON.stringify(overallRoundData.value));
+  
+  // 过滤每个小组的选手
+  if (filteredData.groupedPlayers) {
+    Object.keys(filteredData.groupedPlayers).forEach(group => {
+      filteredData.groupedPlayers[group] = filteredData.groupedPlayers[group].filter((player: any) => {
+        // 直接匹配选手名或选手码
+        if (isExact) {
+          return player.playerName === processedKeyword ||
+                 player.playerCode === processedKeyword;
+        } else {
+          return player.playerName.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+                 player.playerCode.toLowerCase().includes(processedKeyword.toLowerCase()) ||
+                 matchPlayerName(player.playerName, processedKeyword, userData.value, false);
+        }
+      });
+    });
+    
+    // 更新小组顺序，只保留有选手的小组
+    filteredData.groupOrder = filteredData.groupOrder.filter((group: string) => 
+      filteredData.groupedPlayers[group] && filteredData.groupedPlayers[group].length > 0
+    );
+  }
+  
+  return filteredData;
+});
 
 async function loadScoreData() {
   if (!props.year || !props.round) {
