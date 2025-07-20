@@ -1165,7 +1165,8 @@ const filteredPublicScoresWithSearch = computed(() => {
         if (isExact) {
           return vote.voterName.toLowerCase() === processedKeyword;
         } else {
-          return vote.voterName.toLowerCase().includes(processedKeyword);
+          return vote.voterName.toLowerCase().includes(processedKeyword) || 
+                 matchPlayerName(vote.voterName, processedKeyword, userData.value, false);
         }
       });
       

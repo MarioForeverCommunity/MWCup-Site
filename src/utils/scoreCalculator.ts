@@ -908,11 +908,53 @@ export async function loadPublicVotingData(year: string, round: string, yamlData
 }
 
 /**
+ * 加载用户数据映射
+ */
+async function loadUserMappings(): Promise<{[key: string]: string}> {
+  try {
+    const response = await fetch('/data/users.csv');
+    if (!response.ok) return {};
+    
+    const csvText = await response.text();
+    const lines = csvText.trim().split('\n');
+    if (lines.length < 2) return {};
+    
+    const headers = lines[0].split(',').map(h => h.trim());
+    const idIndex = headers.findIndex(h => h === '序号');
+    const usernameIndex = headers.findIndex(h => h === '社区用户名');
+    
+    if (idIndex === -1 || usernameIndex === -1) return {};
+    
+    const userMappings: {[key: string]: string} = {};
+    
+    for (let i = 1; i < lines.length; i++) {
+      const cells = lines[i].split(',').map(cell => cell.trim());
+      if (cells.length <= Math.max(idIndex, usernameIndex)) continue;
+      
+      const id = cells[idIndex];
+      const username = cells[usernameIndex] || `用户${id}`; // 如果没有社区用户名，使用默认格式
+      
+      if (id) {
+        userMappings[id] = username;
+      }
+    }
+    
+    return userMappings;
+  } catch (error) {
+    console.error('加载用户数据失败:', error);
+    return {};
+  }
+}
+
+/**
  * 解析大众评分CSV数据
  */
 async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string, round: string): Promise<PlayerPublicScore[]> {
   const lines = csvText.trim().split('\n');
   if (lines.length === 0) return [];
+  
+  // 加载用户映射
+  const userMappings = await loadUserMappings();
   
   const headers = lines[0].split(',').map(h => h.trim());
   const playerCodeIndex = headers.findIndex(h => h === '选手码');
@@ -951,7 +993,8 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
     if (cells.length < headers.length) continue;
     
     const playerCode = cells[playerCodeIndex]?.trim();
-    const voterName = cells[voterIndex]?.trim();
+    const voterId = cells[voterIndex]?.trim();
+    const voterName = userMappings[voterId] || `用户${voterId}`; // 使用映射的用户名，如果没有则使用默认格式
     const appreciation = parseFloat(cells[appreciationIndex]) || 0;
     const innovation = parseFloat(cells[innovationIndex]) || 0;
     const design = parseFloat(cells[designIndex]) || 0;
