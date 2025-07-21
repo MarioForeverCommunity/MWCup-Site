@@ -128,7 +128,7 @@
               {{ getScoringSchemeDisplayName(scoreData.scoringScheme) }}
             </a>
           </template>
-          <template v-else-if="scoreData.scoringScheme === 'C'">
+          <template v-else-if="scoreData.scoringScheme === 'C' || 'E'">
             <a 
               href="#" 
               @click.prevent="navigateToDocumentStandard"
@@ -266,6 +266,17 @@
         <!-- 大众评分表 (仅评分方案E) -->
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0" class="public-scores">
           <h4>大众评分</h4>
+          <p class="scheme-info">
+          评分标准:
+          <a 
+            href="https://www.marioforever.net/thread-3479-1-1.html" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="scheme-link"
+          >
+            2025 大众评选方案
+          </a>
+        </p>
           <p class="scoring-note">注：基础分按欣赏性得分×1.5、创新性得分×1.5、设计性得分×3、游戏性得分×4的方式计算</p>
           <div class="table-wrapper">
             <table class="table-base score-table">
@@ -1583,8 +1594,8 @@ function getScoringSchemeDisplayName(scheme: string | undefined): string {
     'A': '2009 标准',
     'B': '2014 标准',
     'C': '2020 标准',
-    'D': '2023 大众评分标准',
-    'E': '2025 大众评分标准',
+    'D': '2023 投票评选方案',
+    'E': '2020 标准',
     'S': '2015 半决赛'
   }
   
@@ -1598,8 +1609,7 @@ function getSchemeLink(scheme: string | undefined): string | null {
   const linkMap: { [key: string]: string } = {
     'A': 'https://archive.marioforever.net/post/650057027',
     'B': 'https://archive.marioforever.net/post/2833085201',
-    'D': 'https://www.marioforever.net/thread-2530-1-1.html',
-    'E': 'https://www.marioforever.net/thread-3479-1-1.html'
+    'D': 'https://www.marioforever.net/thread-2530-1-1.html'
   }
   
   return linkMap[scheme] || null
