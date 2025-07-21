@@ -117,7 +117,7 @@
       <div class="detailed-scores">
         <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }}</h4>
         <p class="scheme-info">
-          评分标准: 
+          评分标准:
           <template v-if="getSchemeLink(scoreData.scoringScheme)">
             <a 
               :href="getSchemeLink(scoreData.scoringScheme)!" 
@@ -1838,31 +1838,6 @@ onMounted(() => {
   padding-bottom: var(--spacing-sm);
 }
 
-.overall-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.overall-table th,
-.overall-table td {
-  padding: var(--spacing-sm);
-  text-align: center;
-}
-
-.overall-table td.valid-level {
-  color: var(--success);
-}
-
-.overall-table td.penalty {
-  color: var(--danger);
-}
-
-/* 有效题目和感叹号标记样式 */
-.valid-level {
-  color: var(--text-success);
-  font-weight: 500;
-}
-
 .exclamation-mark {
   font-size: 0.8em;
 }
@@ -1968,7 +1943,7 @@ onMounted(() => {
   background: rgba(255, 250, 245, 0.9);
 }
 
-.score-table, .total-table {
+.score-table, .total-table, .overall-table {
   width: 100%;
   border-collapse: collapse;
   background: rgba(255, 252, 248, 0.9);
@@ -1977,13 +1952,14 @@ onMounted(() => {
 }
 
 .score-table th, .score-table td,
-.total-table th, .total-table td {
+.total-table th, .total-table td,
+.overall-table th, .overall-table td {
   padding: 8px 10px;
   text-align: center;
   border-bottom: 1px solid #eee;
 }
 
-.score-table th, .total-table th {
+.score-table th, .total-table th, .overall-table th {
   background: linear-gradient(135deg, rgba(255, 220, 200, 0.9), rgba(255, 200, 180, 0.8));
   font-weight: 600;
   color: #2c3e50;
@@ -1992,7 +1968,8 @@ onMounted(() => {
 }
 
 .score-table tbody tr:not(.player-separator):hover,
-.total-table tbody tr:hover {
+.total-table tbody tr:hover,
+.overall-table tbody tr:not(.group-separator):hover {
   background: rgba(255, 235, 220, 0.7);
 }
 
@@ -2163,20 +2140,13 @@ onMounted(() => {
   text-align: center;
 }
 
-.level-file {
-  text-align: left;
-  color: #495057;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .level-file-link {
-  color: #3498db;
+  color: var(--primary-color);
   cursor: pointer;
 }
 
 .level-file-link:hover {
-  color: #2980b9;
+  color: var(--primary-hover);
   text-decoration: underline;
 }
 
@@ -2196,11 +2166,12 @@ onMounted(() => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .score-table th, .score-table td,
-  .total-table th, .total-table td {
+  .total-table th, .total-table td,
+  .overall-table th, .overall-table td {
     padding: 6px 4px;
   }
 
-  .score-table, .total-table {
+  .score-table, .total-table, .overall-table {
     font-size: 12px;
     white-space: nowrap;
   }
@@ -2267,7 +2238,7 @@ onMounted(() => {
 }
 
 .scheme-link:hover {
-  color: var(--primary-active);
+  color: var(--primary-hover);
   border-bottom-color: var(--primary-active);
   text-decoration: none;
 }
