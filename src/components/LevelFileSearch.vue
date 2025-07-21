@@ -47,8 +47,7 @@
       <table class="table-base file-table">
         <thead>
           <tr>
-            <th>选手码</th>
-            <th>选手名</th>
+            <th>选手</th>
             <th>文件名</th>
             <th>年份</th>
             <th>轮次</th>
@@ -64,8 +63,10 @@
             :key="file.path" 
             class="table-row"
           >
-            <td class="player-code">{{ (file.playerCode === file.playerName) ? '-' : (file.playerCode || '-') }}</td>
-            <td>{{ file.playerName || '-' }}</td>
+            <td>
+              <span class="player-code">{{ (file.playerCode === file.playerName) ? '-' : (file.playerCode || '-') }}</span>
+              <span class="player-name-text">{{ file.playerName || '-' }}</span>
+            </td>
             <td class="filename">{{ file.name }}</td>
             <td>{{ file.year || '-' }}</td>
             <td>{{ getRefinedRoundType(file) }}</td>
@@ -613,8 +614,14 @@ function searchBySelectorAndKeyword() {
 }
 
 .player-code {
-  font-weight: 600;
-  color: var(--text-secondary);
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  margin-right: 4px;
 }
 
 .download-btn {
