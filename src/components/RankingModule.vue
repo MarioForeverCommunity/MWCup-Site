@@ -112,7 +112,11 @@
             <tbody>
               <tr v-for="item in filteredSingleLevelRanking" :key="`${item.year}-${item.roundKey}-${item.playerCode}`">
                 <td :class="getRankClass(item.rank)">{{ item.rank }}</td>
-                <td>{{ item.levelName }}</td>
+                <td>
+                  <span class="level-file-link" @click="downloadLevelFileSingle(item)">
+                    {{ getPlayerLevelFileNameSingle(item) }}
+                  </span>
+                </td>
                 <td>{{ item.author }}</td>
                 <td>{{ formatScore(item.finalScore) }}</td>
                 <td>{{ item.edition }}</td>
@@ -146,7 +150,14 @@
             <tbody>
               <tr v-for="item in filteredMultiLevelRanking" :key="`${item.year}-${item.roundKey}-${item.playerCode}`">
                 <td :class="getRankClass(item.rank)">{{ item.rank }}</td>
-                <td>{{ item.levelName }}</td>
+                <td>
+                  <span v-if="getPlayerLevelFileMulti(item)" class="level-file-link" @click="downloadLevelFileMulti(item)">
+                    {{ getPlayerLevelFileMulti(item)?.name }}
+                  </span>
+                  <span v-else>
+                    未上传
+                  </span>
+                </td>
                 <td>{{ item.author }}</td>
                 <td>{{ formatScore(item.finalScore) }}</td>
                 <td>{{ item.edition }}</td>
@@ -188,7 +199,11 @@
                 <td :class="getRankChangeClass(item.rankChange)">
                   {{ formatRankChange(item.rankChange) }}
                 </td>
-                <td>{{ item.levelName }}</td>
+                <td>
+                  <span class="level-file-link" @click="downloadLevelFileSingle(item)">
+                    {{ getPlayerLevelFileNameSingle(item) }}
+                  </span>
+                </td>
                 <td>{{ item.author }}</td>
                 <td>{{ formatScore(item.finalScore) }}</td>
                 <td>{{ item.edition }}</td>
@@ -225,6 +240,7 @@ import {
 } from '../utils/rankingCalculator'
 import { matchPlayerName } from '../utils/levelFileHelper'
 import { loadUserData } from '../utils/userDataProcessor'
+import { fetchLevelFilesFromLocal, type LevelFile } from '../utils/levelFileHelper'
 
 // 响应式状态
 const activeTab = ref<'single' | 'multi' | 'original'>('single')
@@ -236,6 +252,140 @@ const multiLevelRanking = ref<MultiLevelRankingItem[]>([])
 const originalScoreRanking = ref<OriginalScoreRankingItem[]>([])
 const availableYears = ref<number[]>([])
 const userDataCache = ref<any[]>([])
+const levelFiles = ref<LevelFile[]>([])
+
+// 单关：获取关卡文件名
+function getPlayerLevelFileNameSingle(item: LevelRankingItem): string {
+  if (!levelFiles.value.length) return '加载中...';
+  // year/roundKey/playerCode
+  const currentYear = item.year;
+  const currentRound = item.roundKey;
+  const playerCode = item.playerCode;
+  // 先查多关卡文件夹
+  const multiLevelFiles = levelFiles.value.filter(file =>
+    file.playerCode === playerCode &&
+    file.year === currentYear &&
+    file.roundKey === currentRound &&
+    file.isMultiLevel === true
+  );
+  if (multiLevelFiles.length > 0 && multiLevelFiles[0].multiLevelFolder) {
+    return multiLevelFiles[0].multiLevelFolder.folderName || multiLevelFiles[0].name;
+  }
+  // 单关卡
+  const exactMatch = levelFiles.value.find(file =>
+    file.playerCode === playerCode &&
+    file.year === currentYear &&
+    file.roundKey === currentRound
+  );
+  if (exactMatch) return exactMatch.name;
+  return '未上传';
+}
+// 多关：获取关卡文件对象
+function getPlayerLevelFileMulti(item: MultiLevelRankingItem): LevelFile | null {
+  if (!levelFiles.value.length) return null;
+  const currentYear = item.year;
+  const currentRound = item.roundKey;
+  const playerCode = item.playerCode;
+  // 先查多关卡文件夹
+  const multiLevelFiles = levelFiles.value.filter(file =>
+    file.playerCode === playerCode &&
+    file.year === currentYear &&
+    file.roundKey === currentRound &&
+    file.isMultiLevel === true
+  );
+  if (multiLevelFiles.length > 0) return multiLevelFiles[0];
+  // 单关卡
+  const exactMatch = levelFiles.value.find(file =>
+    file.playerCode === playerCode &&
+    file.year === currentYear &&
+    file.roundKey === currentRound
+  );
+  return exactMatch || null;
+}
+// 多关：下载关卡
+function downloadLevelFileMulti(item: MultiLevelRankingItem): void {
+  const levelFile = getPlayerLevelFileMulti(item);
+  if (!levelFile) {
+    alert('未找到对应关卡文件');
+    return;
+  }
+  const baseUrl = 'https://levels.smwp.marioforever.net/MW杯关卡/';
+  if (levelFile.isMultiLevel && levelFile.multiLevelFolder) {
+    const folderName = levelFile.multiLevelFolder.folderName;
+    const folderPath = levelFile.multiLevelFolder.folderPath;
+    if (confirm(`这是多关卡文件夹: ${folderName || '未命名文件夹'}\n是否打开在线查看？`)) {
+      const folderUrl = baseUrl + (folderPath || levelFile.path.substring(0, levelFile.path.lastIndexOf('/')));
+      window.open(folderUrl, '_blank');
+    }
+  } else {
+    const fileName = levelFile.name;
+    if (confirm(`确认下载关卡文件: ${fileName}？`)) {
+      const fileUrl = baseUrl + levelFile.path;
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+}
+// 单关：下载关卡
+function downloadLevelFileSingle(item: LevelRankingItem): void {
+  // 逻辑与getPlayerLevelFileNameSingle一致
+  const currentYear = item.year;
+  const currentRound = item.roundKey;
+  const playerCode = item.playerCode;
+  let levelFile: LevelFile | null = null;
+  const multiLevelFiles = levelFiles.value.filter(file =>
+    file.playerCode === playerCode &&
+    file.year === currentYear &&
+    file.roundKey === currentRound &&
+    file.isMultiLevel === true
+  );
+  if (multiLevelFiles.length > 0) levelFile = multiLevelFiles[0];
+  else {
+    const exactMatch = levelFiles.value.find(file =>
+      file.playerCode === playerCode &&
+      file.year === currentYear &&
+      file.roundKey === currentRound
+    );
+    if (exactMatch) levelFile = exactMatch;
+  }
+  if (!levelFile) {
+    alert('未找到对应关卡文件');
+    return;
+  }
+  const baseUrl = 'https://levels.smwp.marioforever.net/MW杯关卡/';
+  if (levelFile.isMultiLevel && levelFile.multiLevelFolder) {
+    const folderName = levelFile.multiLevelFolder.folderName;
+    const folderPath = levelFile.multiLevelFolder.folderPath;
+    if (confirm(`这是多关卡文件夹: ${folderName || '未命名文件夹'}\n是否打开在线查看？`)) {
+      const folderUrl = baseUrl + (folderPath || levelFile.path.substring(0, levelFile.path.lastIndexOf('/')));
+      window.open(folderUrl, '_blank');
+    }
+  } else {
+    const fileName = levelFile.name;
+    if (confirm(`确认下载关卡文件: ${fileName}？`)) {
+      const fileUrl = baseUrl + levelFile.path;
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+}
+// 加载关卡文件数据
+onMounted(async () => {
+  try {
+    levelFiles.value = await fetchLevelFilesFromLocal();
+  } catch (e) {
+    console.warn('加载关卡文件失败', e);
+    levelFiles.value = [];
+  }
+});
 
 // 过滤器
 const filters = reactive<RankingFilters>({
@@ -755,6 +905,16 @@ td:first-child {
 .scoring-note {
   color: #e74c3c;
   font-size: 14px;
+}
+
+.level-file-link {
+  color: var(--primary-color);
+  cursor: pointer;
+}
+
+.level-file-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
 
 @media (min-width: 768px) {
