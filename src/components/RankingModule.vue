@@ -51,23 +51,23 @@
         <div class="checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.A" @change="handleFilterChange">
-            <span class="checkbox-text">2009 标准</span>
+            <span class="checkbox-text">2009 版标准</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.B" @change="handleFilterChange">
-            <span class="checkbox-text">2014 标准</span>
+            <span class="checkbox-text">2014 版标准</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.C" @change="handleFilterChange">
-            <span class="checkbox-text">2020 标准</span>
+            <span class="checkbox-text">2020 版标准</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.D" @change="handleFilterChange">
-            <span class="checkbox-text">2023 投票评选方案</span>
+            <span class="checkbox-text">2023 版投票评选方案</span>
           </label>
           <label class="checkbox-label" v-if="activeTab !== 'original'">
             <input type="checkbox" v-model="filters.scoringSchemes.E" @change="handleFilterChange">
-            <span class="checkbox-text">2025 大众评选方案</span>
+            <span class="checkbox-text">2025 版大众评选方案</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.onlyHighScore" @change="handleFilterChange">

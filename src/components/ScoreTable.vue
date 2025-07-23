@@ -274,7 +274,7 @@
             rel="noopener noreferrer"
             class="scheme-link"
           >
-            2025 大众评选方案
+            2025 版大众评选方案
           </a>
         </p>
           <p class="scoring-note">注：基础分按欣赏性得分×1.5、创新性得分×1.5、设计性得分×3、游戏性得分×4的方式计算</p>
@@ -1080,7 +1080,7 @@ function isPlayerAdvanced(playerName: string): boolean {
     // 特殊格式：players是数组
     return nextRoundData.players.includes(playerName);
   } else {
-    // 标准格式：players是对象的嵌套结构
+    // 版标准格式：players是对象的嵌套结构
     for (const group of Object.values(nextRoundData.players)) {
       if (typeof group === 'object' && group !== null) {
         for (const position of Object.values(group)) {
@@ -1591,11 +1591,11 @@ function getScoringSchemeDisplayName(scheme: string | undefined): string {
   if (!scheme) return '未知标准'
   
   const schemeMap: { [key: string]: string } = {
-    'A': '2009 标准',
-    'B': '2014 标准',
-    'C': '2020 标准',
-    'D': '2023 投票评选方案',
-    'E': '2020 标准',
+    'A': '2009 版标准',
+    'B': '2014 版标准',
+    'C': '2020 版标准',
+    'D': '2023 版投票评选方案',
+    'E': '2020 版标准',
     'S': '2015 半决赛'
   }
   
