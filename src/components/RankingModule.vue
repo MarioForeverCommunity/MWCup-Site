@@ -63,11 +63,11 @@
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.D" @change="handleFilterChange">
-            <span class="checkbox-text">2023 大众评分标准</span>
+            <span class="checkbox-text">2023 投票评选方案</span>
           </label>
-          <label class="checkbox-label">
+          <label class="checkbox-label" v-if="activeTab !== 'original'">
             <input type="checkbox" v-model="filters.scoringSchemes.E" @change="handleFilterChange">
-            <span class="checkbox-text">2025 大众评分标准</span>
+            <span class="checkbox-text">2025 大众评选方案</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.onlyHighScore" @change="handleFilterChange">
@@ -75,7 +75,7 @@
           </label>
         </div>
       </div>
-      <p class="scoring-note">注：榜单不含 2012 年关卡；2013 半决赛第一轮原始分，娱乐性子项按“娱乐性/60×80”计入；2016 四分之一决赛第二轮原始分，欣赏性子项按“欣赏性×10/15”计入；由于 2025 年新大众评分方案不兼容，原始得分率榜单暂时剔除了使用新方案评分的关卡。</p>
+      <p class="scoring-note">注：榜单不含 2012 年关卡；2013 半决赛第一轮原始分，娱乐性子项按“娱乐性/60×80”计入；2016 四分之一决赛第二轮原始分，欣赏性子项按“欣赏性×10/15”计入；由于 2025 年新大众评选方案不兼容，原始得分率榜单暂时剔除了使用新方案评分的关卡。</p>
     </div>
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state animate-pulse">
@@ -570,7 +570,12 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
       .filter(([_, enabled]) => enabled)
       .map(([scheme]) => scheme)
     if (enabledSchemes.length > 0) {
-      filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
+      // 特殊处理：选中C时也显示E
+      if (enabledSchemes.includes('C')) {
+        filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme) || item.scoringScheme === 'E')
+      } else {
+        filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
+      }
     }
   }
 
@@ -622,7 +627,12 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
       .filter(([_, enabled]) => enabled)
       .map(([scheme]) => scheme)
     if (enabledSchemes.length > 0) {
-      filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
+      // 特殊处理：选中C时也显示E
+      if (enabledSchemes.includes('C')) {
+        filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme) || item.scoringScheme === 'E')
+      } else {
+        filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
+      }
     }
   }
 

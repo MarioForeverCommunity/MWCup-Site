@@ -64,7 +64,7 @@
             class="table-row"
           >
             <td>
-              <span class="player-code">{{ (file.playerCode === file.playerName) ? '-' : (file.playerCode || '-') }}</span>
+              <span class="player-code" v-if="file.playerCode !== file.playerName">{{ file.playerCode || '-' }}</span>
               <span class="player-name-text">{{ file.playerName || '-' }}</span>
             </td>
             <td class="filename">{{ file.name }}</td>
