@@ -51,15 +51,15 @@
         <div class="checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.A" @change="handleFilterChange">
-            <span class="checkbox-text">2009 版标准</span>
+            <span class="checkbox-text">2009 版评分标准</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.B" @change="handleFilterChange">
-            <span class="checkbox-text">2014 版标准</span>
+            <span class="checkbox-text">2014 版评分标准</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.C" @change="handleFilterChange">
-            <span class="checkbox-text">2020 版标准</span>
+            <span class="checkbox-text">2020 版评分标准</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.D" @change="handleFilterChange">
