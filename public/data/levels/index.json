@@ -15690,6 +15690,21 @@
     "multiLevelFolder": null
   },
   {
+    "name": "B1-simple.smwl",
+    "path": "2025年第十四届/初赛/第三题/B1-simple.smwl",
+    "mtime": "2025-07-23T17:29:01.000Z",
+    "size": 4096,
+    "playerCode": "B1",
+    "year": 2025,
+    "roundType": "初赛第三题",
+    "playerName": "有名氏",
+    "roundKey": "I3",
+    "groupCode": "B",
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
+  },
+  {
     "name": "B2-Tetra Trolling.smwl",
     "path": "2025年第十四届/初赛/第三题/B2-Tetra Trolling.smwl",
     "mtime": "2025-07-23T13:36:30.000Z",
