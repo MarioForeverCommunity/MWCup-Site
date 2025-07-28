@@ -1019,7 +1019,7 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
     }
     
     // 应用附加分和扣分
-    totalScore = totalScore.plus(adjustedBonus).minus(penalty || 0);
+    totalScore = totalScore.plus(adjustedBonus).plus(penalty || 0);
     
     // 确保总分不为负并四舍五入到1位小数
     if (totalScore.isNegative()) {
@@ -1036,7 +1036,7 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
       design,
       gameplay,
       bonus,
-      penalty: penalty > 0 ? penalty : undefined,
+      penalty: penalty !== 0 ? penalty : undefined,
       totalScore: totalScore.toNumber()
     });
   }
