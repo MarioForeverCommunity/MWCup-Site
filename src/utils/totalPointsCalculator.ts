@@ -1176,7 +1176,6 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
   const levelFiles = await loadLevelIndexData();
   const playerCode = playerData.playerCodes?.[0] || '';
   const playerLevels = getPlayerLevels(levelFiles, playerCode, yearNum);
-
   const levelScores: { roundKey: string; score: Decimal; level: LevelFile }[] = [];
   for (const round of prelimRounds) {
     if (playerData.roundScores?.[round]?.averageScore > 0) {
@@ -1238,12 +1237,22 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
           selected.push(before2[0]);
         }
       } else {
-        // 2022年之后规则：第二轮选择剩余关卡中得分最高的，不限制上传时间
+        // 非2021年规则：第二轮选择剩余关卡中得分最高的，不限制上传时间
         const remaining1 = levelScores.filter(ls => !selected.some(s => s.roundKey === ls.roundKey));
         
         if (remaining1.length) {
           remaining1.sort((a, b) => b.score.comparedTo(a.score));
-          selected.push(remaining1[0]);
+          // 确保第二轮选择的关卡被放在第二个位置（索引1）
+          if (selected.length === 0) {
+            // 如果第一轮没有选择，先添加一个null占位
+            selected[0] = {
+              roundKey: '',
+              score: new Decimal(0),
+              level: {} as LevelFile
+            };
+          }
+          selected[1] = remaining1[0];
+        } else {
         }
       }
     }
@@ -1258,12 +1267,22 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
     }
   }
 
-  if (selected.length < selectCount) {
-    const rest = levelScores.filter(ls => !selected.some(s => s.roundKey === ls.roundKey));
+  if (selected.filter(s => s).length < selectCount) {
+    const rest = levelScores.filter(ls => !selected.some(s => s && s.roundKey === ls.roundKey));
     rest.sort((a, b) => b.score.comparedTo(a.score));
-    for (const r of rest) {
-      if (selected.length >= selectCount) break;
-      selected.push(r);
+    
+    // 找出未填充的轮次索引
+    const emptyIndices = [];
+    for (let i = 0; i < selectCount; i++) {
+      if (!selected[i] || !selected[i].roundKey) {
+        emptyIndices.push(i);
+      }
+    }
+    
+    // 填充未填充的轮次
+    for (let i = 0; i < Math.min(emptyIndices.length, rest.length); i++) {
+      const roundIndex = emptyIndices[i];
+      selected[roundIndex] = rest[i];
     }
   }
 
@@ -1272,13 +1291,13 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
     const sel = selected[i];
     return {
       roundIndex: i,
-      selectedTopic: sel ? sel.roundKey : '未上传',
-      isTimeout: !sel
+      selectedTopic: sel && sel.roundKey ? sel.roundKey : '未上传',
+      isTimeout: !sel || !sel.roundKey
     };
   });
 
   return {
-    validRounds: selected.map(s => s.roundKey),
+    validRounds: selected.map(s => s ? s.roundKey : ""),
     timeoutPenalty: penalty,
     roundSelections,
     deadlineCount: deadlines.length

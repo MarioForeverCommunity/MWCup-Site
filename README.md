@@ -92,7 +92,6 @@ src/
 │   ├── editionHelper.ts     # 届数计算
 │   ├── levelFileHelper.ts   # 关卡索引读取
 │   ├── levelMatcher.ts      # 获取分组的显示名称
-│   ├── preliminaryValidInfoEnhanced.ts  # 初赛各轮有效题目及超时扣分判断
 │   ├── preliminaryValidInfoHelper.ts  # 初赛有效题目信息获取
 │   ├── rankingCalculator.ts # 排名计算
 │   ├── resultFormatter.ts   # 战绩格式处理
