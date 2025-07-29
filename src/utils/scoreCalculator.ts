@@ -1062,7 +1062,7 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
   
   // 计算每个选手的最终大众评分
   for (const playerScore of playerScores.values()) {
-    const validVotes = playerScore.votes.filter(v => v.totalScore > 0);
+    const validVotes = playerScore.votes.filter(v => v.totalScore >= 0);
     const scores = validVotes.map(v => v.totalScore);
     
     // 确保在计算最终评分时进行四舍五入到1位小数
