@@ -65,7 +65,7 @@
             <input type="checkbox" v-model="filters.scoringSchemes.D" @change="handleFilterChange">
             <span class="checkbox-text">2023 版投票评选方案</span>
           </label>
-          <label class="checkbox-label" v-if="activeTab !== 'original'">
+          <label class="checkbox-label">
             <input type="checkbox" v-model="filters.scoringSchemes.E" @change="handleFilterChange">
             <span class="checkbox-text">2025 版大众评选方案</span>
           </label>
@@ -75,7 +75,7 @@
           </label>
         </div>
       </div>
-      <p class="scoring-note">注：榜单不含 2012 年关卡；2013 半决赛第一轮原始分，娱乐性子项按“娱乐性/60×80”计入；2016 四分之一决赛第二轮原始分，欣赏性子项按“欣赏性×10/15”计入；由于 2025 年新大众评选方案不兼容，原始得分率榜单暂时剔除了使用新方案评分的关卡。</p>
+      <p class="scoring-note">注：榜单不含 2012 年关卡；2013 半决赛第一轮原始分，娱乐性子项按"娱乐性/60×80"计入；2016 四分之一决赛第二轮原始分，欣赏性子项按"欣赏性×10/15"计入；2025 版大众评选方案（评分方案E）的原始分按评委评分去除附加分×75% + 大众评分去除附加分×25%计算。</p>
     </div>
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state animate-pulse">
@@ -459,12 +459,41 @@ const filteredMultiLevelRanking = computed(() => {
 
 const filteredOriginalScoreRanking = computed(() => {
   const arr = applyOriginalScoreFilters(originalScoreRanking.value, filters)
+  
+  // 创建两个独立的数组副本来分别计算排名
+  const originalRankArr = [...arr]
+  const scoreRateRankArr = [...arr]
+  
   // 原始分排名 - 基于原始得分率
-  arr.sort((a, b) => b.originalScoreRate - a.originalScoreRate)
-  assignRankingWithTies(arr, 'originalRank', 'originalScoreRate')
+  originalRankArr.sort((a, b) => b.originalScoreRate - a.originalScoreRate)
+  assignRankingWithTies(originalRankArr, 'originalRank', 'originalScoreRate')
+  
   // 得分率排名 - 基于最终得分率
-  arr.sort((a, b) => b.scoreRate - a.scoreRate)
-  assignRankingWithTies(arr, 'scoreRateRank', 'scoreRate')
+  scoreRateRankArr.sort((a, b) => b.scoreRate - a.scoreRate)
+  assignRankingWithTies(scoreRateRankArr, 'scoreRateRank', 'scoreRate')
+  
+  // 创建排名映射
+  const originalRankMap = new Map()
+  const scoreRateRankMap = new Map()
+  
+  originalRankArr.forEach(item => {
+    const key = `${item.year}-${item.roundKey}-${item.playerCode}`
+    originalRankMap.set(key, item.originalRank)
+  })
+  
+  scoreRateRankArr.forEach(item => {
+    const key = `${item.year}-${item.roundKey}-${item.playerCode}`
+    scoreRateRankMap.set(key, item.scoreRateRank)
+  })
+  
+  // 应用排名到原数组并计算排名升降
+  arr.forEach(item => {
+    const key = `${item.year}-${item.roundKey}-${item.playerCode}`
+    item.originalRank = originalRankMap.get(key) || 0
+    item.scoreRateRank = scoreRateRankMap.get(key) || 0
+    item.rankChange = item.originalRank - item.scoreRateRank
+  })
+  
   return arr
 })
 
@@ -652,8 +681,8 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
 
 function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: RankingFilters): OriginalScoreRankingItem[] {
   let filtered = items
-  // 剔除2012年关卡和评分方案为E的关卡
-  filtered = filtered.filter(item => item.year !== 2012 && item.scoringScheme !== 'E')
+  // 剔除2012年关卡
+  filtered = filtered.filter(item => item.year !== 2012)
   
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.trim()
@@ -690,7 +719,12 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: R
       .filter(([_, enabled]) => enabled)
       .map(([scheme]) => scheme)
     if (enabledSchemes.length > 0) {
-      filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
+      // 特殊处理：选中C时也显示E
+      if (enabledSchemes.includes('C')) {
+        filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme) || item.scoringScheme === 'E')
+      } else {
+        filtered = filtered.filter(item => enabledSchemes.includes(item.scoringScheme))
+      }
     }
   }
 
