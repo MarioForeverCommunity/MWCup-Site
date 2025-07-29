@@ -293,7 +293,13 @@ function getPlayerLevelFileMulti(item: MultiLevelRankingItem): LevelFile | null 
     file.roundKey === currentRound &&
     file.isMultiLevel === true
   );
-  if (multiLevelFiles.length > 0) return multiLevelFiles[0];
+  if (multiLevelFiles.length > 0 && multiLevelFiles[0].multiLevelFolder) {
+    // 返回LevelFile对象，但name属性为folderName
+    return {
+      ...multiLevelFiles[0],
+      name: multiLevelFiles[0].multiLevelFolder.folderName || multiLevelFiles[0].name
+    };
+  }
   // 单关卡
   const exactMatch = levelFiles.value.find(file =>
     file.playerCode === playerCode &&
