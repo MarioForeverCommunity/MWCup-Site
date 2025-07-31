@@ -719,8 +719,7 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
       averageScore = totalSum.div(validRecords.length).toDecimalPlaces(1);
     }
 
-    // 对最终总分和平均分进行非负处理，但保留原始评分项中的负分
-    totalSum = ensureNonNegativeScore(totalSum);
+    // 对平均分进行非负处理，但保留原始评分项中的负分
     averageScore = ensureNonNegativeScore(averageScore);
 
     playerScores.push({
@@ -866,7 +865,8 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
         
         const publicScore = publicScoreMap.get(ps.playerCode) || new Decimal(0);
         const judgeAverage = ps.judgeAverage || new Decimal(0);
-        const finalScore = judgeAverage.times(0.75).plus(publicScore.times(0.25)).toDecimalPlaces(1);
+        const rawFinalScore = judgeAverage.times(0.75).plus(publicScore.times(0.25));
+        const finalScore = Decimal.max(0, rawFinalScore).toDecimalPlaces(1);
         
         return {
           ...ps,
@@ -1021,12 +1021,8 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
     // 应用附加分和扣分
     totalScore = totalScore.plus(adjustedBonus).plus(penalty || 0);
     
-    // 确保总分不为负并四舍五入到1位小数
-    if (totalScore.isNegative()) {
-      totalScore = new Decimal(0);
-    } else {
-      totalScore = totalScore.toDecimalPlaces(1);
-    }
+    // 换算后总分允许负分，只需四舍五入到1位小数
+    totalScore = totalScore.toDecimalPlaces(1);
     
     votes.push({
       playerCode,
@@ -1062,13 +1058,13 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
   
   // 计算每个选手的最终大众评分
   for (const playerScore of playerScores.values()) {
-    const validVotes = playerScore.votes.filter(v => v.totalScore >= 0);
-    const scores = validVotes.map(v => v.totalScore);
+    // 所有投票都参与计算，包括负分投票
+    const scores = playerScore.votes.map(v => v.totalScore);
     
-    // 确保在计算最终评分时进行四舍五入到1位小数
-    const rawScore = calculateFinalPublicScore(scores);
-    playerScore.finalPublicScore = new Decimal(rawScore).toDecimalPlaces(1).toNumber();
-    playerScore.validVotesCount = validVotes.length;
+    // 计算最终评分
+    const finalScore = calculateFinalPublicScore(scores);
+    playerScore.finalPublicScore = new Decimal(finalScore).toDecimalPlaces(1).toNumber();
+    playerScore.validVotesCount = playerScore.votes.length;
   }
   
   return Array.from(playerScores.values());
