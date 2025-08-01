@@ -304,10 +304,10 @@
                         <span class="player-name-text">{{ playerPublicScore.playerName }}</span>
                       </td>
                       <td class="voter-name">{{ vote.voterName }}</td>
-                      <td class="score-cell">{{ vote.appreciation }}</td>
-                      <td class="score-cell">{{ vote.innovation }}</td>
-                      <td class="score-cell">{{ vote.design }}</td>
-                      <td class="score-cell">{{ vote.gameplay }}</td>
+                      <td class="score-cell">{{ vote.appreciation }} <span class="converted-score">({{ formatScore(vote.appreciation * 1.5) }})</span></td>
+                      <td class="score-cell">{{ vote.innovation }} <span class="converted-score">({{ formatScore(vote.innovation * 1.5) }})</span></td>
+                      <td class="score-cell">{{ vote.design }} <span class="converted-score">({{ formatScore(vote.design * 3) }})</span></td>
+                      <td class="score-cell">{{ vote.gameplay }} <span class="converted-score">({{ formatScore(vote.gameplay * 4) }})</span></td>
                       <td class="score-cell">{{ vote.bonus }}</td>
                       <td v-if="hasPublicPenalty" class="score-cell">{{ vote.penalty || 0 }}</td>
                       <td class="score-cell">{{ formatScore(vote.totalScore) }}</td>
@@ -2275,5 +2275,13 @@ onMounted(() => {
   pointer-events: auto;
   transition: max-height 1s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 换算后分数样式 */
+.converted-score {
+  color: #666;
+  font-size: 0.85em;
+  font-weight: normal;
+  margin-left: 4px;
 }
 </style>
