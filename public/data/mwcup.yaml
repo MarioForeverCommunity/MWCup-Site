@@ -2971,28 +2971,28 @@ season:
             mf_tid: 3658
           promotion:
             time: 2025-08-02T16:00
-            mf_tid: 
+            mf_tid: 3666
       F:
         smwp_version: [1.7.10, 1.7.11]
         players:
-          S: 
-          M: 
-          W: 
-          P: 
+          S: zqh——123
+          M: 一只果果果果果
+          W: 绿色的糖果
+          P: AngryStar6K
         judges:
-          J1: 
-          J2: 
+          J1: 玛丽的死对头
+          J2: 蓝太阳
         schedule:
           draw:
             time: 2025-08-02T18:00
           match:
             start: 2025-08-02T20:00
             end: 2025-08-09T22:00
-            mf_tid: 
+            mf_tid: 3664
           judging:
             start: 2025-08-02T20:00
             end: 2025-08-13T22:00
-            mf_tid: 
+            mf_tid: 3665
           voting:
             start: 2025-08-09T22:00
             end: 2025-08-13T22:00
