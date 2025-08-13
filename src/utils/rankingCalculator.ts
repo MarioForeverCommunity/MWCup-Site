@@ -3,6 +3,7 @@
  */
 
 import { loadRoundScoreData, type PlayerScore } from './scoreCalculator';
+import { calculateFinalPublicScore } from './scoreCalculator';
 import * as YAML from 'js-yaml';
 import { Decimal } from 'decimal.js';
 import { getRoundChineseName } from './roundNames';
@@ -381,15 +382,18 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
             if (scoreData.publicScores) {
               const playerPublicScore = scoreData.publicScores.find(ps => ps.playerCode === level.playerCode);
               if (playerPublicScore && playerPublicScore.validVotesCount > 0) {
-                let publicBaseScoreSum = 0;
-                let publicValidCount = 0;
+                // 收集所有投票的基础分数（不包括附加分和扣分）
+                const baseScores: number[] = [];
                 for (const vote of playerPublicScore.votes) {
                   // 大众评分原始分：欣赏性×1.5 + 创新性×1.5 + 设计性×3 + 游戏性×4（不包括附加分和扣分）
                   const baseScore = vote.appreciation * 1.5 + vote.innovation * 1.5 + vote.design * 3 + vote.gameplay * 4;
-                  publicBaseScoreSum += baseScore;
-                  publicValidCount++;
+                  baseScores.push(baseScore);
                 }
-                publicOriginalScore = publicValidCount > 0 ? new Decimal(publicBaseScoreSum).div(publicValidCount).toDecimalPlaces(1, Decimal.ROUND_HALF_UP).toNumber() : 0;
+                
+                // 应用基于人数的算法计算原始分
+                if (baseScores.length > 0) {
+                  publicOriginalScore = calculateFinalPublicScore(baseScores);
+                }
               }
             }
             

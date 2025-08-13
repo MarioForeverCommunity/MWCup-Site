@@ -1073,7 +1073,7 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
 /**
  * 计算最终大众评分
  */
-function calculateFinalPublicScore(scores: number[]): number {
+export function calculateFinalPublicScore(scores: number[]): number {
   if (scores.length === 0) return 0;
   
   const sortedScores = [...scores].sort((a, b) => a - b);
