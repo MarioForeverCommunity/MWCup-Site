@@ -308,7 +308,7 @@
                       <td class="score-cell">{{ vote.innovation }} <span class="converted-score">({{ formatScore(vote.innovation * 1.5) }})</span></td>
                       <td class="score-cell">{{ vote.design }} <span class="converted-score">({{ formatScore(vote.design * 3) }})</span></td>
                       <td class="score-cell">{{ vote.gameplay }} <span class="converted-score">({{ formatScore(vote.gameplay * 4) }})</span></td>
-                      <td class="score-cell">{{ vote.bonus }}</td>
+                      <td class="score-cell">{{ vote.bonus }} <span v-if="getDisplayedBonus(vote.bonus) !== vote.bonus.toString()" class="converted-score">({{ getDisplayedBonus(vote.bonus) }})</span></td>
                       <td v-if="hasPublicPenalty" class="score-cell">{{ vote.penalty || 0 }}</td>
                       <td class="score-cell">{{ formatScore(vote.totalScore) }}</td>
                       <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="final-score">
@@ -398,7 +398,7 @@
                     <template v-if="scoreData.scoringScheme === 'E'">
                       <td class="judge-total">
                         <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
-                        <template v-else>{{ formatScore(player.records[0]?.totalScore) }}</template>
+                        <template v-else>{{ formatScore(player.judgeAverage) }}</template>
                       </td>
                       <td class="public-score">
                         <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
@@ -482,6 +482,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const userMapping = ref<UserMapping>({})
 const yamlData = ref<any>(null) // 存储原始YAML数据用于查找未上传选手
+const maxScoreData = ref<any>(null) // 存储maxScore.json数据
 // 移除validLevelData，改用totalPointsCalculator中的逻辑
 
 // 新增：多轮次评分数据缓存
@@ -1128,15 +1129,93 @@ const hasPublicPenalty = computed(() => {
   );
 });
 
-// 过滤和排序大众评分数据，按选手名/码分组
+// 加载maxScore.json数据
+async function loadMaxScoreData() {
+  try {
+    const response = await fetch('/data/maxScore.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    maxScoreData.value = data;
+  } catch (error) {
+    console.error('加载maxScore.json失败:', error);
+  }
+}
+
+// 计算显示的附加分值（考虑bonus_score换算）
+function getDisplayedBonus(originalBonus: number): string {
+  if (!maxScoreData.value || !props.year || !props.round) {
+    return originalBonus.toString();
+  }
+  
+  const yearData = maxScoreData.value.maxScore?.[props.year];
+  if (!yearData) {
+    return originalBonus.toString();
+  }
+  
+  const roundData = yearData[props.round];
+  if (!roundData) {
+    return originalBonus.toString();
+  }
+  
+  const bonusFullScore = roundData.bonus_score || 5;
+  let adjustedBonus = new Decimal(originalBonus);
+  
+  if (bonusFullScore === 8) {
+    adjustedBonus = adjustedBonus.times(1.6);
+  } else if (bonusFullScore === 10) {
+    adjustedBonus = adjustedBonus.times(2);
+  }
+  
+  return adjustedBonus.toDecimalPlaces(1).toString();
+}
+
+// 过滤和排序大众评分数据，按YAML中的选手顺序排序
 const filteredPublicScores = computed(() => {
-  if (!scoreData.value || !scoreData.value.publicScores) return [];
-  // 可根据需要添加筛选或排序逻辑，这里默认按 playerCode 升序
-  return scoreData.value.publicScores.slice().sort((a, b) => {
-    if (a.playerCode < b.playerCode) return -1;
-    if (a.playerCode > b.playerCode) return 1;
-    return 0;
-  });
+  if (!scoreData.value || !scoreData.value.publicScores || !yamlData.value) return [];
+  
+  try {
+    // 从YAML获取选手顺序
+    const playerMapResult = buildPlayerJudgeMap(
+      yamlData.value, 
+      scoreData.value.year, 
+      scoreData.value.round
+    );
+    
+    // 创建一个根据YAML中的选手码顺序排序的映射
+    const playerCodeOrderMap = new Map(
+      Object.keys(playerMapResult.players).map((code, index) => [code, index])
+    );
+    
+    // 按照YAML中的选手顺序排序
+    return scoreData.value.publicScores.slice().sort((a, b) => {
+      const orderA = playerCodeOrderMap.get(a.playerCode);
+      const orderB = playerCodeOrderMap.get(b.playerCode);
+      
+      // 如果都有序号，按序号排序
+      if (orderA !== undefined && orderB !== undefined) {
+        return orderA - orderB;
+      }
+      // 如果只有一方有序号，有序号的排前面
+      else if (orderA !== undefined) return -1;
+      else if (orderB !== undefined) return 1;
+      // 如果都没有序号，按选手码字母顺序排序作为后备
+      else {
+        if (a.playerCode < b.playerCode) return -1;
+        if (a.playerCode > b.playerCode) return 1;
+        return 0;
+      }
+    });
+  } catch (error) {
+    console.error('按选手顺序排序大众评分时出错:', error);
+    // 出错时回退到字母排序
+    return scoreData.value.publicScores.slice().sort((a, b) => {
+      if (a.playerCode < b.playerCode) return -1;
+      if (a.playerCode > b.playerCode) return 1;
+      return 0;
+    });
+  }
 });
 
 // 应用选手和评委搜索过滤的公共评分
@@ -1559,10 +1638,11 @@ async function loadScoreData() {
     yamlData.value = yamlDoc // 保存原始的YAML数据，用于获取未上传选手
     const seasonData = extractSeasonData(yamlDoc)
 
-        // 加载用户映射数据和用户数据
+        // 加载用户映射数据、用户数据和maxScore数据
     const [userMappingData, userDataResult] = await Promise.all([
       loadUserMapping(),
-      loadUserData()
+      loadUserData(),
+      loadMaxScoreData()
     ])
     userMapping.value = userMappingData
     userData.value = userDataResult

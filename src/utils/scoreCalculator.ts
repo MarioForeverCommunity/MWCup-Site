@@ -976,7 +976,7 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
     const response = await fetch('/data/maxScore.json');
     if (response.ok) {
       const data = await response.json();
-      maxScores = data[year]?.[round] || {};
+      maxScores = data?.maxScore?.[year]?.[round] || {};
     }
   } catch (error) {
     console.warn('加载maxScore.json失败:', error);
