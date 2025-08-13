@@ -113,7 +113,7 @@ import { formatResultDisplay as formatResult } from '../utils/resultFormatter';
 export default defineComponent({
   name: 'TotalPointsRanking',
   setup() {
-    const selectedYear = ref('2024');
+    const selectedYear = ref('2025');
     const data = ref<TotalPointsData>({
       year: '',
       players: [],
