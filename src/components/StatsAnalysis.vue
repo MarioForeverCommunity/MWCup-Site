@@ -52,7 +52,7 @@ const tabs = [
   { key: 'totalpoints', label: '积分排行' },
   { key: 'players', label: '选手战绩' },
   { key: 'judges', label: '评委数据' },
-  { key: 'attendance', label: '出勤率统计' },
+  { key: 'attendance', label: '上传率统计' },
   { key: 'users', label: '用户一览' }, // 新增用户一览Tab
 ]
 

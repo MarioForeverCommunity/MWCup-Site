@@ -1,5 +1,5 @@
 /**
- * 比赛数据分析工具 - 分析选手战绩、评委数据和出勤率
+ * 比赛数据分析工具 - 分析选手战绩、评委数据和上传率率
  */
 
 import { loadUserData, findUserIdByName, getStageLevel, getStageName, isValidJudge, type PlayerRecord, type JudgeRecord, type AttendanceData } from './userDataProcessor';
@@ -834,7 +834,7 @@ export async function analyzeJudgeRecords(): Promise<JudgeRecord[]> {
 }
 
 /**
- * 分析出勤率数据
+ * 分析上传率率数据
  */
 export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
   const rounds = await getAllRounds();
@@ -894,7 +894,7 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
         const scores = roundData.scores as { [key: string]: number };
         const totalPlayers = Object.keys(scores).length;
         
-        // 有得分算出勤，0分算未出勤
+        // 有得分算上传率，0分算未上传率
         const validSubmissions = Object.values(scores).filter(score => score > 0).length;
         
         const attendanceRate = totalPlayers > 0 ? new Decimal(validSubmissions).div(totalPlayers).times(100).toNumber() : 0;

@@ -63,7 +63,7 @@ npm run deploy
 ```
 src/
 ├── components/          # Vue 组件
-│   ├── AttendanceStats.vue  # 出勤率模块
+│   ├── AttendanceStats.vue  # 上传率（出勤率）模块
 │   ├── ChampionStatistics.vue  # 冠军统计 & 举办情况
 │   ├── DocumentDisplay.vue  # 赛事文档显示模块
 │   ├── FoldButton.vue       # 折叠展开按钮

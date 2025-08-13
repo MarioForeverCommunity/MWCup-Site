@@ -15,7 +15,7 @@
           <label class="form-label">排序方式：</label>
           <select v-model="sortBy" class="form-control hover-scale">
             <option value="year">按年份排序</option>
-            <option value="attendanceRate">按出勤率排序</option>
+            <option value="attendanceRate">按上传率排序</option>
             <option value="totalPlayers">按参赛人数排序</option>
           </select>
         </div>
@@ -24,7 +24,7 @@
 
     <div v-if="loading" class="loading-state animate-pulse">
       <div class="loading-spinner"></div>
-      <div class="loading-text">正在分析出勤率数据<span class="loading-dots">...</span></div>
+      <div class="loading-text">正在分析上传率数据<span class="loading-dots">...</span></div>
     </div>
 
     <div v-else-if="error" class="error-state animate-shake">
@@ -36,7 +36,7 @@
       <!-- 统计概览卡片 -->
       <div class="summary-cards">
         <div class="stat-card hover-lift">
-          <h3>平均出勤率</h3>
+          <h3>平均上传率</h3>
           <div class="stat-value">{{ averageAttendance.toFixed(1) }}%</div>
           <div class="stat-icon">
             <span :class="averageAttendance >= 80 ? 'trend-up' : 'trend-down'">
@@ -45,12 +45,12 @@
           </div>
         </div>
         <div class="stat-card hover-lift">
-          <h3>最高出勤率</h3>
+          <h3>最高上传率</h3>
           <div class="stat-value">{{ maxAttendance.toFixed(1) }}%</div>
           <div class="stat-icon">🏆</div>
         </div>
         <div class="stat-card hover-lift">
-          <h3>最低出勤率</h3>
+          <h3>最低上传率</h3>
           <div class="stat-value">{{ minAttendance.toFixed(1) }}%</div>
           <div class="stat-icon">⚠️</div>
         </div>
@@ -58,7 +58,7 @@
 
       <!-- 数据表格 -->
       <div class="section-header">
-        <h3>详细出勤数据</h3>
+        <h3>详细上传率（出勤率）统计</h3>
       </div>
       <div class="table-wrapper">
         <table class="table-base attendance-table">
@@ -68,7 +68,7 @@
               <th class="round-col">轮次</th>
               <th class="players-col">参赛选手</th>
               <th class="submissions-col">有效上传</th>
-              <th class="rate-col">出勤率</th>
+              <th class="rate-col">上传率</th>
             </tr>
           </thead>
           <tbody>
@@ -226,26 +226,26 @@ watch(totalPages, (newTotalPages) => {
   }
 }, { immediate: true })
 
-// 平均出勤率
+// 平均上传率
 const averageAttendance = computed(() => {
   if (filteredData.value.length === 0) return 0
   const total = filteredData.value.reduce((sum, item) => sum + item.attendanceRate, 0)
   return total / filteredData.value.length
 })
 
-// 最高出勤率
+// 最高上传率
 const maxAttendance = computed(() => {
   if (filteredData.value.length === 0) return 0
   return Math.max(...filteredData.value.map(item => item.attendanceRate))
 })
 
-// 最低出勤率
+// 最低上传率
 const minAttendance = computed(() => {
   if (filteredData.value.length === 0) return 0
   return Math.min(...filteredData.value.map(item => item.attendanceRate))
 })
 
-// 获取出勤率样式类
+// 获取上传率样式类
 const getAttendanceClass = (rate: number): string => {
   if (rate >= 90) return 'excellent'
   if (rate >= 75) return 'good'
