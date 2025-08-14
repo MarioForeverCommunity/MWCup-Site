@@ -299,7 +299,7 @@
                   <template v-for="(vote, voteIndex) in playerPublicScore.votes" :key="`${playerPublicScore.playerCode}-${vote.voterName}`">
                     <tr>
                       <!-- 只在该选手的第一行显示选手信息，并合并行 -->
-                      <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length + 1" class="player-name player-cell-merged">
+                      <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="player-name player-cell-merged">
                         <span v-if="playerPublicScore.playerCode !== playerPublicScore.playerName && !playerPublicScore.playerCode.startsWith('~')" class="player-code">{{ playerPublicScore.playerCode }}</span>
                         <span class="player-name-text">{{ playerPublicScore.playerName }}</span>
                       </td>
