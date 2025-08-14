@@ -33,6 +33,7 @@
       "G4": {"base_score": 100, "bonus_score": 0},
       "Q1": {"base_score": 100, "bonus_score": 0},
       "Q2": {"base_score": 100, "bonus_score": 0},
+      "S": {"base_score": 100, "bonus_score": 0},
       "F": {"base_score": 100, "bonus_score": 8}
     },
     "2016": {

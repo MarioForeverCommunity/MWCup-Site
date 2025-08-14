@@ -340,6 +340,7 @@
                   <th>排名</th>
                   <th>选手</th>
                   <th>最终得分</th>
+                  <th>得分率</th>
                 </tr>
                 <tr v-else>
                   <th>排名</th>
@@ -354,6 +355,7 @@
                     <th>总分之和</th>
                   </template>
                   <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
+                  <th>得分率</th>
                 </tr>
               </thead>
               <tbody>
@@ -413,6 +415,17 @@
                     </template>
                     <template v-else>
                       {{ formatScore(player.averageScore) }}
+                    </template>
+                  </td>
+                  <td class="score-rate">
+                    <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">
+                      -
+                    </template>
+                    <template v-else-if="scoreData.scoringScheme === 'E'">
+                      {{ player.finalScore !== undefined ? calculateScoreRate(player.finalScore) : '-' }}
+                    </template>
+                    <template v-else>
+                      {{ player.averageScore !== undefined ? calculateScoreRate(player.averageScore) : '-' }}
                     </template>
                   </td>
                 </tr>
@@ -1171,6 +1184,36 @@ function getDisplayedBonus(originalBonus: number): string {
   return adjustedBonus.toDecimalPlaces(1).toString();
 }
 
+// 计算得分率（关卡最终得分 / (base_score + bonus_score)）
+function calculateScoreRate(finalScore: number | Decimal): string {
+  if (!maxScoreData.value || !props.year || !props.round) {
+    return '-';
+  }
+  
+  const yearData = maxScoreData.value.maxScore?.[props.year];
+  if (!yearData) {
+    return '-';
+  }
+  
+  const roundData = yearData[props.round];
+  if (!roundData) {
+    return '-';
+  }
+  
+  const baseScore = new Decimal(roundData.base_score || 100);
+  const bonusScore = new Decimal(roundData.bonus_score || 0);
+  const maxPossibleScore = baseScore.plus(bonusScore);
+  
+  if (maxPossibleScore.isZero()) {
+    return '-';
+  }
+  
+  const finalScoreDecimal = finalScore instanceof Decimal ? finalScore : new Decimal(finalScore);
+  const scoreRate = finalScoreDecimal.dividedBy(maxPossibleScore);
+  
+  return scoreRate.times(100).toFixed(3) + '%';
+}
+
 // 过滤和排序大众评分数据，按YAML中的选手顺序排序
 const filteredPublicScores = computed(() => {
   if (!scoreData.value || !scoreData.value.publicScores || !yamlData.value) return [];
@@ -1638,7 +1681,7 @@ async function loadScoreData() {
     yamlData.value = yamlDoc // 保存原始的YAML数据，用于获取未上传选手
     const seasonData = extractSeasonData(yamlDoc)
 
-        // 加载用户映射数据、用户数据和maxScore数据
+    // 加载用户映射数据、用户数据和maxScore数据
     const [userMappingData, userDataResult] = await Promise.all([
       loadUserMapping(),
       loadUserData(),
@@ -2192,7 +2235,7 @@ onMounted(() => {
 
 .final-score {
   font-weight: 600;
-  color: #e74c3c;
+  color: var(--primary-color);
   text-align: center;
   background: rgba(255, 245, 240, 0.8);
 }
@@ -2241,9 +2284,9 @@ onMounted(() => {
   text-decoration: underline;
 }
 
-.average {
+.average, .score-rate {
   font-weight: 600;
-  color: #e74c3c;
+  color: var(--primary-color);
 }
 
 @media (min-width: 768px) {
