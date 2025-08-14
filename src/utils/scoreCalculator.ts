@@ -1059,11 +1059,10 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
   // 计算每个选手的最终大众评分
   for (const playerScore of playerScores.values()) {
     // 所有投票都参与计算，包括负分投票
-    const scores = playerScore.votes.map(v => v.totalScore);
-    
+    const scores = playerScore.votes.map(v => new Decimal(v.totalScore));
     // 计算最终评分
     const finalScore = calculateFinalPublicScore(scores);
-    playerScore.finalPublicScore = new Decimal(finalScore).toDecimalPlaces(1).toNumber();
+    playerScore.finalPublicScore = finalScore.toNumber();
     playerScore.validVotesCount = playerScore.votes.length;
   }
   
@@ -1073,24 +1072,19 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
 /**
  * 计算最终大众评分
  */
-export function calculateFinalPublicScore(scores: number[]): number {
-  if (scores.length === 0) return 0;
-  
-  const sortedScores = [...scores].sort((a, b) => a - b);
-  
+export function calculateFinalPublicScore(scores: Decimal[]): Decimal {
+  if (scores.length === 0) return new Decimal(0);
+  const sortedScores = [...scores].sort((a, b) => a.comparedTo(b));
   if (sortedScores.length <= 4) {
-    // 4人及以下：直接平均
-    return sortedScores.reduce((sum, score) => sum + score, 0) / sortedScores.length;
+    return sortedScores.reduce((sum, score) => sum.plus(score), new Decimal(0)).div(sortedScores.length).toDecimalPlaces(1);
   } else if (sortedScores.length === 5) {
-    // 5人：最高和最低按一半计算
-    const lowest = sortedScores[0] / 2;
-    const highest = sortedScores[4] / 2;
-    const middle = sortedScores.slice(1, 4).reduce((sum, score) => sum + score, 0);
-    return (lowest + middle + highest) / 4;
+    const lowest = sortedScores[0].div(2);
+    const highest = sortedScores[4].div(2);
+    const middle = sortedScores.slice(1, 4).reduce((sum, score) => sum.plus(score), new Decimal(0));
+    return lowest.plus(middle).plus(highest).div(4).toDecimalPlaces(1);
   } else {
-    // 6人及以上：去掉最高和最低
     const middle = sortedScores.slice(1, -1);
-    return middle.reduce((sum, score) => sum + score, 0) / middle.length;
+    return middle.reduce((sum, score) => sum.plus(score), new Decimal(0)).div(middle.length).toDecimalPlaces(1);
   }
 }
 

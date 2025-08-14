@@ -383,16 +383,18 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
               const playerPublicScore = scoreData.publicScores.find(ps => ps.playerCode === level.playerCode);
               if (playerPublicScore && playerPublicScore.validVotesCount > 0) {
                 // 收集所有投票的基础分数（不包括附加分和扣分）
-                const baseScores: number[] = [];
+                const baseScores: Decimal[] = [];
                 for (const vote of playerPublicScore.votes) {
                   // 大众评分原始分：欣赏性×1.5 + 创新性×1.5 + 设计性×3 + 游戏性×4（不包括附加分和扣分）
-                  const baseScore = vote.appreciation * 1.5 + vote.innovation * 1.5 + vote.design * 3 + vote.gameplay * 4;
+                  const baseScore = new Decimal(vote.appreciation).times(1.5)
+                    .plus(new Decimal(vote.innovation).times(1.5))
+                    .plus(new Decimal(vote.design).times(3))
+                    .plus(new Decimal(vote.gameplay).times(4));
                   baseScores.push(baseScore);
                 }
-                
                 // 应用基于人数的算法计算原始分
                 if (baseScores.length > 0) {
-                  publicOriginalScore = calculateFinalPublicScore(baseScores);
+                  publicOriginalScore = calculateFinalPublicScore(baseScores).toNumber();
                 }
               }
             }
