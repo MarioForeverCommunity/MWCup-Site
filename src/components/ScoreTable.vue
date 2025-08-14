@@ -1689,7 +1689,8 @@ function getSchemeLink(scheme: string | undefined): string | null {
   const linkMap: { [key: string]: string } = {
     'A': 'https://archive.marioforever.net/post/650057027',
     'B': 'https://archive.marioforever.net/post/2833085201',
-    'D': 'https://www.marioforever.net/thread-2530-1-1.html'
+    'D': 'https://www.marioforever.net/thread-2530-1-1.html',
+    'S': 'https://archive.marioforever.net/post/3966722003'
   }
   
   return linkMap[scheme] || null
