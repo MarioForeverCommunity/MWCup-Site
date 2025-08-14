@@ -75,6 +75,18 @@
   transform: translateY(-1px);
 }
 
+/* Header action button: align like FoldButton */
+.header-action-btn {
+  float: right;
+  padding: 4px 8px; /* smaller like fold button */
+  border-radius: var(--radius-medium);
+  font-size: 14px;
+  font-weight: 500;
+  transition: var(--transition-normal);
+  backdrop-filter: var(--blur-light);
+  margin-left: var(--spacing-sm);
+}
+
 .btn-danger {
   background: linear-gradient(135deg, #dc3545, #c82333);
   color: white;

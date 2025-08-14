@@ -40,9 +40,9 @@
       </div>
       <!-- 赛况总表 -->
       <div v-if="filteredOverallRoundData" class="overall-status">
-        <h4>赛况总表</h4>
+        <h4>赛况总表 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportOverallToExcel">导出表格 (beta)</button></h4>
         <div class="table-wrapper">
-          <table class="table-base overall-table">
+          <table ref="overallTableRef" class="table-base overall-table">
             <thead>
               <tr>
                 <th>所在小组</th>
@@ -115,7 +115,7 @@
 
       <!-- 详细评分表 -->
       <div class="detailed-scores">
-        <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }}</h4>
+        <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportDetailedToExcel">导出表格 (beta)</button></h4>
         <p class="scheme-info">
           评分标准:
           <template v-if="getSchemeLink(scoreData.scoringScheme)">
@@ -142,7 +142,7 @@
           </template>
         </p>
         <div class="table-wrapper">
-          <table class="table-base score-table">
+          <table ref="detailedTableRef" class="table-base score-table">
             <thead>
               <!-- 评分方案为C或E时，添加分类行 -->
               <tr v-if="['C', 'E'].includes(scoreData.scoringScheme)">
@@ -265,7 +265,7 @@
         
         <!-- 大众评分表 (仅评分方案E) -->
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0" class="public-scores">
-          <h4>大众评分</h4>
+          <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格 (beta)</button></h4>
           <p class="scheme-info">
           评分标准:
           <a 
@@ -279,7 +279,7 @@
         </p>
           <p class="scoring-note">注：基础分按欣赏性得分×1.5、创新性得分×1.5、设计性得分×3、游戏性得分×4的方式计算</p>
           <div class="table-wrapper">
-            <table class="table-base score-table">
+            <table ref="publicTableRef" class="table-base score-table">
               <thead>
                 <tr>
                   <th>选手</th>
@@ -331,10 +331,10 @@
         
         <!-- 总分排名表 -->
         <div class="player-totals">
-          <h4>总分排名</h4>
+          <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格 (beta)</button></h4>
           <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 大众评分×25%</p>
           <div class="table-wrapper">
-            <table class="table-base total-table">
+            <table ref="totalTableRef" class="table-base total-table">
               <thead>
                 <tr v-if="scoreData.scoringScheme === 'S'">
                   <th>排名</th>
@@ -445,6 +445,7 @@ function toChineseNumber(num: number): string {
   return cnNums[num] || num.toString();
 }
 import { ref, watch, onMounted, computed } from 'vue'
+import * as XLSX from 'xlsx'
 import FoldButton from './FoldButton.vue'
 import { 
   loadRoundScoreData, 
@@ -459,6 +460,7 @@ import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/
 import { fetchLevelFilesFromLocal, type LevelFile, matchPlayerName } from '../utils/levelFileHelper'
 import { loadUserData, type UserData } from '../utils/userDataProcessor'
 import { Decimal } from 'decimal.js'
+import { getRoundChineseName } from '../utils/roundNames'
 import { 
   calculate2019TotalScore, 
   calculateValidLevelTotalScore, 
@@ -489,6 +491,99 @@ const searchPlayer = ref('')
 const searchJudge = ref('')
 
 // 移除未使用的接口定义
+
+// ===== 导出到 Excel：表格引用与导出方法 =====
+const overallTableRef = ref<HTMLTableElement | null>(null)
+const detailedTableRef = ref<HTMLTableElement | null>(null)
+const publicTableRef = ref<HTMLTableElement | null>(null)
+const totalTableRef = ref<HTMLTableElement | null>(null)
+
+function exportTableToExcel(table: HTMLTableElement | null, filename: string) {
+  if (!table) {
+    alert('未找到可导出的表格')
+    return
+  }
+  const wb = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' })
+  XLSX.writeFile(wb, filename)
+}
+
+const buildFileName = (suffix: string) => {
+  const roundName = getRoundChineseName(props.round, { year: props.year })
+  return `${props.year}年${roundName}_${suffix}.xlsx`
+}
+
+function exportOverallToExcel() { exportTableToExcel(overallTableRef.value, buildFileName('赛况总表')) }
+function exportDetailedToExcel() { exportTableToExcel(detailedTableRef.value, buildFileName(scoreData.value?.scoringScheme === 'E' ? '评委评分' : '详细评分')) }
+function exportPublicToExcel() {
+  // 针对大众评分，手动构造Sheet，避免括号导致Excel解析为负数
+  if (!scoreData.value || scoreData.value.scoringScheme !== 'E' || !scoreData.value.publicScores) {
+    alert('暂无大众评分可导出')
+    return
+  }
+
+  const sp = (searchPlayer.value || '').trim()
+  const sj = (searchJudge.value || '').trim()
+
+  const hasPenalty = hasPublicPenalty.value
+
+  const header = [
+    '选手',
+    '大众评分员',
+    '欣赏性', '欣赏性(换算×1.5)',
+    '创新性', '创新性(换算×1.5)',
+    '设计性', '设计性(换算×3)',
+    '游戏性', '游戏性(换算×4)',
+    '附加分'
+  ] as (string)[]
+  if (hasPenalty) header.push('扣分')
+  header.push('换算后总分', '大众最终得分')
+
+  const data: (string | number)[][] = [header]
+
+  // 依当前搜索条件进行简单过滤
+  for (const playerPublicScore of scoreData.value.publicScores) {
+    if (sp && !playerPublicScore.playerName.includes(sp) && !playerPublicScore.playerCode.includes(sp)) continue
+
+    const votes = (playerPublicScore.votes || []).filter((v: any) => {
+      if (!sj) return true
+      return (v.voterName || '').includes(sj)
+    })
+    if (votes.length === 0) continue
+
+    for (const vote of votes) {
+      const a = Number(vote.appreciation) || 0
+      const i = Number(vote.innovation) || 0
+      const d = Number(vote.design) || 0
+      const g = Number(vote.gameplay) || 0
+      const bonus = typeof vote.bonus === 'number' ? vote.bonus : Number(vote.bonus) || 0
+      const penalty = typeof vote.penalty === 'number' ? vote.penalty : Number(vote.penalty) || 0
+
+      const row: (string | number)[] = [
+        playerPublicScore.playerName,
+        vote.voterName,
+        a, +(a * 1.5).toFixed(3),
+        i, +(i * 1.5).toFixed(3),
+        d, +(d * 3).toFixed(3),
+        g, +(g * 4).toFixed(3),
+        bonus
+      ]
+      if (hasPenalty) row.push(penalty)
+      row.push(
+        // 换算后总分（组件中已给出）
+        typeof vote.totalScore === 'number' ? vote.totalScore : Number(vote.totalScore) || 0,
+        // 大众最终得分（按选手汇总）
+        typeof playerPublicScore.finalPublicScore === 'number' ? playerPublicScore.finalPublicScore : Number(playerPublicScore.finalPublicScore) || 0
+      )
+      data.push(row)
+    }
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '大众评分')
+  XLSX.writeFile(wb, buildFileName('大众评分'))
+}
+function exportTotalToExcel() { exportTableToExcel(totalTableRef.value, buildFileName('总分排名')) }
 
 const scoreData = ref<RoundScoreData | null>(null)
 const loading = ref(false)

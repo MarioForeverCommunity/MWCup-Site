@@ -93,10 +93,10 @@
       <!-- 单关排名 -->
       <div v-if="activeTab === 'single'" class="animate-fadeInUp">
       <div class="section-header">
-        <h3>单关排名 ({{ filteredSingleLevelRanking.length }} 条记录)</h3>
+        <h3>单关排名 ({{ filteredSingleLevelRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportSingleToExcel">导出表格 (beta)</button></h3>
       </div>
         <div class="table-wrapper">
-          <table class="table-base ranking-table">
+          <table ref="singleTableRef" class="table-base ranking-table">
             <thead>
               <tr>
                 <th>排名</th>
@@ -131,10 +131,10 @@
       <!-- 多关排名 -->
       <div v-if="activeTab === 'multi'" class="animate-fadeInUp">
       <div class="section-header">
-        <h3>多关排名 ({{ filteredMultiLevelRanking.length }} 条记录)</h3>
+        <h3>多关排名 ({{ filteredMultiLevelRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportMultiToExcel">导出表格 (beta)</button></h3>
       </div>
         <div class="table-wrapper">
-          <table class="table-base ranking-table">
+          <table ref="multiTableRef" class="table-base ranking-table">
             <thead>
               <tr>
                 <th>排名</th>
@@ -172,10 +172,10 @@
       <!-- 原始得分率排名 -->
       <div v-if="activeTab === 'original'" class="animate-fadeInUp">
       <div class="section-header">
-        <h3>原始得分率排名 ({{ filteredOriginalScoreRanking.length }} 条记录)</h3>
+        <h3>原始得分率排名 ({{ filteredOriginalScoreRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportOriginalToExcel">导出表格 (beta)</button></h3>
       </div>
         <div class="table-wrapper">
-          <table class="table-base ranking-table">
+          <table ref="originalTableRef" class="table-base ranking-table">
             <thead>
               <tr>
                 <th>原始分排名</th>
@@ -225,6 +225,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import * as XLSX from 'xlsx'
 import type { 
   LevelRankingItem, 
   MultiLevelRankingItem, 
@@ -253,6 +254,26 @@ const originalScoreRanking = ref<OriginalScoreRankingItem[]>([])
 const availableYears = ref<number[]>([])
 const userDataCache = ref<any[]>([])
 const levelFiles = ref<LevelFile[]>([])
+
+// ===== 导出到 Excel：表格引用与导出方法 =====
+const singleTableRef = ref<HTMLTableElement | null>(null)
+const multiTableRef = ref<HTMLTableElement | null>(null)
+const originalTableRef = ref<HTMLTableElement | null>(null)
+
+function exportTableToExcel(table: HTMLTableElement | null, filename: string) {
+  if (!table) {
+    alert('未找到可导出的表格')
+    return
+  }
+  const wb = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' })
+  XLSX.writeFile(wb, filename)
+}
+
+const buildFileName = (suffix: string) => `${filters.selectedYear ? filters.selectedYear + '年' : ''}${suffix}.xlsx`
+
+function exportSingleToExcel() { exportTableToExcel(singleTableRef.value, buildFileName('单关排名')) }
+function exportMultiToExcel() { exportTableToExcel(multiTableRef.value, buildFileName('多关排名')) }
+function exportOriginalToExcel() { exportTableToExcel(originalTableRef.value, buildFileName('原始得分率排名')) }
 
 // 单关：获取关卡文件名
 function getPlayerLevelFileNameSingle(item: LevelRankingItem): string {
