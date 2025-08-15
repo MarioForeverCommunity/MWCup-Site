@@ -225,7 +225,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import * as XLSX from 'xlsx'
 import type { 
   LevelRankingItem, 
   MultiLevelRankingItem, 
@@ -242,6 +241,34 @@ import {
 import { matchPlayerName } from '../utils/levelFileHelper'
 import { loadUserData } from '../utils/userDataProcessor'
 import { fetchLevelFilesFromLocal, type LevelFile } from '../utils/levelFileHelper'
+
+// SheetJS 工具：按需加载，优先使用 xlsx-js-style（可写样式），失败回退到 xlsx
+type XLSXWorkSheet = { [key: string]: any; '!ref'?: string }
+let _XLSX: any | null = null
+async function getXLSX() {
+  if (_XLSX) return _XLSX
+  try {
+    const mod: any = await import('xlsx-js-style')
+    _XLSX = mod?.default ?? mod
+  } catch (_) {
+    const mod: any = await import('xlsx')
+    _XLSX = mod?.default ?? mod
+  }
+  return _XLSX
+}
+
+// 居中对齐辅助（需要 xlsx-js-style 才能在 Excel 中看到样式）
+function centerAlignAllCells(ws: XLSXWorkSheet) {
+  const ref = ws['!ref']
+  if (!ref) return
+  for (const addr of Object.keys(ws)) {
+    if (addr.startsWith('!')) continue
+    const cell: any = ws[addr]
+    if (!cell || typeof cell !== 'object') continue
+    cell.s = cell.s || {}
+    cell.s.alignment = { horizontal: 'center', vertical: 'center' }
+  }
+}
 
 // 响应式状态
 const activeTab = ref<'single' | 'multi' | 'original'>('single')
@@ -260,12 +287,16 @@ const singleTableRef = ref<HTMLTableElement | null>(null)
 const multiTableRef = ref<HTMLTableElement | null>(null)
 const originalTableRef = ref<HTMLTableElement | null>(null)
 
-function exportTableToExcel(table: HTMLTableElement | null, filename: string) {
+async function exportTableToExcel(table: HTMLTableElement | null, filename: string) {
   if (!table) {
     alert('未找到可导出的表格')
     return
   }
+  const XLSX = await getXLSX()
   const wb = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' })
+  const sheetName = wb.SheetNames[0]
+  const ws = wb.Sheets[sheetName] as XLSXWorkSheet
+  centerAlignAllCells(ws)
   XLSX.writeFile(wb, filename)
 }
 

@@ -445,7 +445,21 @@ function toChineseNumber(num: number): string {
   return cnNums[num] || num.toString();
 }
 import { ref, watch, onMounted, computed } from 'vue'
-import * as XLSX from 'xlsx'
+// SheetJS 工具：按需加载，避免在 setup 期间阻塞或报错
+type XLSXRange = { s: { r: number; c: number }; e: { r: number; c: number } }
+type XLSXWorkSheet = { [key: string]: any; '!ref'?: string; '!merges'?: XLSXRange[] }
+let _XLSX: any | null = null
+async function getXLSX() {
+  if (_XLSX) return _XLSX
+  try {
+    const mod: any = await import('xlsx-js-style')
+    _XLSX = mod?.default ?? mod
+  } catch (_) {
+    const mod: any = await import('xlsx')
+    _XLSX = mod?.default ?? mod
+  }
+  return _XLSX
+}
 import FoldButton from './FoldButton.vue'
 import { 
   loadRoundScoreData, 
@@ -498,24 +512,182 @@ const detailedTableRef = ref<HTMLTableElement | null>(null)
 const publicTableRef = ref<HTMLTableElement | null>(null)
 const totalTableRef = ref<HTMLTableElement | null>(null)
 
-function exportTableToExcel(table: HTMLTableElement | null, filename: string) {
-  if (!table) {
-    alert('未找到可导出的表格')
-    return
-  }
-  const wb = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' })
-  XLSX.writeFile(wb, filename)
-}
-
 const buildFileName = (suffix: string) => {
   const roundName = getRoundChineseName(props.round, { year: props.year })
   return `${props.year}年${roundName}_${suffix}.xlsx`
 }
 
-function exportOverallToExcel() { exportTableToExcel(overallTableRef.value, buildFileName('赛况总表')) }
-function exportDetailedToExcel() { exportTableToExcel(detailedTableRef.value, buildFileName(scoreData.value?.scoringScheme === 'E' ? '评委评分' : '详细评分')) }
-function exportPublicToExcel() {
-  // 针对大众评分，手动构造Sheet，避免括号导致Excel解析为负数
+// 居中对齐辅助（如需生效请使用支持样式的构建，如 xlsx-js-style）
+function centerAlignAllCells(ws: XLSXWorkSheet) {
+  const ref = ws['!ref']
+  if (!ref) return
+  for (const addr of Object.keys(ws)) {
+    if (addr.startsWith('!')) continue
+    const cell: any = ws[addr]
+    if (!cell || typeof cell !== 'object') continue
+    cell.s = cell.s || {}
+    cell.s.alignment = { horizontal: 'center', vertical: 'center' }
+  }
+}
+
+async function exportOverallToExcel() {
+  const overall = filteredOverallRoundData.value
+  if (!overall) {
+    alert('暂无赛况总表可导出')
+    return
+  }
+
+  // 表头
+  const header: (string)[] = ['所在小组', '选手码', '选手']
+  for (let i = 0; i < overall.roundCodes.length; i++) {
+    const label = `第${toChineseNumber(i + 1)}${props.year === '2012' ? '轮' : (overall.roundCodes[i].startsWith('I') ? '题' : '轮')}得分`
+    header.push(label)
+  }
+  if (overall.isShowValidLevel && overall.validLevelColumns) {
+    for (const col of overall.validLevelColumns) header.push(col.label)
+  }
+  if (['2019', '2020', '2021'].includes(props.year)) header.push('超时扣分')
+  header.push('总得分')
+  if (props.year === '2018') header.push('胜', '平', '负', '总积分')
+  header.push('小组内排名', '总排名', '是否晋级')
+
+  const data: (string | number)[][] = [header]
+  const merges: XLSXRange[] = []
+
+  for (const group of overall.groupOrder) {
+    const players = overall.groupedPlayers[group] || []
+    if (!players.length) continue
+    const startRow = data.length
+    for (const p of players) {
+      const row: (string | number)[] = [
+        group,
+        p.playerCode,
+        p.playerName,
+        ...p.roundScores.map((s: any) => (s && typeof s.toNumber === 'function') ? +s.toNumber().toFixed(3) : +(Number(s) || 0).toFixed(3))
+      ]
+      if (overall.isShowValidLevel) {
+        for (const validInfo of (p.validRounds || [])) {
+          row.push(validInfo?.label || '')
+        }
+      }
+      if (['2019', '2020', '2021'].includes(props.year)) {
+        row.push(p.timeoutPenalty ? -Number(p.timeoutPenalty) : 0)
+      }
+      row.push((p.totalScore && typeof p.totalScore.toNumber === 'function') ? +p.totalScore.toNumber().toFixed(3) : +(Number(p.totalScore) || 0).toFixed(3))
+      if (props.year === '2018') {
+        row.push(p.wins || 0, p.draws || 0, p.losses || 0, p.matchPoints || 0)
+      }
+      row.push(p.groupRank ?? '-', p.totalRank ?? '-', (isPlayerAdvanced(p.playerName) ? '是' : '否'))
+      data.push(row)
+    }
+    // 合并小组列
+    merges.push({ s: { r: startRow, c: 0 }, e: { r: startRow + players.length - 1, c: 0 } })
+  }
+
+  const XLSX = await getXLSX()
+  const ws = XLSX.utils.aoa_to_sheet(data)
+  ws['!merges'] = merges
+  centerAlignAllCells(ws)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '赛况总表')
+  XLSX.writeFile(wb, buildFileName('赛况总表'))
+}
+
+async function exportDetailedToExcel() {
+  if (!scoreData.value) {
+    alert('暂无详细评分可导出')
+    return
+  }
+
+  const scheme = scoreData.value.scoringScheme
+  const cols = scoreData.value.columns || []
+
+  const data: (string | number)[][] = []
+  const merges: XLSXRange[] = []
+
+  if (scheme === 'S') {
+    // 表头
+    data.push(['选手码', '选手', '最终得分'])
+    // 每名选手一行
+    for (const g of groupedDetailRecords.value) {
+      const rec = g.records[0]
+      const finalScore = (rec.totalScore && typeof rec.totalScore.toNumber === 'function') ? +rec.totalScore.toNumber().toFixed(3) : +(Number(rec.totalScore) || 0).toFixed(3)
+      data.push([g.playerCode, g.playerName, finalScore])
+    }
+  } else {
+    // 表头
+    const header = ['选手码', '选手', '评委', ...cols, '总分', scheme === 'E' ? '评委最终得分' : '最终得分']
+    data.push(header)
+
+    // 构建 playerCode -> 最终显示分 的映射
+    const playerScoreMap = new Map<string, number>()
+    for (const p of (scoreData.value.playerScores || [])) {
+      const val = scheme === 'E' ? (p.judgeAverage || p.averageScore) : p.averageScore
+      const num = val && typeof val.toNumber === 'function' ? +val.toNumber().toFixed(3) : +(Number(val) || 0).toFixed(3)
+      playerScoreMap.set(p.playerCode, num)
+    }
+
+    for (const group of groupedDetailRecords.value) {
+      const startRow = data.length
+      const records = group.records
+      for (let idx = 0; idx < records.length; idx++) {
+        const rec = records[idx]
+        // 正常行
+        const isSpecial = rec.isNoSubmission || rec.isCanceled || rec.isUnworking
+        const row: (string | number)[] = [
+          idx === 0 ? rec.playerCode : '',
+          idx === 0 ? rec.playerName : '',
+          isSpecial ? (rec.isCanceled ? '成绩无效' : rec.isUnworking ? '关卡无法运行' : (rec.playerCode.startsWith('~') ? '取消资格' : '未上传')) : (rec.judgeName || rec.judgeCode)
+        ]
+
+        if (isSpecial) {
+          // 合并“评委”到“总分”列，显示一个占位说明
+          const judgeCol = 2
+          const lastCol = 2 + cols.length // 评委列后面有 cols 列，然后是“总分”列
+          // 补齐到 lastCol 列
+          while (row.length <= lastCol) row.push('')
+          // 最后一列（总分）也留空
+          merges.push({ s: { r: data.length, c: judgeCol }, e: { r: data.length, c: lastCol } })
+          // 末尾的“最终得分/评委最终得分”仅第一行显示
+          row.push(idx === 0 ? (playerScoreMap.get(rec.playerCode) ?? 0) : '')
+        } else {
+          // 分项分数
+          for (const c of cols) {
+            const val = (rec.scores && rec.scores[c] != null) ? rec.scores[c] : '-'
+            const num = typeof val === 'number' ? val : (val && typeof val.toNumber === 'function') ? val.toNumber() : (val === '-' ? '-' : Number(val) || 0)
+            row.push(typeof num === 'number' ? +new Decimal(num).toFixed(3) : num)
+          }
+          // 总分
+          const total = (rec.totalScore && typeof rec.totalScore.toNumber === 'function') ? +rec.totalScore.toNumber().toFixed(3) : +(Number(rec.totalScore) || 0).toFixed(3)
+          row.push(total)
+          // 最终/评委最终得分（仅第一行显示）
+          row.push(idx === 0 ? (playerScoreMap.get(rec.playerCode) ?? 0) : '')
+        }
+        data.push(row)
+      }
+      const endRow = data.length - 1
+      if (endRow >= startRow) {
+        // 合并选手码、选手两列
+        merges.push({ s: { r: startRow, c: 0 }, e: { r: endRow, c: 0 } })
+        merges.push({ s: { r: startRow, c: 1 }, e: { r: endRow, c: 1 } })
+        // 合并最后一列（最终/评委最终得分）
+        const lastColIdx = 3 + cols.length // 0:码 1:名 2:评委 [3..]明细, 明细后是总分(3+len), 再后是最后一列(3+len+1)
+        merges.push({ s: { r: startRow, c: lastColIdx + 1 }, e: { r: endRow, c: lastColIdx + 1 } })
+      }
+    }
+  }
+
+  const XLSX = await getXLSX()
+  const ws = XLSX.utils.aoa_to_sheet(data)
+  ws['!merges'] = merges
+  centerAlignAllCells(ws)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, scheme === 'E' ? '评委评分' : '详细评分')
+  XLSX.writeFile(wb, buildFileName(scheme === 'E' ? '评委评分' : '详细评分'))
+}
+
+async function exportPublicToExcel() {
+  // 针对大众评分，手动构造Sheet，支持合并与选手码
   if (!scoreData.value || scoreData.value.scoringScheme !== 'E' || !scoreData.value.publicScores) {
     alert('暂无大众评分可导出')
     return
@@ -527,20 +699,20 @@ function exportPublicToExcel() {
   const hasPenalty = hasPublicPenalty.value
 
   const header = [
-    '选手',
+    '选手码', '选手',
     '大众评分员',
     '欣赏性', '欣赏性(换算×1.5)',
     '创新性', '创新性(换算×1.5)',
     '设计性', '设计性(换算×3)',
     '游戏性', '游戏性(换算×4)',
     '附加分'
-  ] as (string)[]
+  ] as string[]
   if (hasPenalty) header.push('扣分')
   header.push('换算后总分', '大众最终得分')
 
   const data: (string | number)[][] = [header]
+  const merges: XLSXRange[] = []
 
-  // 依当前搜索条件进行简单过滤
   for (const playerPublicScore of scoreData.value.publicScores) {
     if (sp && !playerPublicScore.playerName.includes(sp) && !playerPublicScore.playerCode.includes(sp)) continue
 
@@ -550,40 +722,109 @@ function exportPublicToExcel() {
     })
     if (votes.length === 0) continue
 
-    for (const vote of votes) {
+    const startRow = data.length
+    for (let i = 0; i < votes.length; i++) {
+      const vote = votes[i]
       const a = Number(vote.appreciation) || 0
-      const i = Number(vote.innovation) || 0
+      const i2 = Number(vote.innovation) || 0
       const d = Number(vote.design) || 0
       const g = Number(vote.gameplay) || 0
       const bonus = typeof vote.bonus === 'number' ? vote.bonus : Number(vote.bonus) || 0
       const penalty = typeof vote.penalty === 'number' ? vote.penalty : Number(vote.penalty) || 0
 
       const row: (string | number)[] = [
-        playerPublicScore.playerName,
+        i === 0 ? playerPublicScore.playerCode : '',
+        i === 0 ? playerPublicScore.playerName : '',
         vote.voterName,
         a, +(a * 1.5).toFixed(3),
-        i, +(i * 1.5).toFixed(3),
+        i2, +(i2 * 1.5).toFixed(3),
         d, +(d * 3).toFixed(3),
         g, +(g * 4).toFixed(3),
         bonus
       ]
       if (hasPenalty) row.push(penalty)
       row.push(
-        // 换算后总分（组件中已给出）
+        // 换算后总分
         typeof vote.totalScore === 'number' ? vote.totalScore : Number(vote.totalScore) || 0,
-        // 大众最终得分（按选手汇总）
-        typeof playerPublicScore.finalPublicScore === 'number' ? playerPublicScore.finalPublicScore : Number(playerPublicScore.finalPublicScore) || 0
+        // 大众最终得分（仅第一行显示）
+        i === 0 ? (typeof playerPublicScore.finalPublicScore === 'number' ? playerPublicScore.finalPublicScore : Number(playerPublicScore.finalPublicScore) || 0) : ''
       )
       data.push(row)
     }
+
+    const endRow = data.length - 1
+    // 合并“选手”和“选手码”两列
+    merges.push({ s: { r: startRow, c: 0 }, e: { r: endRow, c: 0 } })
+    merges.push({ s: { r: startRow, c: 1 }, e: { r: endRow, c: 1 } })
+    // 合并“最终得分”列
+    const lastColIdx = header.length - 1
+    merges.push({ s: { r: startRow, c: lastColIdx }, e: { r: endRow, c: lastColIdx } })
   }
 
+  const XLSX = await getXLSX()
   const ws = XLSX.utils.aoa_to_sheet(data)
+  ws['!merges'] = merges
+  centerAlignAllCells(ws)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, '大众评分')
   XLSX.writeFile(wb, buildFileName('大众评分'))
 }
-function exportTotalToExcel() { exportTableToExcel(totalTableRef.value, buildFileName('总分排名')) }
+
+async function exportTotalToExcel() {
+  if (!scoreData.value) {
+    alert('暂无总分排名可导出')
+    return
+  }
+  const scheme = scoreData.value.scoringScheme
+  const data: (string | number)[][] = []
+  if (scheme === 'S') {
+    data.push(['排名', '选手码', '选手', '最终得分', '得分率'])
+    for (const p of filteredPlayerScoresWithRank.value) {
+      data.push([
+        p.displayRank ?? '-',
+        p.playerCode,
+        p.playerName,
+        +(p.averageScore && typeof p.averageScore.toNumber === 'function' ? p.averageScore.toNumber().toFixed(3) : (Number(p.averageScore) || 0).toFixed(3)),
+        calculateScoreRate(p.averageScore ?? 0)
+      ])
+    }
+  } else {
+    const baseHeader = ['排名', '选手码', '选手', '关卡名']
+    if (scheme !== 'E') baseHeader.push('有效评分次数')
+    if (scheme === 'E') baseHeader.push('评委评分', '大众评分')
+    else baseHeader.push('总分之和')
+    baseHeader.push('最终得分', '得分率')
+    data.push(baseHeader)
+    for (const p of filteredPlayerScoresWithRank.value) {
+      const row: (string | number)[] = [
+        p.displayRank ?? '-',
+        p.playerCode,
+        p.playerName,
+        (p.playerCode.startsWith('~') ? '取消资格' : (getPlayerLevelFileName(p.playerCode)))
+      ]
+      if (scheme !== 'E') row.push(p.validRecordsCount ?? 0)
+      if (scheme === 'E') {
+        row.push(
+          p.records[0]?.isCanceled || (p.validRecordsCount === 0 && getPlayerLevelFileName(p.playerCode) === '未上传') ? '-' : formatScore(p.judgeAverage),
+          p.records[0]?.isCanceled || (p.validRecordsCount === 0 && getPlayerLevelFileName(p.playerCode) === '未上传') ? '-' : formatScore(p.publicScore)
+        )
+      } else {
+        row.push(formatScore(p.totalSum))
+      }
+      row.push(
+        scheme === 'E' ? formatScore(p.finalScore) : formatScore(p.averageScore),
+        p.records[0]?.isCanceled || (p.validRecordsCount === 0 && getPlayerLevelFileName(p.playerCode) === '未上传') ? '-' : calculateScoreRate((scheme === 'E' ? p.finalScore : p.averageScore) ?? 0)
+      )
+      data.push(row)
+    }
+  }
+  const XLSX = await getXLSX()
+  const ws = XLSX.utils.aoa_to_sheet(data)
+  centerAlignAllCells(ws)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '总分排名')
+  XLSX.writeFile(wb, buildFileName('总分排名'))
+}
 
 const scoreData = ref<RoundScoreData | null>(null)
 const loading = ref(false)
