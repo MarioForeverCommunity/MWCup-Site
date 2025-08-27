@@ -1066,4 +1066,10 @@ td:first-child {
     min-width: 800px;
   }
 }
+
+@media (max-width: 768px) {
+  .export-btn {
+    display: none !important;
+  }
+}
 </style>
