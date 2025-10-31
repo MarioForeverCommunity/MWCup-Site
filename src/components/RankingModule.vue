@@ -608,7 +608,8 @@ function getEditionString(year: number): string {
     2022: '2022年第十一届',
     2023: '2023年第十二届',
     2024: '2024年第十三届',
-    2025: '2025年第十四届'
+    2025: '2025年第十四届',
+    2026: '2026年第十五届'
   }
   return editionMap[year] || `${year}年`
 }
