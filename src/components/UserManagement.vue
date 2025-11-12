@@ -284,9 +284,9 @@ onMounted(() => {
 /* 主容器 */
 .user-management {
   max-width: 1400px;
+  margin: 0 auto;
   background: var(--bg-primary);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-subtle);
+  min-height: 100vh;
 }
 
 /* 统计卡片 */
