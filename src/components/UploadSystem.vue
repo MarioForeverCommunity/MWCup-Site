@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getEditionOptions } from '../utils/editionHelper'
+
+const route = useRoute()
+const router = useRouter()
 
 // 所有支持的年份，分为比赛系统和网盘两部分
 const competitionYears = ['2025', '2024', '2023', '2022']
@@ -9,6 +13,25 @@ const years = [...competitionYears, ...archiveYears] as const
 
 type Year = (typeof years)[number]
 const activeYear = ref<Year>(competitionYears[0]) // 默认显示最新一年
+
+// 监听路由参数变化
+watch(() => route.params, (newParams) => {
+  if (newParams.year) {
+    const year = newParams.year as string
+    if (years.includes(year as Year)) {
+      activeYear.value = year as Year
+    }
+  }
+}, { immediate: true })
+
+// 当年份改变时更新路由
+const onYearChange = () => {
+  if (activeYear.value) {
+    router.push(`/upload/${activeYear.value}`)
+  } else {
+    router.push('/upload')
+  }
+}
 
 // 使用 getEditionOptions 生成带有届数的选项
 const competitionOptions = getEditionOptions([...competitionYears])
@@ -66,6 +89,7 @@ const openUrl = () => {
     <div class="year-selector">
       <select 
         v-model="activeYear" 
+        @change="onYearChange"
         class="form-control hover-scale"
         :class="{ 'archive': !showIframe }"
       >

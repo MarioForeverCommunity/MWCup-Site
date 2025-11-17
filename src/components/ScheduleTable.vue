@@ -130,8 +130,8 @@ onMounted(async () => {
   // 获取所有年份并排序（从新到旧）
   years.value = schedules.value.map(ys => ys.year).sort((a, b) => Number(b) - Number(a));
   
-  // 默认选择最近一年
-  if (years.value.length > 0) {
+  // 只有在没有通过props传入年份时，才默认选择最近一年
+  if (!props.year && years.value.length > 0) {
     selectedYear.value = years.value[0];
   }
 });

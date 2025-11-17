@@ -64,12 +64,16 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
 import { getRoundChineseName } from '../utils/roundNames'
 import ScoreTable from './ScoreTable.vue'
 import SubjectDisplay from './SubjectDisplay.vue'
 import ScheduleTable from './ScheduleTable.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 const seasonData = ref<any>(null)
 const selectedYear = ref('')
@@ -120,7 +124,8 @@ const openWikiPage = () => {
 
 watch([selectedYear, selectedRound], async () => {
   // 监听变化，可在此处添加其他逻辑
-}, { immediate: true })
+  // 这里可以添加数据刷新逻辑，但避免重新创建组件
+}, { immediate: false })
 
 const availableYears = computed(() => {
   if (!seasonData.value) return []
@@ -187,26 +192,68 @@ async function loadSeasonData() {
   try {
     const yamlDoc = await fetchMarioWorkerYaml()
     seasonData.value = extractSeasonData(yamlDoc)
-    // 自动选择最新一届
-    const years = Object.keys(seasonData.value).sort((a, b) => parseInt(b) - parseInt(a))
-    if (years.length > 0) {
-      selectedYear.value = years[0]
+    
+    // 只有在没有从路由参数获取年份时才自动选择最新一届
+    if (!selectedYear.value) {
+      const years = Object.keys(seasonData.value).sort((a, b) => parseInt(b) - parseInt(a))
+      if (years.length > 0) {
+        selectedYear.value = years[0]
+      }
     }
   } catch (error) {
     console.error('加载赛季数据失败:', error)
   }
 }
 
-onMounted(() => {
-  loadSeasonData()
+onMounted(async () => {
+  // 初始化时先从路由参数设置年份和轮次
+  if (route.params.year) {
+    selectedYear.value = route.params.year as string
+  }
+  if (route.params.round) {
+    selectedRound.value = route.params.round as string
+  }
+  
+  // 然后加载数据
+  await loadSeasonData()
 })
+
+// 监听路由参数变化
+watch(() => route.params, (newParams) => {
+  // 只有当路由参数实际变化时才更新，避免重复渲染
+  const newYear = newParams.year as string || ''
+  const newRound = newParams.round as string || ''
+  
+  if (selectedYear.value !== newYear) {
+    selectedYear.value = newYear
+  }
+  
+  if (selectedRound.value !== newRound) {
+    selectedRound.value = newRound
+  }
+}, { immediate: false })
 
 async function onYearChange() {
   selectedRound.value = ''
+  // 更新路由 - 使用replace避免历史记录堆积，并防止重复导航
+  const targetPath = selectedYear.value ? `/matches/${selectedYear.value}` : '/matches'
+  if (route.path !== targetPath) {
+    router.replace(targetPath)
+  }
 }
 
 async function onRoundChange() {
-  // 可以在这里添加其他逻辑
+  // 更新路由 - 使用replace避免历史记录堆积，并防止重复导航
+  let targetPath = '/matches'
+  if (selectedYear.value && selectedRound.value) {
+    targetPath = `/matches/${selectedYear.value}/${selectedRound.value}`
+  } else if (selectedYear.value) {
+    targetPath = `/matches/${selectedYear.value}`
+  }
+  
+  if (route.path !== targetPath) {
+    router.replace(targetPath)
+  }
 }
 </script>
 

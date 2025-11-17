@@ -1,40 +1,52 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import packageJson from '../package.json'
-import RoundSelector from './components/RoundSelector.vue'
-import LevelFileTest from './components/LevelFileSearch.vue'
-import UploadSystem from './components/UploadSystem.vue'
-import StatsAnalysis from './components/StatsAnalysis.vue'
-import DocumentDisplay from './components/DocumentDisplay.vue'
 
-type TabType = 'matches'  | 'upload' | 'levels' | 'stats' | 'docs'
+const router = useRouter()
+const route = useRoute()
 
-const getSavedTab = (): TabType => {
-  // 优先检查URL参数
-  const urlParams = new URLSearchParams(window.location.search)
-  const tabParam = urlParams.get('tab')
-  
-  if (tabParam && ['matches', 'upload', 'levels', 'stats', 'docs'].includes(tabParam)) {
-    return tabParam as TabType
-  }
-  
-  // 如果没有URL参数，则使用sessionStorage
-  const savedTab = sessionStorage.getItem('mwcup-active-tab')
-  return (savedTab as TabType) || 'matches'
-}
-
-const activeTab = ref<TabType>(getSavedTab())
 const isSidebarOpen = ref(true)
 const isMobileView = ref(false)
 const showBackToTop = ref(false)
 
+// 获取当前激活的标签页
+const getActiveTab = () => {
+  const path = route.path
+  if (path.startsWith('/matches')) return 'matches'
+  if (path.startsWith('/upload')) return 'upload'
+  if (path.startsWith('/levels')) return 'levels'
+  if (path.startsWith('/stats')) return 'stats'
+  if (path.startsWith('/docs')) return 'docs'
+  return 'matches'
+}
+
+const activeTab = ref(getActiveTab())
+
 // 监听标签页变化并保存到 sessionStorage
-const setActiveTab = (tab: TabType) => {
-  activeTab.value = tab
-  sessionStorage.setItem('mwcup-active-tab', tab)
+const setActiveTab = (tab: string) => {
+  activeTab.value = tab as any
   
-  // 同步URL参数
-  updateUrlParams(tab)
+  // 根据标签页进行路由跳转
+  switch (tab) {
+    case 'matches':
+      router.push('/matches')
+      break
+    case 'upload':
+      router.push('/upload')
+      break
+    case 'levels':
+      router.push('/levels')
+      break
+    case 'stats':
+      router.push('/stats')
+      break
+    case 'docs':
+      router.push('/docs')
+      break
+    default:
+      router.push('/matches')
+  }
   
   // 移动端点击导航项后自动收起侧边栏
   if (isMobileView.value) {
@@ -42,28 +54,15 @@ const setActiveTab = (tab: TabType) => {
   }
 }
 
-// 更新URL参数
-const updateUrlParams = (tab: TabType) => {
-  const url = new URL(window.location.href)
-  const params = new URLSearchParams(url.search)
-  
-  // 设置tab参数
-  params.set('tab', tab)
-  
-  // 如果不是docs标签页，移除doc参数
-  if (tab !== 'docs') {
-    params.delete('doc')
-  }
-  
-  // 如果不是stats标签页，移除stats参数
-  if (tab !== 'stats') {
-    params.delete('stat')
-  }
-  
-  // 更新URL（不会触发页面刷新）
-  const newUrl = `${url.pathname}?${params.toString()}`
-  window.history.replaceState({}, '', newUrl)
-}
+// 监听路由变化来更新激活的标签页
+watch(() => route.path, (newPath) => {
+  if (newPath.startsWith('/matches')) activeTab.value = 'matches'
+  else if (newPath.startsWith('/upload')) activeTab.value = 'upload'
+  else if (newPath.startsWith('/levels')) activeTab.value = 'levels'
+  else if (newPath.startsWith('/stats')) activeTab.value = 'stats'
+  else if (newPath.startsWith('/docs')) activeTab.value = 'docs'
+  else activeTab.value = 'matches'
+}, { immediate: true })
 
 // 检测当前视图是否为移动设备
 const checkMobileView = () => {
@@ -80,25 +79,12 @@ onMounted(() => {
   checkMobileView()
   window.addEventListener('resize', checkMobileView)
   window.addEventListener('scroll', handleScroll)
-  
-  // 监听浏览器前进后退事件，同步标签页状态
-  window.addEventListener('popstate', handlePopState)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobileView)
   window.removeEventListener('scroll', handleScroll)
-  window.removeEventListener('popstate', handlePopState)
 })
-
-// 处理浏览器前进后退事件
-const handlePopState = () => {
-  const newTab = getSavedTab()
-  if (newTab !== activeTab.value) {
-    activeTab.value = newTab
-    sessionStorage.setItem('mwcup-active-tab', newTab)
-  }
-}
 
 const openSidebar = () => {
   isSidebarOpen.value = true
@@ -202,31 +188,21 @@ const openCommunity = () => {
       @click="isSidebarOpen = false"
     ></div>
     <main class="main-content" :class="{ 'content-expanded': !isSidebarOpen }">
-      <Transition name="slide-fade" mode="out-in">
-        <!-- 上传系统独立布局，不使用 content-container -->
-        <div v-if="activeTab === 'upload'" class="upload-container animate-fadeInUp" key="upload">
-          <UploadSystem />
-        </div>
-        
-        <!-- 其他页面使用 content-container -->
-        <div v-else class="content-container">
-          <div v-if="activeTab === 'matches'" class="content-panel animate-fadeInUp" key="matches">
-            <RoundSelector />
+      <router-view v-slot="{ Component, route }">
+        <Transition name="slide-fade" mode="out-in">
+          <!-- 上传系统独立布局，不使用 content-container -->
+          <div v-if="route.path.startsWith('/upload')" class="upload-container animate-fadeInUp">
+            <component :is="Component" />
           </div>
           
-          <div v-else-if="activeTab === 'docs'" class="content-panel animate-fadeInUp" key="docs">
-            <DocumentDisplay />
+          <!-- 其他页面使用 content-container -->
+          <div v-else class="content-container">
+            <div class="content-panel animate-fadeInUp">
+              <component :is="Component" />
+            </div>
           </div>
-          
-          <div v-else-if="activeTab === 'levels'" class="content-panel animate-fadeInUp" key="levels">
-            <LevelFileTest />
-          </div>
-          
-          <div v-else-if="activeTab === 'stats'" class="content-panel animate-fadeInUp" key="stats-main">
-            <StatsAnalysis />
-          </div>
-        </div>
-      </Transition>
+        </Transition>
+      </router-view>
     </main>
     
     <!-- 返回顶部按钮 -->

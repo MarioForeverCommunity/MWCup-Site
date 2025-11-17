@@ -2078,8 +2078,8 @@ function getSchemeLink(scheme: string | undefined): string | null {
 // 导航到文档标准页面
 function navigateToDocumentStandard(): void {
   // 在新标签页中打开，并设置对应的标签页和文档选择
-  const baseUrl = window.location.origin + window.location.pathname
-  const url = `${baseUrl}?tab=docs&doc=standard`
+  const baseUrl = window.location.origin
+  const url = `${baseUrl}/docs/standard-2020`
   window.open(url, '_blank')
 }
 

@@ -224,7 +224,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import type { 
   LevelRankingItem, 
   MultiLevelRankingItem, 
@@ -269,6 +270,14 @@ function centerAlignAllCells(ws: XLSXWorkSheet) {
     cell.s.alignment = { horizontal: 'center', vertical: 'center' }
   }
 }
+
+// 路由相关
+const router = useRouter()
+
+// 定义props
+const props = defineProps<{
+  type?: string
+}>()
 
 // 响应式状态
 const activeTab = ref<'single' | 'multi' | 'original'>('single')
@@ -552,6 +561,20 @@ const filteredOriginalScoreRanking = computed(() => {
 // 初始化
 onMounted(async () => {
   await loadInitialData()
+})
+
+// 监听路由参数变化
+watch(() => props.type, (newType) => {
+  if (newType && ['single', 'multi', 'original'].includes(newType)) {
+    activeTab.value = newType as 'single' | 'multi' | 'original'
+  }
+}, { immediate: true })
+
+// 监听标签页变化，更新路由
+watch(activeTab, (newTab) => {
+  if (props.type !== newTab) {
+    router.push({ name: 'StatsRanking', params: { type: newTab } })
+  }
 })
 
 // 加载初始数据

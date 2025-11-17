@@ -4,7 +4,7 @@
       <div class="control-panel">
         <div class="form-group">
           <label for="year-select" class="form-label">选择届次：</label>
-          <select id="year-select" v-model="selectedYear" @change="loadData" class="form-control hover-scale">
+          <select id="year-select" v-model="selectedYear" @change="handleYearChange" class="form-control hover-scale">
             <option v-for="option in availableEditionOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -103,7 +103,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed } from 'vue';
+import { defineComponent, ref, onMounted, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { loadTotalPointsData, type TotalPointsData } from '../utils/totalPointsCalculator';
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader';
 import { getRoundChineseName } from '../utils/roundNames';
@@ -112,7 +113,15 @@ import { formatResultDisplay as formatResult } from '../utils/resultFormatter';
 
 export default defineComponent({
   name: 'TotalPointsRanking',
-  setup() {
+  props: {
+    year: {
+      type: String,
+      default: ''
+    }
+  },
+  setup(props) {
+    const route = useRoute();
+    const router = useRouter();
     const selectedYear = ref('2025');
     const data = ref<TotalPointsData>({
       year: '',
@@ -285,15 +294,37 @@ export default defineComponent({
       }));
     })
 
+    // 监听年份变化
+    const handleYearChange = () => {
+      // 先加载数据，然后更新路由
+      loadData();
+      if (selectedYear.value !== route.params.year) {
+        router.push({ name: 'StatsTotalPoints', params: { year: selectedYear.value } });
+      }
+    };
+
+    // 监听路由参数变化
+    watch(() => props.year, (newYear) => {
+      if (newYear && newYear !== selectedYear.value) {
+        selectedYear.value = newYear;
+        loadData();
+      }
+    }, { immediate: true });
+
     // 初始化
     onMounted(async () => {
       availableYears.value = getAvailableYears();
+      // 如果路由参数中有年份，使用路由参数
+      if (props.year && props.year !== selectedYear.value) {
+        selectedYear.value = props.year;
+      }
       try {
         yamlData.value = await fetchMarioWorkerYaml();
         await loadData();
       } catch (error) {
       }
-    });    return {
+    });
+    return {
       selectedYear,
       data,
       isLoading,
@@ -306,7 +337,8 @@ export default defineComponent({
       formatResultDisplay,
       getPlayerCountForRound,
       formatAvailableRoundsDisplay,
-      playersWithRank
+      playersWithRank,
+      handleYearChange
     };
   }
 });

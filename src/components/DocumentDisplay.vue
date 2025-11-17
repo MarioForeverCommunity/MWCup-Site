@@ -25,7 +25,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 
 interface DocumentInfo {
@@ -41,11 +42,15 @@ const availableDocs: DocumentInfo[] = [
     filename: 'regulation.md'
   },
   {
-    key: 'standard',
+    key: 'standard-2020',
     title: '评分标准（2020版）',
     filename: 'standard2020.md'
   }
 ]
+
+// Vue Router
+const route = useRoute()
+const router = useRouter()
 
 const documentContent = ref<string>('')
 const loading = ref(false)
@@ -58,14 +63,22 @@ const renderedContent = computed(() => {
 })
 
 const selectDocument = (docKey: string) => {
-  selectedDoc.value = docKey
-  loadDocumentContent()
-  updateUrlParams(docKey)
-  
-  // 文档切换时滚动到顶部
-  setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, 100)
+  // 只有当选择的文档与当前不同时才更新
+  if (selectedDoc.value !== docKey) {
+    selectedDoc.value = docKey
+    loadDocumentContent()
+    
+    // 使用Vue Router更新路由
+    router.push({
+      name: 'DocsSub',
+      params: { doc: docKey }
+    })
+    
+    // 文档切换时滚动到顶部
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, 100)
+  }
 }
 
 async function loadDocumentContent() {
@@ -101,56 +114,36 @@ async function loadDocumentContent() {
   }
 }
 
-// 更新URL参数
-const updateUrlParams = (docKey: string) => {
-  const url = new URL(window.location.href)
-  const params = new URLSearchParams(url.search)
-  
-  // 设置doc参数
-  params.set('doc', docKey)
-  
-  // 更新URL（不会触发页面刷新）
-  const newUrl = `${url.pathname}?${params.toString()}`
-  window.history.replaceState({}, '', newUrl)
-}
-
-// 检查URL参数来确定初始选择的文档
-const checkUrlParams = () => {
-  const urlParams = new URLSearchParams(window.location.search)
-  const docParam = urlParams.get('doc')
-  
-  if (docParam && availableDocs.find(doc => doc.key === docParam)) {
-    return docParam
+// 检查路由参数来确定初始选择的文档
+const checkRouteParams = () => {
+  const docKey = route.params.doc as string
+  if (docKey && availableDocs.some(doc => doc.key === docKey)) {
+    return docKey
   }
-  
+  // 只有当路由参数不存在或不合法时，才使用第一个文档
   return availableDocs[0]?.key || ''
 }
 
-// 处理浏览器前进后退事件
-const handlePopState = () => {
-  const newDoc = checkUrlParams()
-  if (newDoc !== selectedDoc.value) {
-    selectDocument(newDoc)
+
+watch(() => route.params.doc, (newDoc) => {
+  if (newDoc && typeof newDoc === 'string' && selectedDoc.value !== newDoc) {
+    selectedDoc.value = newDoc
+    loadDocumentContent()
   }
-}
+})
 
 // 组件挂载时初始化
 onMounted(() => {
   if (availableDocs.length > 0) {
-    selectDocument(checkUrlParams())
+    const initialDoc = checkRouteParams()
+    selectedDoc.value = initialDoc
+    loadDocumentContent()
   }
-  // 监听popstate事件
-  window.addEventListener('popstate', handlePopState)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('popstate', handlePopState)
+  // 不再需要移除事件监听器，因为Vue Router会自动处理
 })
-
-// 如果不在onMounted中，先设置一个默认值
-if (availableDocs.length > 0) {
-  selectedDoc.value = availableDocs[0].key
-}
 </script>
 
 <style scoped>
