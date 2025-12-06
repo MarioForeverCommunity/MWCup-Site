@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+export PATH="$HOME/.bun/bin:$PATH"
+
 # 确保脚本抛出遇到的错误
 set -e
 
