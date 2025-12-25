@@ -3,7 +3,7 @@
 - **前端框架**: Vue 3
 - **开发语言**: TypeScript
 - **构建工具**: Vite
-- **包管理器**: bun
+- **包管理器**: bun (禁止使用 npm/yarn/pnpm)
 - **样式方案**: CSS3 (CSS Variables + 模块化)
 - **数据处理**: js-yaml, papaparse
 

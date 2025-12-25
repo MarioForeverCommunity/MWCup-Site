@@ -80,6 +80,8 @@ src/
 │   ├── TotalPointsRanking.vue  # 积分排行
 │   ├── UploadSystem.vue     # 上传系统 iframe
 │   └── UserManagement.vue   # 用户一览
+├── router/             # Vue 路由配置
+│   └── index.ts        # 路由定义
 ├── styles/             # 样式文件
 │   ├── style.css           # 主样式文件
 │   ├── theme.css           # 主题配色
@@ -87,7 +89,8 @@ src/
 │   ├── layout.css          # 布局样式
 │   └── animations.css      # 动画效果
 ├── types/              # TypeScript 类型定义
-│   └── ranking.ts          # 排名相关类型
+│   ├── ranking.ts          # 排名相关类型
+│   └── xlsx-js-style.d.ts  # xlsx-js 样式类型定义
 ├── utils/              # 工具函数
 │   ├── dataAnalyzer.ts      # 数据统计分析
 │   ├── editionHelper.ts     # 届数计算
