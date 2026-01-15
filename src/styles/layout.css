@@ -97,7 +97,6 @@
   color: white;
   box-shadow: 0 8px 25px rgba(255, 99, 71, 0.3);
   border-color: var(--primary-color);
-  animation: glow 1.5s ease-in-out infinite alternate;
 }
 
 /* === 主内容区域 === */

@@ -220,7 +220,7 @@ async function getAllRounds(): Promise<{ year: number; round: string }[]> {
       // 2024年
       '2024P1', '2024P2', '2024I1', '2024I2', '2024I3', '2024R', '2024F',
       // 2025年
-      '2025P1', '2025P2', '2025I1', '2025I2', '2025I3'
+      '2025P1', '2025P2', '2025I1', '2025I2', '2025I3', '2025F',
     ];
     
     for (let i = 0; i < knownFiles.length; i++) {

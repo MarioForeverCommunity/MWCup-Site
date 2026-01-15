@@ -49,7 +49,7 @@
                 <th>选手</th>
                 <template v-if="filteredOverallRoundData?.roundCodes">
                   <template v-for="(roundCode, index) in filteredOverallRoundData.roundCodes" :key="roundCode">
-                    <th>第{{ toChineseNumber(index + 1) }}{{ year === '2012' ? '轮' : isTopicMode(roundCode) ? '题' : '轮' }}得分</th>
+                    <th>第{{ toChineseNumber(Number(index) + 1) }}{{ year === '2012' ? '轮' : isTopicMode(roundCode) ? '题' : '轮' }}得分</th>
                   </template>
                 </template>
                 <template v-if="filteredOverallRoundData?.isShowValidLevel && filteredOverallRoundData?.validLevelColumns">
@@ -103,7 +103,7 @@
                     </tr>
                   </template>
                   <!-- 添加小组间的分隔线 -->
-                  <tr v-if="groupIndex < overallRoundData.groupOrder.length - 1" class="group-separator">
+                  <tr v-if="Number(groupIndex) < overallRoundData.groupOrder.length - 1" class="group-separator">
                     <td :colspan="overallRoundData.totalColumns" class="separator-cell"></td>
                   </tr>
                 </template>
@@ -505,12 +505,6 @@ const searchPlayer = ref('')
 const searchJudge = ref('')
 
 // 移除未使用的接口定义
-
-// ===== 导出到 Excel：表格引用与导出方法 =====
-const overallTableRef = ref<HTMLTableElement | null>(null)
-const detailedTableRef = ref<HTMLTableElement | null>(null)
-const publicTableRef = ref<HTMLTableElement | null>(null)
-const totalTableRef = ref<HTMLTableElement | null>(null)
 
 const buildFileName = (suffix: string) => {
   const roundName = getRoundChineseName(props.round, { year: props.year })
