@@ -197,38 +197,42 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
               <tr v-if="!scheduleWithRowspans.items || scheduleWithRowspans.items.length === 0">
                 <td colspan="5">无日程数据</td>
               </tr>
-              <tr 
-                v-for="(item, index) in scheduleWithRowspans.items" 
-                :key="item.stage + item.content + (item.start||'') + index"
-                class="schedule-row"
-              >
-                <td 
-                  v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
-                  :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
-                  class="stage-cell"
-                >
-                  {{ item.stage }}
-                </td>
-                <td class="content-cell">{{ item.content }}</td>
-                <template v-if="item.start === item.end">
-                  <td colspan="2" class="time-cell">{{ formatTime(item.start) }}</td>
-                </template>
-                <template v-else-if="item.start && item.end">
-                  <td class="time-cell">{{ formatTime(item.start) }}</td>
-                  <td class="time-cell">{{ formatTime(item.end) }}</td>
-                </template>
-                <template v-else>
-                  <td colspan="2" class="time-cell">{{ formatTime(item.start) || formatTime(item.end) || '——' }}</td>
-                </template>
-                <td class="link-cell">
-                  <template v-if="item.multipleLinks">
-                    <div v-for="(link, idx) in filterMultipleLinks(item.multipleLinks, props.round)" :key="link + idx" class="multi-link-container">
-                      <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link, !!props.round)"></a>
-                    </div>
+              <template v-for="(item, index) in scheduleWithRowspans.items" :key="item.stage + item.content + (item.start||'') + index">
+                <tr class="schedule-row">
+                  <td 
+                    v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
+                    :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
+                    class="stage-cell"
+                  >
+                    {{ item.stage }}
+                  </td>
+                  <td class="content-cell">{{ item.content }}</td>
+                  <template v-if="item.start === item.end">
+                    <td colspan="2" class="time-cell">{{ formatTime(item.start) }}</td>
                   </template>
-                  <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>
-                </td>
-              </tr>
+                  <template v-else-if="item.start && item.end">
+                    <td class="time-cell">{{ formatTime(item.start) }}</td>
+                    <td class="time-cell">{{ formatTime(item.end) }}</td>
+                  </template>
+                  <template v-else>
+                    <td colspan="2" class="time-cell">{{ formatTime(item.start) || formatTime(item.end) || '——' }}</td>
+                  </template>
+                  <td class="link-cell">
+                    <template v-if="item.multipleLinks">
+                      <div v-for="(link, idx) in filterMultipleLinks(item.multipleLinks, props.round)" :key="link + idx" class="multi-link-container">
+                        <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link, !!props.round)"></a>
+                      </div>
+                    </template>
+                    <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>
+                  </td>
+                </tr>
+                <tr
+                  v-if="index < scheduleWithRowspans.items.length - 1 && scheduleWithRowspans.items[index].stage !== scheduleWithRowspans.items[index + 1].stage"
+                  class="stage-separator"
+                >
+                  <td colspan="5" class="separator-cell"></td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -269,6 +273,14 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
   background: rgba(255, 240, 230, 0.9);
   border-right: 1px solid var(--border-medium);
   color: var(--text-primary);
+}
+
+.stage-separator .separator-cell {
+  background: rgba(255, 230, 210, 0.6);
+  border-bottom: 1px rgba(255, 140, 105, 0.3);
+  padding: 0;
+  line-height: 2px;
+  height: 2px;
 }
 
 .link-btn {
