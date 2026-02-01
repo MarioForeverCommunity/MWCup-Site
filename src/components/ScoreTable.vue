@@ -977,7 +977,7 @@ async function calculateOverallRoundData() {
   // 处理选手数据
   const groupMap: Record<string, string[]> = {}
   // 2020年及以后的初赛轮次显示有效题目列
-  const isShowValidLevel = ['2020', '2021', '2022', '2023', '2024', '2025'].includes(props.year) && roundCodes.some(code => code.startsWith('I'));
+  const isShowValidLevel = ['2020', '2021', '2022', '2023', '2024', '2025', '2026'].includes(props.year) && roundCodes.some(code => code.startsWith('I'));
   const is2019 = props.year === '2019' && roundCodes.some(code => code.startsWith('G'));
   
   // 有效题目列内容（2020年及以后初赛）

@@ -135,6 +135,14 @@
       "I2": {"base_score": 100, "bonus_score": 5},
       "I3": {"base_score": 100, "bonus_score": 5},
       "F": {"base_score": 100, "bonus_score": 8}
+    },
+    "2026": {
+      "P1": {"base_score": 100, "bonus_score": 5},
+      "P2": {"base_score": 100, "bonus_score": 5},
+      "I1": {"base_score": 100, "bonus_score": 5},
+      "I2": {"base_score": 100, "bonus_score": 5},
+      "I3": {"base_score": 100, "bonus_score": 5},
+      "F": {"base_score": 100, "bonus_score": 8}
     }
   }
 }

@@ -2997,3 +2997,29 @@ season:
             start: 2025-08-09T22:00
             end: 2025-08-13T22:00
             mf_tid: 3675
+  2026:
+    scoring_scheme: E
+    host: Fahlee
+    chief_judge: false
+    rounds:
+      P1:
+        is_warmup: true
+        smwp_version: [1.7.11, 1.7.12]
+        players:
+
+        judges:
+          J1:
+          J2:
+        schedule:
+          match:
+            start: 2026-02-06T20:00
+            end: 2026-02-20T22:00
+            mf_tid:
+          judging:
+            start: 2026-02-06T20:00
+            end: 2026-02-28T22:00
+            mf_tid:
+          voting:
+            start: 2026-02-20T22:00
+            end: 2026-02-28T22:00
+            mf_tid:

@@ -1,4 +1,5 @@
 export const uploadUrlMap: Record<string, string> = {
+  '2026': 'https://mwcup2026.marioforever.net',
   '2025': 'https://mwcup2025.marioforever.net',
   '2024': 'https://mwcup2024.marioforever.net',
   '2023': 'https://mwcup2023.marioforever.net',

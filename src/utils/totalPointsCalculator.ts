@@ -546,7 +546,7 @@ async function calculatePlayerTotalScore(year: string, playerData: any, yamlData
   } else if (['2020', '2021'].includes(year)) {
     // 2020-2021年初赛：有效关卡制，有扣分
     totalScore = await calculateValidLevelTotalScore(year, playerData, yamlData, true);
-  } else if (['2022', '2023', '2024', '2025'].includes(year)) {
+  } else if (['2022', '2023', '2024', '2025', '2026'].includes(year)) {
     // 2022年之后初赛：有效关卡制，无扣分
     totalScore = await calculateValidLevelTotalScore(year, playerData, yamlData, false);
   } else {
