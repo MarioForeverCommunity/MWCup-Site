@@ -8,7 +8,7 @@ const route = useRoute()
 const router = useRouter()
 
 // 所有支持的年份，分为比赛系统和网盘两部分
-const competitionYears = ['2025', '2024', '2023', '2022']
+const competitionYears = ['2026', '2025', '2024', '2023', '2022']
 const archiveYears = ['2021', '2020', '2019', '2018', '2017', '2016', '2015', '2014', '2013', '2012']
 const years = [...competitionYears, ...archiveYears] as const
 
@@ -59,6 +59,9 @@ const currentUrl = computed(() => urlMap[activeYear.value])
 // 判断是否显示iframe（只有比赛系统显示）
 const showIframe = computed(() => competitionYears.includes(activeYear.value))
 
+// 2026年临时禁用提示
+const showConstructionNotice = computed(() => activeYear.value === '2026')
+
 // 打开链接（比赛系统新窗口不带referrer，其他正常）
 const openUrl = () => {
   if (showIframe.value) {
@@ -106,7 +109,14 @@ const openUrl = () => {
       </button>
     </div>
     
-    <div v-if="showIframe" class="iframe-container">
+    <div v-if="showConstructionNotice" class="construction-notice">
+      <div class="notice-content">
+        <div class="notice-icon">🚧</div>
+        <div class="notice-text">工事中，请打开上传系统操作</div>
+      </div>
+    </div>
+    
+    <div v-else-if="showIframe" class="iframe-container">
       <iframe 
         :src="currentUrl" 
         frameborder="0" 
@@ -144,6 +154,33 @@ const openUrl = () => {
   background-color: var(--background-secondary);
   display: flex;
   flex-direction: column;
+}
+
+.construction-notice {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-secondary);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-height: 760px;
+}
+
+.notice-content {
+  text-align: center;
+  padding: 40px;
+}
+
+.notice-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.notice-text {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .upload-iframe {
