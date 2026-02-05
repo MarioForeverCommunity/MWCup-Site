@@ -40,7 +40,7 @@
       </div>
       <!-- 赛况总表 -->
       <div v-if="filteredOverallRoundData" class="overall-status">
-        <h4>赛况总表 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportOverallToExcel">导出表格 (beta)</button></h4>
+        <h4>赛况总表 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportOverallToExcel">导出表格</button></h4>
         <div class="table-wrapper">
           <table ref="overallTableRef" class="table-base overall-table">
             <thead>
@@ -115,7 +115,7 @@
 
       <!-- 详细评分表 -->
       <div class="detailed-scores">
-        <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportDetailedToExcel">导出表格 (beta)</button></h4>
+        <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportDetailedToExcel">导出表格</button></h4>
         <p class="scheme-info">
           评分标准:
           <template v-if="getSchemeLink(scoreData.scoringScheme)">
@@ -265,7 +265,7 @@
         
         <!-- 大众评分表 (仅评分方案E) -->
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0" class="public-scores">
-          <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格 (beta)</button></h4>
+          <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
           <p class="scheme-info">
           评分标准:
           <a 
@@ -331,7 +331,7 @@
         
         <!-- 总分排名表 -->
         <div class="player-totals">
-          <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格 (beta)</button></h4>
+          <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格</button></h4>
           <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 大众评分×25%</p>
           <div class="table-wrapper">
             <table ref="totalTableRef" class="table-base total-table">
