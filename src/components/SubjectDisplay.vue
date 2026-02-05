@@ -270,7 +270,6 @@ watch(() => [props.year, props.round], () => {
 }
 
 .markdown-content :deep(h1) {
-  margin-top: 0.5rem;
   font-size: 1.8rem;
   padding-bottom: 0.5rem;
 }
