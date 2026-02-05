@@ -113,10 +113,10 @@ export function parseCsvToScoreRecords(
     const judgeCodeIndex = headers.findIndex(h => h === '评委');
     
     if (playerCodeIndex === -1) {
-      throw new Error('CSV格式错误：找不到"选手码"或"选手用户名"列');
+      throw new Error('未找到选手评分数据');
     }
     if (judgeCodeIndex === -1) {
-      throw new Error('CSV格式错误：找不到"评委"列');
+      throw new Error('未找到评委评分数据');
     }
 
     // 获取当前轮次的评分方案
@@ -967,7 +967,7 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
   const penaltyIndex = headers.findIndex(h => h === '扣分');
   
   if ([playerCodeIndex, voterIndex, appreciationIndex, innovationIndex, designIndex, gameplayIndex, bonusIndex].some(i => i === -1)) {
-    throw new Error('大众评分CSV格式错误：缺少必要列');
+    throw new Error('未找到大众评分数据');
   }
   
   // 加载maxScore.json获取附加分设置
