@@ -59,8 +59,11 @@ const currentUrl = computed(() => urlMap[activeYear.value])
 // 判断是否显示iframe（只有比赛系统显示）
 const showIframe = computed(() => competitionYears.includes(activeYear.value))
 
-// 2026年临时禁用提示
-const showConstructionNotice = computed(() => activeYear.value === '2026')
+// 临时禁用的年份列表（后续如需禁用某个年份，可在此添加）
+const disabledYears: readonly string[] = ['']
+
+// 判断是否显示工事中提示
+const showConstructionNotice = computed(() => disabledYears.includes(activeYear.value))
 
 // 打开链接（比赛系统新窗口不带referrer，其他正常）
 const openUrl = () => {

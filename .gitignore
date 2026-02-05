@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .vercel/*
+AGENTS.md
 
 public/data/levels/*
 !public/data/levels/*.json
