@@ -315,7 +315,7 @@ function downloadLevel(file: LevelFile) {
  * 判断某年P1是否为热身赛
  */
 function isWarmupRound(year: number, roundKey: string): boolean {
-  const warmupYears = [2013, 2016, 2020, 2022, 2023, 2024, 2025];
+  const warmupYears = [2013, 2016, 2020, 2022, 2023, 2024, 2025, 2026];
   return roundKey === 'P1' && warmupYears.includes(year);
 }
 
