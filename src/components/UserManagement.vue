@@ -76,7 +76,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in paginatedUsers" :key="user.序号" class="user-row hover-row animate-fadeInLeft">
+            <tr v-for="user in filteredUsers" :key="user.序号" class="user-row hover-row animate-fadeInLeft">
               <td class="user-id">{{ user.序号 }}</td>
               <td class="baidu-name">
                 <span v-if="user.百度用户名" class="username">{{ user.百度用户名 }}</span>
@@ -104,27 +104,7 @@
         </table>
       </div>
 
-      <div class="pagination-controls animate-fadeInUp">
-        <button 
-          @click="currentPage = Math.max(1, currentPage - 1)" 
-          :disabled="currentPage === 1"
-          class="btn-secondary hover-scale"
-        >
-          ← 上一页
-        </button>
-        <div class="page-info">
-          <span class="current-page">{{ currentPage }}</span>
-          <span class="separator">/</span>
-          <span class="total-pages">{{ totalPages }}</span>
-        </div>
-        <button 
-          @click="currentPage = Math.min(totalPages, currentPage + 1)" 
-          :disabled="currentPage === totalPages"
-          class="btn-secondary hover-scale"
-        >
-          下一页 →
-        </button>
-      </div>
+
     </div>
 
     <div class="help-section animate-fadeInUp">
@@ -150,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { loadUserData, type UserData } from '../utils/userDataProcessor'
 
 const users = ref<UserData[]>([])
@@ -158,8 +138,6 @@ const loading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
 const filterType = ref('')
-const currentPage = ref(1)
-const itemsPerPage = 20
 
 // 筛选后的用户
 const filteredUsers = computed(() => {
@@ -207,25 +185,6 @@ const filteredUsers = computed(() => {
   return filtered
 })
 
-// 分页后的用户
-const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredUsers.value.slice(start, end)
-})
-
-// 总页数
-const totalPages = computed(() => {
-  return Math.ceil(filteredUsers.value.length / itemsPerPage)
-})
-
-// 监听总页数变化，如果当前页数超过最大页数，则调整到最大页数
-watch(totalPages, (newTotalPages) => {
-  if (currentPage.value > newTotalPages && newTotalPages > 0) {
-    currentPage.value = newTotalPages
-  }
-}, { immediate: true })
-
 // 统计数据
 const bothPlatformUsers = computed(() => {
   return users.value.filter(user => user.百度用户名 && user.社区用户名).length
@@ -267,7 +226,6 @@ const refreshData = async () => {
   try {
     const userData = await loadUserData()
     users.value = userData
-    currentPage.value = 1
   } catch (err) {
     error.value = '加载数据失败: ' + (err instanceof Error ? err.message : '未知错误')
   } finally {

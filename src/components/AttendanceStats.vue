@@ -73,7 +73,7 @@
           </thead>
           <tbody>
             <tr 
-              v-for="(item, index) in paginatedData" 
+              v-for="(item, index) in filteredData" 
               :key="`${item.year}-${item.round}`" 
               class="attendance-row"
               :style="{ animationDelay: `${index * 0.05}s` }"
@@ -111,34 +111,13 @@
         </table>
       </div>
 
-      <!-- 分页控件 -->
-      <div class="pagination-controls animate-fadeInUp">
-        <button 
-          @click="currentPage = Math.max(1, currentPage - 1)" 
-          :disabled="currentPage === 1"
-          class="btn-secondary hover-scale"
-        >
-          ← 上一页
-        </button>
-        <div class="page-info">
-          <span class="current-page">{{ currentPage }}</span>
-          <span class="page-separator">/</span>
-          <span class="total-pages">{{ totalPages }}</span>
-        </div>
-        <button 
-          @click="currentPage = Math.min(totalPages, currentPage + 1)" 
-          :disabled="currentPage === totalPages"
-          class="btn-secondary hover-scale"
-        >
-          下一页 →
-        </button>
-      </div>
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { analyzeAttendanceData } from '../utils/dataAnalyzer'
 import { type AttendanceData } from '../utils/userDataProcessor'
 import { getEditionOptions } from '../utils/editionHelper'
@@ -148,8 +127,6 @@ const loading = ref(false)
 const error = ref('')
 const selectedYear = ref('')
 const sortBy = ref('year')
-const currentPage = ref(1)
-const itemsPerPage = 20
 
 // 可用年份
 const availableYears = computed(() => {
@@ -207,25 +184,6 @@ const filteredData = computed(() => {
   return filtered
 })
 
-// 分页后的数据
-const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredData.value.slice(start, end)
-})
-
-// 总页数
-const totalPages = computed(() => {
-  return Math.ceil(filteredData.value.length / itemsPerPage)
-})
-
-// 监听总页数变化，如果当前页数超过最大页数，则调整到最大页数
-watch(totalPages, (newTotalPages) => {
-  if (currentPage.value > newTotalPages && newTotalPages > 0) {
-    currentPage.value = newTotalPages
-  }
-}, { immediate: true })
-
 // 平均上传率
 const averageAttendance = computed(() => {
   if (filteredData.value.length === 0) return 0
@@ -261,7 +219,6 @@ const refreshData = async () => {
   try {
     const data = await analyzeAttendanceData()
     attendanceData.value = data
-    currentPage.value = 1
   } catch (err) {
     error.value = '加载数据失败: ' + (err instanceof Error ? err.message : '未知错误')
   } finally {
