@@ -36,6 +36,11 @@
       <!-- 统计概览卡片 -->
       <div class="summary-cards">
         <div class="stat-card hover-lift">
+          <h3>轮次总数</h3>
+          <div class="stat-value">{{ filteredData.length }}</div>
+          <div class="stat-icon">📊</div>
+        </div>
+        <div class="stat-card hover-lift">
           <h3>平均上传率</h3>
           <div class="stat-value">{{ averageAttendance.toFixed(1) }}%</div>
           <div class="stat-icon">
