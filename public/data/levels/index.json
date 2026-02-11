@@ -16063,5 +16063,20 @@
     "hasPlayerInfo": true,
     "isMultiLevel": false,
     "multiLevelFolder": null
+  },
+  {
+    "name": "2-永夜颂歌2.smwl",
+    "path": "2026年第十五届/热身赛/2-永夜颂歌2.smwl",
+    "mtime": "2026-02-11T15:55:26.000Z",
+    "size": 7676,
+    "playerCode": "2",
+    "year": 2026,
+    "roundType": "热身赛",
+    "playerName": "有名氏",
+    "roundKey": "P1",
+    "groupCode": null,
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
   }
 ]
