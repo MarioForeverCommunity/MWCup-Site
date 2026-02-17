@@ -14,7 +14,7 @@
           <span class="loading-text">加载试题中<span class="loading-dots"></span></span>
         </div>
         
-        <p v-else-if="error">{{ error }}</p>
+        <p v-else-if="error" class="no-subject">{{ error }}</p>
         
         <div v-else-if="subjectContent" class="subject-content-wrapper">
           <div class="markdown-content" v-html="renderedContent"></div>
@@ -235,6 +235,11 @@ watch(() => [props.year, props.round], () => {
   border-radius: var(--radius-large);
   background: var(--bg-panel);
   backdrop-filter: var(--blur-medium);
+}
+
+.no-subject {
+  text-align: center;
+  color: var(--text-error);
 }
 
 .markdown-content {
