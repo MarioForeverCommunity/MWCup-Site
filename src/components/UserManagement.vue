@@ -110,13 +110,12 @@
     <div class="help-section animate-fadeInUp">
       <h3>说明</h3>
       <div class="help-content">
-        <p><strong>用户名对应关系说明：</strong></p>
         <ul>
-          <li>MW杯2012~2019年在百度Marioworker吧举办，2020年之后在Mario Forever社区举办</li>
+          <li>Mario Worker杯2012~2019年在百度Marioworker吧举办，2020年之后在Mario Forever社区举办</li>
           <li>部分百度用户没有注册社区账号，部分社区用户也没有百度账号</li>
-          <li>社区用户可以更改用户名，CSV中的“社区曾用名”与“社区用户名”对应同一用户</li>
+          <li>社区用户可以更改用户名，上表中的“社区曾用名”与“社区用户名”对应同一用户</li>
           <li>序号作为用户在本站的标识符，用于战绩统计等功能</li>
-          <li>社区UID是社区平台的唯一用户标识</li>
+          <li>社区UID是Mario Forever社区平台的唯一用户标识</li>
         </ul>
         <p><strong>平台状态：</strong></p>
         <ul>

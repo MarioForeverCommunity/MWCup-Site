@@ -2780,25 +2780,4 @@ onMounted(() => {
 .total-ranking-hidden {
   margin-top: var(--spacing-lg);
 }
-
-.hidden-notice {
-  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-  border: 1px solid #ffb74d;
-  border-radius: var(--radius-medium);
-  padding: var(--spacing-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  box-shadow: var(--shadow-light);
-}
-
-.hidden-notice .notice-icon {
-  font-size: 1.2rem;
-}
-
-.hidden-notice .notice-text {
-  color: #e65100;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
 </style>
