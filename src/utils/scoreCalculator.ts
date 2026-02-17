@@ -113,10 +113,10 @@ export function parseCsvToScoreRecords(
     const judgeCodeIndex = headers.findIndex(h => h === '评委');
     
     if (playerCodeIndex === -1) {
-      throw new Error('未找到选手评分数据');
+      throw new Error('暂无选手评分数据');
     }
     if (judgeCodeIndex === -1) {
-      throw new Error('未找到评委评分数据');
+      throw new Error('暂无评委评分数据');
     }
 
     // 获取当前轮次的评分方案

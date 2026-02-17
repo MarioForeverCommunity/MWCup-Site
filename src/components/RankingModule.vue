@@ -242,6 +242,7 @@ import {
 import { matchPlayerName } from '../utils/levelFileHelper'
 import { loadUserData } from '../utils/userDataProcessor'
 import { fetchLevelFilesFromLocal, type LevelFile } from '../utils/levelFileHelper'
+import { shouldShowScoreData, fetchMarioWorkerYaml } from '../utils/scheduleHelper'
 
 // SheetJS 工具：按需加载，优先使用 xlsx-js-style（可写样式），失败回退到 xlsx
 type XLSXWorkSheet = { [key: string]: any; '!ref'?: string }
@@ -290,6 +291,7 @@ const originalScoreRanking = ref<OriginalScoreRankingItem[]>([])
 const availableYears = ref<number[]>([])
 const userDataCache = ref<any[]>([])
 const levelFiles = ref<LevelFile[]>([])
+const yamlData = ref<any>(null)
 
 // ===== 导出到 Excel：表格引用与导出方法 =====
 const singleTableRef = ref<HTMLTableElement | null>(null)
@@ -584,12 +586,13 @@ async function loadInitialData() {
     error.value = null
     
     // 并行加载所有数据
-    const [years, singleData, multiData, originalData, userData] = await Promise.all([
+    const [years, singleData, multiData, originalData, userData, yaml] = await Promise.all([
       getAvailableYears(),
       calculateSingleLevelRanking(),
       calculateMultiLevelRanking(),
       calculateOriginalScoreRanking(),
-      loadUserData()
+      loadUserData(),
+      fetchMarioWorkerYaml()
     ])
 
     availableYears.value = years
@@ -597,6 +600,7 @@ async function loadInitialData() {
     multiLevelRanking.value = multiData
     originalScoreRanking.value = originalData
     userDataCache.value = userData
+    yamlData.value = yaml
     
     // 如果没有数据，显示提示信息
     if (singleData.length === 0 && multiData.length === 0 && originalData.length === 0) {
@@ -645,6 +649,11 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
   let filtered = items
   // 剔除2012年关卡
   filtered = filtered.filter(item => item.year !== 2012)
+  
+  // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
+  if (yamlData.value) {
+    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
+  }
   
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.trim()
@@ -703,6 +712,11 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
   // 剔除2012年关卡
   filtered = filtered.filter(item => item.year !== 2012)
   
+  // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
+  if (yamlData.value) {
+    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
+  }
+  
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.trim()
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
@@ -759,6 +773,11 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: R
   let filtered = items
   // 剔除2012年关卡
   filtered = filtered.filter(item => item.year !== 2012)
+  
+  // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
+  if (yamlData.value) {
+    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
+  }
   
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.trim()

@@ -496,3 +496,148 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
   }
   return result;
 }
+
+/**
+ * 获取指定年份和轮次的评分截止时间
+ * @param yamlData YAML数据
+ * @param year 年份字符串
+ * @param roundKey 轮次代码（如 I1, G2, F 等）
+ * @returns 评分截止时间字符串，如果没有则返回 null
+ */
+export function getJudgingEndTime(yamlData: any, year: string, roundKey: string): string | null {
+  const seasonData = yamlData?.season?.[year];
+  if (!seasonData) return null;
+  
+  let roundData = findRoundData(seasonData, roundKey);
+  if (!roundData) return null;
+  
+  const schedule = roundData.schedule;
+  if (!schedule) return null;
+  
+  if (schedule.judging?.end) {
+    return schedule.judging.end;
+  }
+  
+  if (schedule.voting?.end) {
+    return schedule.voting.end;
+  }
+  
+  return null;
+}
+
+/**
+ * 获取指定年份和轮次的大众评分截止时间
+ * @param yamlData YAML数据
+ * @param year 年份字符串
+ * @param roundKey 轮次代码
+ * @returns 大众评分截止时间字符串，如果没有则返回 null
+ */
+export function getVotingEndTime(yamlData: any, year: string, roundKey: string): string | null {
+  const seasonData = yamlData?.season?.[year];
+  if (!seasonData) return null;
+  
+  let roundData = findRoundData(seasonData, roundKey);
+  if (!roundData) return null;
+  
+  const schedule = roundData.schedule;
+  if (!schedule) return null;
+  
+  if (schedule.voting?.end) {
+    return schedule.voting.end;
+  }
+  
+  return null;
+}
+
+/**
+ * 查找轮次数据（处理多轮次键的情况）
+ */
+function findRoundData(seasonData: any, roundKey: string): any {
+  if (seasonData.rounds?.[roundKey]) {
+    return seasonData.rounds[roundKey];
+  }
+  
+  if (seasonData.rounds) {
+    for (const [key, data] of Object.entries(seasonData.rounds)) {
+      if (key.startsWith('[') && key.endsWith(']')) {
+        try {
+          const parsedKey = JSON.parse(key);
+          if (Array.isArray(parsedKey) && parsedKey.includes(roundKey)) {
+            return data;
+          }
+        } catch {
+          const rounds = key.slice(1, -1).split(',').map(r => r.trim());
+          if (rounds.includes(roundKey)) {
+            return data;
+          }
+        }
+      } else if (key.includes(',')) {
+        const rounds = key.split(',').map(r => r.trim());
+        if (rounds.includes(roundKey)) {
+          return data;
+        }
+      }
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * 判断评分是否已截止
+ * @param yamlData YAML数据
+ * @param year 年份字符串
+ * @param roundKey 轮次代码
+ * @returns true 表示评分已截止，false 表示评分未截止
+ */
+export function isJudgingEnded(yamlData: any, year: string, roundKey: string): boolean {
+  const endTime = getJudgingEndTime(yamlData, year, roundKey);
+  if (!endTime) return true;
+  
+  const endDate = new Date(endTime);
+  const now = new Date();
+  
+  return now >= endDate;
+}
+
+/**
+ * 判断大众评分是否已截止
+ * @param yamlData YAML数据
+ * @param year 年份字符串
+ * @param roundKey 轮次代码
+ * @returns true 表示大众评分已截止，false 表示大众评分未截止
+ */
+export function isVotingEnded(yamlData: any, year: string, roundKey: string): boolean {
+  const endTime = getVotingEndTime(yamlData, year, roundKey);
+  if (!endTime) return true;
+  
+  const endDate = new Date(endTime);
+  const now = new Date();
+  
+  return now >= endDate;
+}
+
+/**
+ * 判断指定年份是否应该应用评分截止时间过滤（仅对2026年及之后的赛事生效）
+ * @param year 年份字符串或数字
+ * @returns true 表示应该应用过滤
+ */
+export function shouldApplyDeadlineFilter(year: string | number): boolean {
+  const yearNum = typeof year === 'string' ? parseInt(year) : year;
+  return yearNum >= 2026;
+}
+
+/**
+ * 判断轮次是否应该显示评分数据（综合考虑年份和评分截止时间）
+ * @param yamlData YAML数据
+ * @param year 年份字符串
+ * @param roundKey 轮次代码
+ * @returns true 表示应该显示评分数据
+ */
+export function shouldShowScoreData(yamlData: any, year: string, roundKey: string): boolean {
+  if (!shouldApplyDeadlineFilter(year)) {
+    return true;
+  }
+  
+  return isJudgingEnded(yamlData, year, roundKey);
+}

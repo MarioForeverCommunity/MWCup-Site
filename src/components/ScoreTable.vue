@@ -330,7 +330,7 @@
         </div>
         
         <!-- 总分排名表 -->
-        <div class="player-totals">
+        <div v-if="shouldShowTotalRanking" class="player-totals">
           <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格</button></h4>
           <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 大众评分×25%</p>
           <div class="table-wrapper">
@@ -433,6 +433,14 @@
             </table>
           </div>
         </div>
+        
+        <!-- 总分排名未显示提示 -->
+        <div v-else class="total-ranking-hidden">
+          <div class="error-state">
+            <span class="notice-icon">⏰</span>
+            <span class="notice-text">{{ totalRankingDeadlineHint }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -481,6 +489,7 @@ import {
   get2019ValidLevelInfo
 } from '../utils/totalPointsCalculator';
 import { getPreliminaryValidInfoEnhanced } from '../utils/preliminaryValidInfoHelper';
+import { shouldShowScoreData, shouldApplyDeadlineFilter, getJudgingEndTime } from '../utils/scheduleHelper';
 
 // 通过 NoSubmissionRecord.d.ts 扩展了 ScoreRecord 类型，添加了 isNoSubmission 属性
 import '../NoSubmissionRecord.d.ts'
@@ -1957,6 +1966,34 @@ const filteredPlayerScoresWithRank = computed(() => {
   return arr
 })
 
+// 判断是否应该显示总分排名（仅对2026年及之后的赛事生效）
+const shouldShowTotalRanking = computed(() => {
+  if (!shouldApplyDeadlineFilter(props.year)) {
+    return true
+  }
+  
+  if (!yamlData.value) {
+    return true
+  }
+  
+  return shouldShowScoreData(yamlData.value, props.year, props.round)
+})
+
+// 获取评分截止时间提示
+const totalRankingDeadlineHint = computed(() => {
+  if (shouldShowTotalRanking.value || !yamlData.value) return ''
+  
+  const endTime = getJudgingEndTime(yamlData.value, props.year, props.round)
+  if (endTime) {
+    const endDate = new Date(endTime)
+    const now = new Date()
+    if (now < endDate) {
+      return `评分截止时间为 ${endDate.toLocaleString('zh-CN')}`
+    }
+  }
+  return '评分尚未截止，暂不显示总分排名'
+})
+
 // 筛选赛况总表数据
 const filteredOverallRoundData = computed(() => {
   if (!overallRoundData.value) return null;
@@ -2737,5 +2774,31 @@ onMounted(() => {
   font-size: 0.85em;
   font-weight: normal;
   margin-left: 4px;
+}
+
+/* 总分排名隐藏提示样式 */
+.total-ranking-hidden {
+  margin-top: var(--spacing-lg);
+}
+
+.hidden-notice {
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  border: 1px solid #ffb74d;
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  box-shadow: var(--shadow-light);
+}
+
+.hidden-notice .notice-icon {
+  font-size: 1.2rem;
+}
+
+.hidden-notice .notice-text {
+  color: #e65100;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 </style>

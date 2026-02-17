@@ -6,6 +6,7 @@
 
 import { loadRoundScoreData } from './scoreCalculator';
 import { Decimal } from 'decimal.js';
+import { shouldShowScoreData } from './scheduleHelper';
 
 // 设置Decimal的精度和舍入模式
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
@@ -175,6 +176,11 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
   const validRounds: string[] = [];
   for (const round of availableRounds) {
     try {
+      // 过滤评分未截止的轮次（仅对2026年及之后的赛事生效）
+      if (!shouldShowScoreData(yamlData, year, round)) {
+        continue;
+      }
+      
       // 首先检查是否为特殊的总分制评分（如2015年半决赛）
       let roundData = seasonData.rounds[round];
       
