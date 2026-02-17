@@ -264,7 +264,7 @@
         </div>
         
         <!-- 大众评分表 (仅评分方案E) -->
-        <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0" class="public-scores">
+        <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
           <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
           <p class="scheme-info">
           评分标准:
