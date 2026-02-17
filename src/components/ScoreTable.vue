@@ -263,7 +263,7 @@
           </table>
         </div>
         
-        <!-- 大众评分表 (仅评分方案E) -->
+        <!-- 大众评分表 (仅评分方案E)，截止前不显示 -->
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
           <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
           <p class="scheme-info">
@@ -434,8 +434,8 @@
           </div>
         </div>
         
-        <!-- 总分排名未显示提示 -->
-        <div v-else class="total-ranking-hidden">
+        <!-- 评分截止时间提示 -->
+        <div v-if="!shouldShowTotalRanking" class="total-ranking-hidden">
           <div class="error-state">
             <span class="notice-icon">⏰</span>
             <span class="notice-text">{{ totalRankingDeadlineHint }}</span>
