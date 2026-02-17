@@ -14,9 +14,7 @@
           <span class="loading-text">加载试题中<span class="loading-dots"></span></span>
         </div>
         
-        <div v-else-if="error" class="error-state">
-          <span>{{ error }}</span>
-        </div>
+        <p v-else-if="error">{{ error }}</p>
         
         <div v-else-if="subjectContent" class="subject-content-wrapper">
           <div class="markdown-content" v-html="renderedContent"></div>
