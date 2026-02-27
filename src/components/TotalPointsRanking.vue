@@ -404,16 +404,15 @@ export default defineComponent({
 /* 排名特殊样式 */
 
 .rank-first .rank-number {
-  color: var(--primary-color);
-  text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+  color: #FFD700;
 }
 
 .rank-second .rank-number {
-  color: #6c757d;
+  color: #C0C0C0;
 }
 
 .rank-third .rank-number {
-  color: var(--primary-color);
+  color: #CD7F32;
 }
 
 .notes-section {
