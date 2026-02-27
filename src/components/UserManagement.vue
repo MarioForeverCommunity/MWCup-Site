@@ -456,10 +456,6 @@ onMounted(() => {
     font-size: 12px;
     white-space: nowrap;
   }
-
-  .user-management {
-    padding: var(--spacing-md);
-  }
   
   .summary-cards {
     grid-template-columns: 1fr;

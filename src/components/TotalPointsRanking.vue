@@ -470,10 +470,6 @@ export default defineComponent({
     font-size: 12px;
     white-space: nowrap;
   }
-
-  .total-points-ranking {
-    padding: var(--spacing-md);
-  }
   
   .player-col {
     width: 120px;
