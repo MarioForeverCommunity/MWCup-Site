@@ -59,11 +59,11 @@
                 </template>
                 <th v-if="['2019','2020','2021'].includes(year)">超时扣分</th>
                 <th>总得分</th>
-                <!-- 2018年单循环赛制特有列 -->
-                <th v-if="year === '2018'">胜</th>
-                <th v-if="year === '2018'">平</th>
-                <th v-if="year === '2018'">负</th>
-                <th v-if="year === '2018'">总积分</th>
+                <!-- 2018年单循环赛制特有列（四分之一决赛不显示） -->
+                <th v-if="year === '2018' && !['Q1', 'Q2'].includes(round)">胜</th>
+                <th v-if="year === '2018' && !['Q1', 'Q2'].includes(round)">平</th>
+                <th v-if="year === '2018' && !['Q1', 'Q2'].includes(round)">负</th>
+                <th v-if="year === '2018' && !['Q1', 'Q2'].includes(round)">总积分</th>
                 <th class="rank-col">小组内排名</th>
                 <th class="rank-col">总排名</th>
                 <th>是否晋级</th>
@@ -92,11 +92,11 @@
                         {{ player.timeoutPenalty ? '-' + formatScore(player.timeoutPenalty) : '-' }}
                       </td>
                       <td class="total-score">{{ formatScore(player.totalScore) }}</td>
-                      <!-- 2018年单循环赛制数据列 -->
-                      <td v-if="year === '2018'" class="win-count">{{ player.wins || 0 }}</td>
-                      <td v-if="year === '2018'" class="draw-count">{{ player.draws || 0 }}</td>
-                      <td v-if="year === '2018'" class="loss-count">{{ player.losses || 0 }}</td>
-                      <td v-if="year === '2018'" class="match-points">{{ player.matchPoints || 0 }}</td>
+                      <!-- 2018年单循环赛制数据列（四分之一决赛不显示） -->
+                      <td v-if="year === '2018' && !['Q1', 'Q2'].includes(round)" class="win-count">{{ player.wins || 0 }}</td>
+                      <td v-if="year === '2018' && !['Q1', 'Q2'].includes(round)" class="draw-count">{{ player.draws || 0 }}</td>
+                      <td v-if="year === '2018' && !['Q1', 'Q2'].includes(round)" class="loss-count">{{ player.losses || 0 }}</td>
+                      <td v-if="year === '2018' && !['Q1', 'Q2'].includes(round)" class="match-points">{{ player.matchPoints || 0 }}</td>
                       <td class="rank-col">{{ player.groupRank }}</td>
                       <td class="rank-col">{{ player.totalRank }}</td>
                       <td :class="{'advanced': isPlayerAdvanced(player.playerName)}">{{ isPlayerAdvanced(player.playerName) ? '是' : '否' }}</td>
@@ -303,14 +303,14 @@
                         <span v-if="playerPublicScore.playerCode !== playerPublicScore.playerName && !playerPublicScore.playerCode.startsWith('~')" class="player-code">{{ playerPublicScore.playerCode }}</span>
                         <span class="player-name-text">{{ playerPublicScore.playerName }}</span>
                       </td>
-                      <td class="voter-name">{{ vote.voterName }}</td>
-                      <td class="score-cell">{{ vote.appreciation }} <span class="converted-score">({{ formatScore(vote.appreciation * 1.5) }})</span></td>
-                      <td class="score-cell">{{ vote.innovation }} <span class="converted-score">({{ formatScore(vote.innovation * 1.5) }})</span></td>
-                      <td class="score-cell">{{ vote.design }} <span class="converted-score">({{ formatScore(vote.design * 3) }})</span></td>
-                      <td class="score-cell">{{ vote.gameplay }} <span class="converted-score">({{ formatScore(vote.gameplay * 4) }})</span></td>
-                      <td class="score-cell">{{ vote.bonus }} <span v-if="getDisplayedBonus(vote.bonus) !== vote.bonus.toString()" class="converted-score">({{ getDisplayedBonus(vote.bonus) }})</span></td>
-                      <td v-if="hasPublicPenalty" class="score-cell">{{ vote.penalty || 0 }}</td>
-                      <td class="score-cell">{{ formatScore(vote.totalScore) }}</td>
+                      <td class="voter-name" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.voterName }}</td>
+                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.appreciation }} <span class="converted-score">({{ formatScore(vote.appreciation * 1.5) }})</span></td>
+                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.innovation }} <span class="converted-score">({{ formatScore(vote.innovation * 1.5) }})</span></td>
+                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.design }} <span class="converted-score">({{ formatScore(vote.design * 3) }})</span></td>
+                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.gameplay }} <span class="converted-score">({{ formatScore(vote.gameplay * 4) }})</span></td>
+                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.bonus }} <span v-if="getDisplayedBonus(vote.bonus) !== vote.bonus.toString()" class="converted-score">({{ getDisplayedBonus(vote.bonus) }})</span></td>
+                      <td v-if="hasPublicPenalty" class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.penalty || 0 }}</td>
+                      <td class="score-cell total-score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ formatScore(vote.totalScore) }}</td>
                       <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="final-score">
                         {{ formatScore(playerPublicScore.finalPublicScore) }}
                         <span v-if="searchJudge && searchJudge.trim()" class="filtered-count">
@@ -551,7 +551,8 @@ async function exportOverallToExcel() {
   }
   if (['2019', '2020', '2021'].includes(props.year)) header.push('超时扣分')
   header.push('总得分')
-  if (props.year === '2018') header.push('胜', '平', '负', '总积分')
+  // 2018年单循环赛制特有列（四分之一决赛不显示）
+  if (props.year === '2018' && !['Q1', 'Q2'].includes(props.round)) header.push('胜', '平', '负', '总积分')
   header.push('小组内排名', '总排名', '是否晋级')
 
   const data: (string | number)[][] = [header]
@@ -577,7 +578,8 @@ async function exportOverallToExcel() {
         row.push(p.timeoutPenalty ? -Number(p.timeoutPenalty) : 0)
       }
       row.push((p.totalScore && typeof p.totalScore.toNumber === 'function') ? +p.totalScore.toNumber().toFixed(3) : +(Number(p.totalScore) || 0).toFixed(3))
-      if (props.year === '2018') {
+      // 2018年单循环赛制数据列（四分之一决赛不显示）
+      if (props.year === '2018' && !['Q1', 'Q2'].includes(props.round)) {
         row.push(p.wins || 0, p.draws || 0, p.losses || 0, p.matchPoints || 0)
       }
       row.push(p.groupRank ?? '-', p.totalRank ?? '-', (isPlayerAdvanced(p.playerName) ? '是' : '否'))
@@ -1654,7 +1656,35 @@ const filteredPublicScoresWithSearch = computed(() => {
     }).filter(player => player.votes.length > 0); // 只保留有匹配投票记录的选手
   }
   
-  return result;
+  // 为每个投票添加是否是最高分/最低分的标记
+  return result.map(player => {
+    if (!player.votes || player.votes.length === 0) return player;
+    
+    // 提取所有评分
+    const scores = player.votes.map(vote => vote.totalScore);
+    const minScore = Math.min(...scores);
+    const maxScore = Math.max(...scores);
+    const voteCount = player.votes.length;
+    
+    // 为每个投票添加标记
+    const votesWithFlags = player.votes.map(vote => {
+      const isMin = vote.totalScore === minScore;
+      const isMax = vote.totalScore === maxScore;
+      
+      return {
+        ...vote,
+        isMin,
+        isMax,
+        isHalved: (voteCount === 5 && (isMin || isMax)),
+        isRemoved: (voteCount > 5 && (isMin || isMax))
+      };
+    });
+    
+    return {
+      ...player,
+      votes: votesWithFlags
+    };
+  });
 });
 
 // 格式化分数显示
@@ -2623,8 +2653,46 @@ onMounted(() => {
 .revoked-score .score-cell, 
 .revoked-score .judge-total,
 .revoked-score .judge-name {
-  background: rgba(248, 215, 218, 0.8);
+  background-color: rgba(248, 215, 218, 0.5);
   opacity: 0.7;
+}
+
+/* 大众评分特殊处理样式 */
+.public-score-halved {
+  font-style: italic;
+}
+
+.public-score-removed {
+  background-color: rgba(248, 215, 218, 0.5);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* 评委列不应用斜体和删除线样式 */
+.voter-name.public-score-halved {
+  font-style: normal;
+}
+
+.voter-name.public-score-removed {
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+/* 只在换算后总分单元格显示标记 */
+.total-score-cell.public-score-halved::after {
+  content: '½';
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #ff6b6b;
+  background: rgba(248, 215, 218, 0.5);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .rank {

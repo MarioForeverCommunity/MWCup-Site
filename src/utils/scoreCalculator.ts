@@ -52,6 +52,8 @@ export interface PublicVoteRecord {
   bonus: number;        // 附加分 (0-5)
   penalty?: number;     // 扣分 (可选)
   totalScore: number;   // 计算后的总分
+  isHalved?: boolean;   // 是否被减半
+  isRemoved?: boolean;  // 是否被移除
 }
 
 export interface PlayerPublicScore {
