@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const levelsDir = path.join(__dirname, '../public/data/levels');
 const yamlPath = path.join(__dirname, '../public/data/mwcup.yaml');
 const specialLevelsPath = path.join(__dirname, '../public/data/specialLevels.json');
+const levelSubjectsPath = path.join(__dirname, '../public/data/levelSubjects.json');
 const output = [];
 
 // 加载 YAML 数据
@@ -30,6 +31,17 @@ try {
   console.log('Loaded special levels data successfully');
 } catch (error) {
   console.error('Failed to load special levels data:', error);
+  process.exit(1);
+}
+
+// 加载关卡题目对应关系数据
+let levelSubjectsData = null;
+try {
+  const levelSubjectsContent = fs.readFileSync(levelSubjectsPath, 'utf8');
+  levelSubjectsData = JSON.parse(levelSubjectsContent);
+  console.log('Loaded level subjects data successfully');
+} catch (error) {
+  console.error('Failed to load level subjects data:', error);
   process.exit(1);
 }
 
@@ -354,6 +366,9 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolde
           const isMultiLevelFile = file.name.endsWith('.mfs') || file.name.endsWith('.smws');
           // 新增：精细化 roundType
           const refinedRoundType = refineRoundType(playerInfo?.roundType || roundType, playerInfo?.roundKey, year ? parseInt(year) : null);
+          // 获取题目代号
+          const subject = getSubject(year, refinedRoundType, playerInfo?.matchedCode || playerCode);
+          
           const levelFile = {
             name: file.name,
             path: fileRelativePath,
@@ -366,6 +381,7 @@ function walk(dir, relativePath = '', parentFolderPlayerCode = null, parentFolde
             playerName: playerInfo?.playerName || null,
             roundKey: playerInfo?.roundKey || null,
             groupCode: playerInfo?.groupCode || null,
+            subject: subject,
             // 是否找到了完整的选手信息
             hasPlayerInfo: !!playerInfo,
             // 标记是否来自多关卡题文件夹或是多关卡文件类型
@@ -528,6 +544,50 @@ function isMultiLevelRound(filePath) {
   }
   
   return false;
+}
+
+/**
+ * 根据年份、轮次和选手码获取题目名称
+ */
+function getSubject(year, roundType, playerCode) {
+  if (!levelSubjectsData || !year || !roundType || !playerCode) {
+    return null;
+  }
+  const yearData = levelSubjectsData.levelSubjects[String(year)];
+  if (!yearData) {
+    return null;
+  }
+  const roundData = yearData[roundType];
+  if (!roundData) {
+    return null;
+  }
+  const subjectInfo = roundData.find(item => item.playerCode === playerCode);
+  if (!subjectInfo) {
+    return null;
+  }
+  
+  // 从mwcupData中获取题目名称
+  const subjectCode = subjectInfo.subject;
+  if (!mwcupData?.season?.[year]?.rounds) {
+    return subjectCode;
+  }
+  
+  // 查找对应的轮次
+  let roundKey = null;
+  const rounds = mwcupData.season[year].rounds;
+  for (const [key, data] of Object.entries(rounds)) {
+    if (key.startsWith('P1') && (roundType === '热身赛' || roundType === '预赛')) {
+      roundKey = key;
+      break;
+    }
+  }
+  
+  if (!roundKey || !rounds[roundKey]?.subjects) {
+    return subjectCode;
+  }
+  
+  // 返回题目名称
+  return rounds[roundKey].subjects[subjectCode] || subjectCode;
 }
 
 /**

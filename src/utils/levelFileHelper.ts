@@ -22,6 +22,7 @@ export interface LevelFile {
   hasPlayerInfo: boolean;      // 是否有完整的选手信息
   isMultiLevel?: boolean;      // 是否是多关卡文件的一部分
   multiLevelFolder?: MultiLevelFolder | null; // 多关卡文件夹信息
+  subject?: string | null;     // 题目名称
 }
 
 let levelFilesCache: LevelFile[] | null = null;

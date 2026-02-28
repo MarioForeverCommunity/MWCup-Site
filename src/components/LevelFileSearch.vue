@@ -324,58 +324,68 @@ function getRefinedRoundType(file: LevelFile): string {
   if (!file.roundKey) return file.roundType || '-';
   const year = file.year;
   const roundKey = file.roundKey;
+  let roundName = '';
   // 2019年小组赛特殊处理
   if (year === 2019 && roundKey.startsWith('G')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
-      return `小组赛第${['一','二','三','四'][idx-1]||idx}题`;
+      roundName = `小组赛第${['一','二','三','四'][idx-1]||idx}题`;
     }
   }
-  if (roundKey.startsWith('G')) {
+  else if (roundKey.startsWith('G')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
-      return `小组赛第${['一','二','三','四'][idx-1]||idx}轮`;
+      roundName = `小组赛第${['一','二','三','四'][idx-1]||idx}轮`;
     }
   }
-  if (year === 2012 && roundKey.startsWith('I')) {
+  else if (year === 2012 && roundKey.startsWith('I')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
-      return `初赛第${['一','二','三','四'][idx-1]||idx}轮`;
+      roundName = `初赛第${['一','二','三','四'][idx-1]||idx}轮`;
     }
   }
-  if (roundKey.startsWith('I')) {
+  else if (roundKey.startsWith('I')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
-      return `初赛第${['一','二','三','四'][idx-1]||idx}题`;
+      roundName = `初赛第${['一','二','三','四'][idx-1]||idx}题`;
     }
   }
-  if (roundKey.startsWith('R')) {
+  else if (roundKey.startsWith('R')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
-      return `复赛第${['一','二','三'][idx-1]||idx}题`;
+      roundName = `复赛第${['一','二','三'][idx-1]||idx}题`;
     }
   }
-  if (roundKey.startsWith('Q')) {
+  else if (roundKey.startsWith('Q')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
-      return `四分之一决赛第${['一','二'][idx-1]||idx}轮`;
+      roundName = `四分之一决赛第${['一','二'][idx-1]||idx}轮`;
     }
   }
-  if (roundKey.startsWith('S')) {
+  else if (roundKey.startsWith('S')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
-      return `半决赛第${['一','二'][idx-1]||idx}轮`;
+      roundName = `半决赛第${['一','二'][idx-1]||idx}轮`;
     }
   }
   // 预赛/热身赛/资格赛判断
-  if (roundKey === 'P1') {
+  else if (roundKey === 'P1') {
     if (typeof year === 'number' && isWarmupRound(year, roundKey)) {
-      return '热身赛';
+      roundName = '热身赛';
     } else {
-      return '预选赛';
+      roundName = '预选赛';
     }
   }
-  return file.roundType || '-';
+  else {
+    roundName = file.roundType || '-';
+  }
+  
+  // 添加subject信息，直接显示在轮次名称旁，不加空格
+  if (file.subject) {
+    roundName += file.subject;
+  }
+  
+  return roundName;
 }
 
 // 防抖定时器

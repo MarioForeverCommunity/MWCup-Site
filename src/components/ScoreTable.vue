@@ -2189,7 +2189,9 @@ function getPlayerLevelFileName(playerCode: string): string {
   
   // 如果找到多关卡文件夹，返回文件夹名称
   if (multiLevelFiles.length > 0 && multiLevelFiles[0].multiLevelFolder) {
-    return multiLevelFiles[0].multiLevelFolder.folderName || multiLevelFiles[0].name;
+    const folderName = multiLevelFiles[0].multiLevelFolder.folderName || multiLevelFiles[0].name;
+    const subject = multiLevelFiles[0].subject;
+    return subject ? `${folderName} (${subject})` : folderName;
   }
   
   // 如果没有多关卡文件夹，使用单个关卡文件
@@ -2200,7 +2202,8 @@ function getPlayerLevelFileName(playerCode: string): string {
   });
   
   if (exactMatch) {
-    return exactMatch.name;
+    const subject = exactMatch.subject;
+    return subject ? `${exactMatch.name} (${subject})` : exactMatch.name;
   }
   
   return '未上传';

@@ -3014,6 +3014,9 @@ season:
         judges:
           J1: 我懂你不懂的lz
           J2: 玛丽的死对头
+        subjects:
+          'A': 第一题
+          'B': 第二题
         schedule:
           match:
             start: 2026-02-06T20:00

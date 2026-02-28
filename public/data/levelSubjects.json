@@ -1,0 +1,13 @@
+{
+  "levelSubjects": {
+    "2026": {
+      "热身赛": [
+        {"playerCode": "1", "subject": "B"},
+        {"playerCode": "2", "subject": "A"},
+        {"playerCode": "3", "subject": "A"},
+        {"playerCode": "4", "subject": "A"},
+        {"playerCode": "5", "subject": "A"}
+      ]
+    }
+  }
+}
