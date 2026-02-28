@@ -93,7 +93,14 @@
                 <td class="years-cell">
                   <div class="participation-display">
                     <span class="participation-count">{{ record.participatedYears.length }}届</span>
-                    <div class="participation-years">{{ record.participatedYears.join(', ') }}</div>
+                    <span class="main-event-count">（正赛{{ record.mainEventYears.length }}届）</span>
+                    <div class="participation-years">
+                      <span 
+                        v-for="year in record.participatedYears" 
+                        :key="year"
+                        :class="{ 'preliminary-only': !record.mainEventYears.includes(year) }"
+                      >{{ year }}</span>
+                    </div>
                   </div>
                 </td>
                 <td class="levels-cell">
@@ -462,6 +469,21 @@ onMounted(() => {
   color: var(--text-secondary);
   margin-top: var(--spacing-xs);
   line-height: 1.2;
+}
+
+.participation-years span:not(:last-child)::after {
+  content: ', ';
+}
+
+.preliminary-only {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.main-event-count {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: normal;
 }
 
 /* 分页控件 */

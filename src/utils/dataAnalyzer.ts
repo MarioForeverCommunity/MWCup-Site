@@ -493,6 +493,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
               playerRecords[unifiedUserId] = {
                 userId,
                 participatedYears: [],
+                mainEventYears: [],
                 totalLevels: 0,
                 maxScore: 0,
                 maxScoreRate: 0,
@@ -512,6 +513,9 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
             const record = playerRecords[unifiedUserId];
             if (!record.participatedYears.includes(year)) {
               record.participatedYears.push(year);
+            }
+            if (!record.mainEventYears.includes(year)) {
+              record.mainEventYears.push(year);
             }
             
             record.totalLevels++;
@@ -555,6 +559,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           playerRecords[unifiedUserId] = {
             userId,
             participatedYears: [],
+            mainEventYears: [],
             totalLevels: 0,
             maxScore: 0,
             maxScoreRate: 0,
@@ -576,6 +581,9 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
         const record = playerRecords[unifiedUserId];
         if (!record.participatedYears.includes(year)) {
           record.participatedYears.push(year);
+        }
+        if (stageLevel > 1 && !record.mainEventYears.includes(year)) {
+          record.mainEventYears.push(year);
         }
         
         record.totalLevels++;
