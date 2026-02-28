@@ -16,6 +16,7 @@
           <select v-model="sortBy" class="form-control hover-scale">
             <option value="totalLevels">按关卡数排序</option>
             <option value="participatedYears">按参赛届数排序</option>
+            <option value="mainEventYears">按参加正赛届数排序</option>
             <option value="bestRank">按最高总积分排名排序</option>
             <option value="championCount">按冠亚季军次数排序</option>
           </select>
@@ -125,6 +126,7 @@
                 </td>
                 <td class="action-cell">
                   <button 
+                    v-if="record.mainEventYears.length > 0"
                     @click="toggleDetails(record.userId)" 
                     class="detail-btn hover-scale"
                     :class="{
@@ -357,13 +359,14 @@ const filteredRecords = computed(() => {
         return b.totalLevels - a.totalLevels
       case 'participatedYears':
         return b.participatedYears.length - a.participatedYears.length
+      case 'mainEventYears':
+        return b.mainEventYears.length - a.mainEventYears.length
       case 'bestRank':
         if (a.bestRank === 0 && b.bestRank === 0) return 0
         if (a.bestRank === 0) return 1
         if (b.bestRank === 0) return -1
         return a.bestRank - b.bestRank
       case 'championCount':
-        // 按冠亚季军次数排序，优先冠军，其次亚军，再其次季军
         const aTotal = (a.championCount || 0) * 10000 + (a.runnerUpCount || 0) * 100 + (a.thirdPlaceCount || 0)
         const bTotal = (b.championCount || 0) * 10000 + (b.runnerUpCount || 0) * 100 + (b.thirdPlaceCount || 0)
         return bTotal - aTotal
