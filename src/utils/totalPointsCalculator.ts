@@ -1309,3 +1309,58 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
     deadlineCount: deadlines.length
   };
 }
+
+/**
+ * 计算并列排名
+ * @param players 选手数组
+ * @param scoreField 排序字段（如 'totalPoints'）
+ * @param secondaryField 次级排序字段（如 'validRoundsCount'）
+ * @returns 包含 displayRank 属性的选手数组
+ */
+export function calculateRankingWithTies(
+  players: PlayerTotalPoints[],
+  scoreField: string = 'totalPoints',
+  secondaryField: string = 'validRoundsCount'
+): (PlayerTotalPoints & { displayRank: number })[] {
+  let lastScore: string | null = null;
+  let lastSecondary: number | null = null;
+  let lastRank = 0;
+  let skip = 0;
+
+  const result: (PlayerTotalPoints & { displayRank: number })[] = [];
+
+  for (let i = 0; i < players.length; i++) {
+    const player = players[i];
+    const currScore = player[scoreField as keyof PlayerTotalPoints];
+    const currSecondary = player[secondaryField as keyof PlayerTotalPoints];
+
+    const currScoreStr = typeof currScore === 'number' ? currScore.toFixed(3) : 
+                         currScore instanceof Decimal ? currScore.toFixed(3) : 
+                         String(currScore);
+    const currSecondaryNum = typeof currSecondary === 'number' ? currSecondary : 0;
+
+    if (
+      lastScore !== null && currScoreStr === lastScore &&
+      lastSecondary !== null && currSecondaryNum === lastSecondary
+    ) {
+      result.push({
+        ...player,
+        displayRank: lastRank
+      });
+      skip++;
+    } else {
+      const rank = lastRank + 1 + skip;
+      result.push({
+        ...player,
+        displayRank: rank
+      });
+      lastRank = rank;
+      skip = 0;
+    }
+
+    lastScore = currScoreStr;
+    lastSecondary = currSecondaryNum;
+  }
+
+  return result;
+}

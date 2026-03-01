@@ -518,7 +518,9 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
               record.mainEventYears.push(year);
             }
             
-            record.totalLevels++;
+            if (year !== 2012) {
+              record.totalLevels++;
+            }
           }
           
           continue; // 处理完2012年I2后跳到下一个轮次
@@ -528,11 +530,73 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
       }
       
       const scoreData = await loadRoundScoreData(year.toString(), round, yamlData);
-      if (!scoreData || scoreData.playerScores.length === 0) continue;
       
       // 获取该轮次的满分
       const maxPossibleScore = await getMaxScore(year, round);
       const stageLevel = getStageLevel(round);
+      
+      // 对于P1/P2轮次（stageLevel === 1），需要处理YAML中所有选手，包括未上传的
+      if (stageLevel === 1) {
+        const yearData = yamlData?.season?.[year.toString()];
+        const roundData = yearData?.rounds?.[round];
+        
+        if (roundData?.players) {
+          let playerNames: string[] = [];
+          
+          // 提取选手列表
+          if (Array.isArray(roundData.players)) {
+            playerNames = roundData.players.filter(Boolean);
+          } else if (typeof roundData.players === 'object') {
+            const firstValue = Object.values(roundData.players)[0];
+            if (typeof firstValue === 'string') {
+              // 扁平结构：players: { '1': 用户名, '2': 用户名, ... }
+              playerNames = Object.values(roundData.players).filter(v => typeof v === 'string');
+            } else {
+              // 分组结构：players: { A: { A1: 用户名, ... }, ... }
+              for (const groupData of Object.values(roundData.players)) {
+                if (typeof groupData === 'object' && groupData) {
+                  playerNames.push(...Object.values(groupData).filter(v => typeof v === 'string'));
+                }
+              }
+            }
+          }
+          
+          // 为YAML中的所有选手初始化记录
+          for (const playerName of playerNames) {
+            const unifiedUserId = await getUnifiedUserId(playerName);
+            const userId = findUserIdByName(users, playerName);
+            if (!userId) continue;
+            
+            if (!playerRecords[unifiedUserId]) {
+              playerRecords[unifiedUserId] = {
+                userId,
+                participatedYears: [],
+                mainEventYears: [],
+                totalLevels: 0,
+                maxScore: 0,
+                maxScoreRate: 0,
+                bestStage: '',
+                bestRank: Infinity,
+                bestStageLevel: 0,
+                bestStageYear: undefined,
+                bestStageRound: undefined,
+                bestStageRank: undefined,
+                championCount: 0,
+                runnerUpCount: 0,
+                thirdPlaceCount: 0
+              };
+              playerMaxScoreInfo[unifiedUserId] = { maxScore: new Decimal(0), maxPossibleScore: 100 };
+            }
+            
+            const record = playerRecords[unifiedUserId];
+            if (!record.participatedYears.includes(year)) {
+              record.participatedYears.push(year);
+            }
+          }
+        }
+      }
+      
+      if (!scoreData || scoreData.playerScores.length === 0) continue;
       
       // 处理每个选手的得分
       const playerScores: { 
@@ -586,7 +650,9 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           record.mainEventYears.push(year);
         }
         
-        record.totalLevels++;
+        if (year !== 2012) {
+          record.totalLevels++;
+        }
         
         // 只有有效成绩才计入排名和最高分数据（排除被取消成绩的选手）
         if (playerScore.records.some(r => r.isCanceled)) {
@@ -697,7 +763,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
     console.warn('计算总分排行榜历届最佳排名失败:', error);
   }
 
-  // --- 修正最佳战绩为YAML中晋级的最高轮次 ---
+  // --- 修正最佳战绩为YAML中晋级的最高轮次（排除2012年）---
   if (yamlData && yamlData.season) {
     const userBestStageLevel: { [unifiedUserId: string]: { stageLevel: number; stage: string; year: number; round: string } } = {};
     const userMainEventYears: { [unifiedUserId: string]: Set<number> } = {};
@@ -705,6 +771,10 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
     for (const [yearStr, yearData] of Object.entries(yamlData.season)) {
       if (!yearData || typeof yearData !== 'object' || !('rounds' in yearData)) continue;
       const year = parseInt(yearStr);
+      
+      // 排除2012年
+      if (year === 2012) continue;
+      
       const roundsData = (yearData as any).rounds;
       for (const [roundKey, roundDataRaw] of Object.entries(roundsData)) {
         const roundData = roundDataRaw as any;
@@ -785,7 +855,11 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
   }
   // --- END 修正 ---
 
-  return Object.values(playerRecords).filter(record => record.totalLevels > 0);
+  return Object.values(playerRecords).filter(record => {
+    // 过滤掉只参加过2012年的选手
+    const yearsWithout2012 = record.participatedYears.filter(year => year !== 2012);
+    return yearsWithout2012.length > 0;
+  });
 }
 
 /**

@@ -103,11 +103,16 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { loadTotalPointsData, type TotalPointsData } from '../utils/totalPointsCalculator';
+import { loadTotalPointsData, type TotalPointsData, type PlayerTotalPoints } from '../utils/totalPointsCalculator';
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader';
 import { getRoundChineseName } from '../utils/roundNames';
 import { getEditionOptions } from '../utils/editionHelper';
 import { formatResultDisplay as formatResult } from '../utils/resultFormatter';
+
+// 扩展类型，包含displayRank
+interface PlayerWithRank extends PlayerTotalPoints {
+  displayRank: number;
+}
 
 export default defineComponent({
   name: 'TotalPointsRanking',
@@ -277,7 +282,7 @@ export default defineComponent({
     }
 
     // 计算带并列排名的players
-    const playersWithRank = computed(() => {
+    const playersWithRank = computed<PlayerWithRank[]>(() => {
       if (!data.value.players) return []
       // 按总积分降序，参与轮次数降序
       const arr = [...data.value.players].sort((a, b) => {
@@ -285,11 +290,7 @@ export default defineComponent({
         return b.validRoundsCount - a.validRoundsCount
       })
       assignRankingWithTiesForTotal(arr, 'totalPoints', 'validRoundsCount', 'displayRank')
-      // 添加缺失的 displayRank 属性到每个 player 对象
-      return arr.map((player, index) => ({
-        ...player,
-        displayRank: index + 1
-      }));
+      return arr as PlayerWithRank[]
     })
 
     // 监听年份变化

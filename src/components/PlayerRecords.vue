@@ -93,11 +93,11 @@
                 </td>
                 <td class="years-cell">
                   <div class="participation-display">
-                    <span class="participation-count">{{ record.participatedYears.length }}届</span>
-                    <span class="main-event-count">（正赛{{ record.mainEventYears.length }}届）</span>
+                    <span class="participation-count">{{ getParticipatedYearsWithout2012(record).length }}届</span>
+                    <span class="main-event-count">（正赛{{ record.mainEventYears.filter(year => year !== 2012).length }}届）</span>
                     <div class="participation-years">
                       <span 
-                        v-for="year in record.participatedYears" 
+                        v-for="year in record.participatedYears.filter(y => y !== 2012)" 
                         :key="year"
                         :class="{ 'preliminary-only': !record.mainEventYears.includes(year) }"
                       >{{ year }}</span>
@@ -126,7 +126,7 @@
                 </td>
                 <td class="action-cell">
                   <button 
-                    v-if="record.mainEventYears.length > 0"
+                    v-if="record.mainEventYears.filter(year => year !== 2012).length > 0"
                     @click="toggleDetails(record.userId)" 
                     class="detail-btn hover-scale"
                     :class="{
@@ -184,7 +184,7 @@ import { loadUserData, type PlayerRecord, type UserData } from '../utils/userDat
 import { matchPlayerName } from '../utils/levelFileHelper'
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader'
 import { formatResultDisplay } from '../utils/resultFormatter'
-import { loadTotalPointsData } from '../utils/totalPointsCalculator'
+import { loadTotalPointsData, calculateRankingWithTies } from '../utils/totalPointsCalculator'
 
 // 年度战绩数据接口
 interface YearlyPlayerData {
@@ -260,16 +260,19 @@ const loadPlayerYearlyData = async (userId: number) => {
   const allPlayerNames = getAllPlayerNames(userId)
   const yearlyData: YearlyPlayerData[] = []
   
-  // 过滤掉只参加预选赛/热身赛/资格赛的年份
-  for (const year of playerRecord.participatedYears) {
+  // 过滤掉只参加预选赛/热身赛/资格赛的年份，以及2012年
+  for (const year of playerRecord.participatedYears.filter(y => y !== 2012)) {
     try {
       const totalPointsData = await loadTotalPointsData(year.toString(), yamlData.value)
       if (!totalPointsData.hasData || totalPointsData.players.length === 0) {
         continue // 该年份没有正式比赛数据，跳过
       }
       
+      // 计算并列排名
+      const playersWithRank = calculateRankingWithTies(totalPointsData.players, 'totalPoints', 'validRoundsCount')
+      
       // 查找该选手在当年的排名和积分 - 使用所有可能的用户名进行匹配
-      const playerData = totalPointsData.players.find(p => {
+      const playerData = playersWithRank.find(p => {
         // 检查选手名是否匹配任何一个可能的用户名
         if (allPlayerNames.includes(p.playerName)) return true
         
@@ -280,10 +283,9 @@ const loadPlayerYearlyData = async (userId: number) => {
       })
       
       if (playerData) {
-        const rank = totalPointsData.players.indexOf(playerData) + 1
         yearlyData.push({
           year,
-          rank,
+          rank: playerData.displayRank,
           totalPoints: Number(playerData.totalPoints),
           bestResult: formatResultDisplay(playerData.bestResult, {
             year: year.toString(),
@@ -302,14 +304,13 @@ const loadPlayerYearlyData = async (userId: number) => {
 // 格式化战绩显示函数（直接使用TotalPointsRanking.vue的成绩显示格式）
 const formatBestStageDisplay = (record: PlayerRecord) => {
   const bestStage = record.bestStage;
-  const bestYear = record.bestStageYear || Math.max(...record.participatedYears);
+  const yearsWithout2012 = getParticipatedYearsWithout2012(record);
+  const bestYear = record.bestStageYear && record.bestStageYear !== 2012 ? record.bestStageYear : 
+                  (yearsWithout2012.length > 0 ? Math.max(...yearsWithout2012) : Math.max(...record.participatedYears));
   
   // 特殊处理2012年：如果选手参加了2012年且没有明确的bestStage，显示为初赛/15强
-  if (record.participatedYears.includes(2012) && (!bestStage || bestStage === '' || bestStage === '无' || bestStage === '未知' || bestStage === '小组赛/初赛')) {
-    return '初赛/15强';
-  }
-  
-  if (!bestStage || bestStage === '无' || bestStage === '未知') {
+  // 但现在我们排除2012年，所以这个逻辑需要调整
+  if (!bestStage || bestStage === '' || bestStage === '无' || bestStage === '未知' || bestStage === '小组赛/初赛') {
     return formatResultDisplay('仅报名', {
       year: bestYear.toString(),
       yamlData: yamlData.value
@@ -325,6 +326,13 @@ const formatBestStageDisplay = (record: PlayerRecord) => {
 // 筛选和排序后的记录
 const filteredRecords = computed(() => {
   let filtered = records.value
+  
+  // 过滤掉只参加过2012年的选手
+  filtered = filtered.filter(record => {
+    const yearsWithout2012 = getParticipatedYearsWithout2012(record)
+    return yearsWithout2012.length > 0
+  })
+  
   // 搜索过滤
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.trim()
@@ -358,9 +366,9 @@ const filteredRecords = computed(() => {
       case 'totalLevels':
         return b.totalLevels - a.totalLevels
       case 'participatedYears':
-        return b.participatedYears.length - a.participatedYears.length
+        return getParticipatedYearsWithout2012(b).length - getParticipatedYearsWithout2012(a).length
       case 'mainEventYears':
-        return b.mainEventYears.length - a.mainEventYears.length
+        return b.mainEventYears.filter(year => year !== 2012).length - a.mainEventYears.filter(year => year !== 2012).length
       case 'bestRank':
         if (a.bestRank === 0 && b.bestRank === 0) return 0
         if (a.bestRank === 0) return 1
@@ -378,21 +386,38 @@ const filteredRecords = computed(() => {
   return filtered
 })
 
-// 活跃选手数（参加过3届以上）
+// 排除2012年的参赛年份
+const getParticipatedYearsWithout2012 = (record: PlayerRecord): number[] => {
+  return record.participatedYears.filter(year => year !== 2012)
+}
+
+// 活跃选手数（参加过3届以上，排除2012年）
 const activePlayersCount = computed(() => {
-  return records.value.filter(record => record.participatedYears.length >= 3).length
+  return records.value.filter(record => getParticipatedYearsWithout2012(record).length >= 3).length
 })
 
-// 平均参赛届数
+// 平均参赛届数（排除2012年）
 const averageParticipation = computed(() => {
   if (records.value.length === 0) return 0
-  const total = records.value.reduce((sum, record) => sum + record.participatedYears.length, 0)
+  const total = records.value.reduce((sum, record) => sum + getParticipatedYearsWithout2012(record).length, 0)
   return total / records.value.length
 })
 
-// 冠军选手数
+// 冠军选手数（排除2012年）
 const championPlayersCount = computed(() => {
-  return records.value.filter(record => record.championCount > 0).length
+  return records.value.filter(record => {
+    // 检查该选手是否在2012年之后获得过冠军
+    const yearsWithout2012 = getParticipatedYearsWithout2012(record)
+    if (yearsWithout2012.length === 0) return false
+    
+    // 检查该选手的最佳战绩年份是否在2012年之后
+    if (record.bestStageYear && record.bestStageYear > 2012) {
+      return record.championCount > 0
+    }
+    
+    // 如果最佳战绩年份是2012年或未定义，需要检查其他年份
+    return record.championCount > 0 && yearsWithout2012.length > 0
+  }).length
 })
 
 // 获取选手用户名
