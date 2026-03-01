@@ -77,6 +77,7 @@ import { getEditionNumber } from '../utils/editionHelper'
 import { uploadUrlMap as urlMap } from '../utils/urlMap'
 
 import { loadRoundScoreData } from '../utils/scoreCalculator'
+import { loadTotalPointsData } from '../utils/totalPointsCalculator'
 import { Decimal } from 'decimal.js'
 
 interface ChampionInfo {
@@ -98,6 +99,58 @@ interface ChampionInfo {
 const champions = ref<ChampionInfo[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+// 检查选手是否在YAML的指定轮次中出现
+function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: string): boolean {
+  let roundData = seasonData.rounds[roundKey]
+  
+  if (!roundData) {
+    for (const [key, data] of Object.entries(seasonData.rounds)) {
+      if (key.startsWith('[') && key.endsWith(']')) {
+        try {
+          const parsedKey = JSON.parse(key)
+          if (Array.isArray(parsedKey) && parsedKey.includes(roundKey)) {
+            roundData = data
+            break
+          }
+        } catch {
+          const rounds = key.slice(1, -1).split(',').map(r => r.trim())
+          if (rounds.includes(roundKey)) {
+            roundData = data
+            break
+          }
+        }
+      } else if (key.includes(',')) {
+        const rounds = key.split(',').map(r => r.trim())
+        if (rounds.includes(roundKey)) {
+          roundData = data
+          break
+        }
+      }
+    }
+  }
+  
+  if (!roundData?.players) return false
+  
+  if (Array.isArray(roundData.players)) {
+    return roundData.players.includes(playerName)
+  } else if (typeof roundData.players === 'object') {
+    const firstValue = Object.values(roundData.players)[0]
+    if (typeof firstValue === 'string') {
+      return Object.values(roundData.players).includes(playerName)
+    } else {
+      for (const groupData of Object.values(roundData.players)) {
+        if (typeof groupData === 'object' && groupData) {
+          if (Object.values(groupData).includes(playerName)) {
+            return true
+          }
+        }
+      }
+    }
+  }
+  
+  return false
+}
 
 // 日期格式化函数：将ISO日期转换为中文格式
 function formatDate(isoDate: string): string {
@@ -278,134 +331,29 @@ async function loadChampions() {
                 }
               }
               
-              // 然后再从半决赛获取第三、第四名
+              // 然后从总积分排名获取第三、第四名
               try {
-                let semifinalPlayers: { playerName: string, averageScore: number }[] = []
+                const totalPointsData = await loadTotalPointsData(year, yamlDoc)
                 
-                // 处理特殊情况：2015年半决赛使用YAML中的scores
-                if (year === '2015') {
-                  const semifinalRound = data.rounds?.S
-                  if (semifinalRound?.scores) {
-                    // 从YAML的scores字段获取分数
-                    semifinalPlayers = Object.entries(semifinalRound.scores).map(([playerCode, score]) => {
-                      // 从players中找到对应的选手名字
-                      const playerName = semifinalRound.players?.I?.[playerCode] || 
-                                       semifinalRound.players?.II?.[playerCode] || 
-                                       playerCode
-                      return { playerName, averageScore: Number(score) }
-                    })
-                  }
-                }
-                // 处理有S1、S2两轮的半决赛（2013、2016年）
-                else if (['2013', '2016'].includes(year)) {
-                  try {
-                    const s1Data = await loadRoundScoreData(year, 'S1', yamlDoc)
-                    const s2Data = await loadRoundScoreData(year, 'S2', yamlDoc)
-                    
-                    // 合并两轮的分数
-                    const playerScores: { [key: string]: { total: number, count: number } } = {}
-                    
-                    // 添加S1的分数
-                    if (s1Data?.playerScores) {
-                      s1Data.playerScores.forEach(p => {
-                        if (p.averageScore !== undefined) {
-                          playerScores[p.playerName] = {
-                            total: Number(p.averageScore),
-                            count: 1
-                          }
-                        }
-                      })
-                    }
-                    
-                    // 添加S2的分数
-                    if (s2Data?.playerScores) {
-                      s2Data.playerScores.forEach(p => {
-                        if (p.averageScore !== undefined) {
-                          // S1/S2合并分数
-                          if (playerScores[p.playerName]) {
-                            playerScores[p.playerName].total = Number(playerScores[p.playerName].total) + Number(p.averageScore)
-                            playerScores[p.playerName].count += 1
-                          } else {
-                            playerScores[p.playerName] = {
-                              total: Number(p.averageScore),
-                              count: 1
-                            }
-                          }
-                        }
-                      })
-                    }
-                    
-                    // 计算平均分并创建选手列表
-                    semifinalPlayers = Object.entries(playerScores).map(([playerName, data]) => ({
-                      playerName,
-                      averageScore: data.total // 合计得分而非平均分
-                    }))
-                  } catch (err) {
-                    console.warn(`${year} 年S1/S2数据加载失败，尝试加载S数据:`, err)
-                    // 如果S1/S2失败，尝试加载S
-                    const semifinalData = await loadRoundScoreData(year, 'S', yamlDoc)
-                    if (semifinalData?.playerScores) {
-                      semifinalPlayers = semifinalData.playerScores.map(p => ({
-                        playerName: p.playerName,
-                        averageScore: typeof p.averageScore === 'object' && 'toNumber' in p.averageScore ? p.averageScore.toNumber() : Number(p.averageScore)
-                      }))
-                    }
-                  }
-                }
-                // 特殊处理2014年半决赛选手未上传的情况
-                else if (year === '2014') {
-                  const semifinalData = await loadRoundScoreData(year, 'S', yamlDoc)
-                  
-                  // 获取所有应该参加半决赛的选手
-                  const semiRound = data.rounds?.S
-                  const allSemiPlayers: string[] = []
-                  
-                  if (semiRound?.players) {
-                    // 从YAML中获取所有半决赛选手
-                    if (semiRound.players.I) {
-                      Object.values(semiRound.players.I).forEach(name => allSemiPlayers.push(name as string))
-                    }
-                    if (semiRound.players.II) {
-                      Object.values(semiRound.players.II).forEach(name => allSemiPlayers.push(name as string))
-                    }
-                  }
-                  
-                  // 合并评分数据和YAML数据
-                  if (semifinalData?.playerScores) {
-                    semifinalPlayers = semifinalData.playerScores.map(p => ({
-                      playerName: p.playerName,
-                      averageScore: Number(p.averageScore)
-                    }))
-                    
-                    // 查找在YAML中有但评分数据中没有的选手（未上传）
-                    const scoredPlayers = semifinalPlayers.map(p => p.playerName)
-                    const missingPlayers = allSemiPlayers.filter(name => !scoredPlayers.includes(name))
-                    
-                    // 将未上传的选手添加到列表，但分数为0
-                    missingPlayers.forEach(name => {
-                      semifinalPlayers.push({ playerName: name, averageScore: 0 })
-                    })
-                  }
-                }
-                // 其他年份的正常半决赛
-                else {
-                  const semifinalData = await loadRoundScoreData(year, 'S', yamlDoc)
-                  if (semifinalData?.playerScores) {
-                    semifinalPlayers = semifinalData.playerScores.map(p => ({
-                      playerName: p.playerName,
-                      averageScore: Number(p.averageScore)
-                    }))
-                  }
-                }
-                
-                if (semifinalPlayers.length > 0) {
+                if (totalPointsData.players && totalPointsData.players.length > 0) {
                   // 获取所有决赛选手的名字（包括补充的未上传选手）
                   const finalistNames = [championInfo.first, championInfo.second].filter(Boolean) as string[]
                   
-                  // 找出半决赛中未进入决赛的选手
-                  const eliminatedPlayers = semifinalPlayers
-                    .filter(p => !finalistNames.includes(p.playerName))
-                    .sort((a, b) => Number(b.averageScore) - Number(a.averageScore))
+                  // 找出晋级半决赛但未进入决赛的选手，按总积分降序排序
+                  const eliminatedPlayers = totalPointsData.players
+                    .filter(p => {
+                      // 排除决赛选手
+                      if (finalistNames.includes(p.playerName)) return false
+                      
+                      // 基于YAML检查是否晋级半决赛
+                      const seasonData = yamlDoc.season[year]
+                      const reachedSemifinal = isPlayerInYamlRound(seasonData, 'S', p.playerName) ||
+                                              isPlayerInYamlRound(seasonData, 'S1', p.playerName) ||
+                                              isPlayerInYamlRound(seasonData, 'S2', p.playerName)
+                      
+                      return reachedSemifinal
+                    })
+                    .sort((a, b) => Number(b.totalPoints) - Number(a.totalPoints))
                   
                   if (eliminatedPlayers.length > 0) championInfo.third = eliminatedPlayers[0].playerName
                   if (eliminatedPlayers.length > 1) championInfo.fourth = eliminatedPlayers[1].playerName
@@ -462,128 +410,29 @@ async function loadChampions() {
               championInfo.fourth = finalRound.players.P
             }
           } else {
-            // 2019年及之前，尝试从半决赛数据获取第三、第四名
+            // 2019年及之前，尝试从总积分排名获取第三、第四名
             try {
-              let semifinalPlayers: { playerName: string, averageScore: number }[] = []
+              const totalPointsData = await loadTotalPointsData(year, yamlDoc)
               
-              // 处理特殊情况：2015年半决赛使用YAML中的scores
-              if (year === '2015') {
-                const semifinalRound = data.rounds?.S
-                if (semifinalRound?.scores) {
-                  semifinalPlayers = Object.entries(semifinalRound.scores).map(([playerCode, score]) => {
-                    const playerName = semifinalRound.players?.I?.[playerCode] || 
-                                     semifinalRound.players?.II?.[playerCode] || 
-                                     playerCode
-                    return { playerName, averageScore: Number(score) }
-                  })
-                }
-              }
-              // 处理有S1、S2两轮的半决赛（2013、2016）
-              else if (['2013', '2016'].includes(year)) {
-                try {
-                  const s1Data = await loadRoundScoreData(year, 'S1', yamlDoc)
-                  const s2Data = await loadRoundScoreData(year, 'S2', yamlDoc)
-                  
-                  const playerScores: { [key: string]: { total: number, count: number } } = {}
-                  
-                  if (s1Data?.playerScores) {
-                    s1Data.playerScores.forEach(p => {
-                      if (p.averageScore !== undefined) {
-                        playerScores[p.playerName] = {
-                          total: Number(p.averageScore),
-                          count: 1
-                        }
-                      }
-                    })
-                  }
-                  
-                  if (s2Data?.playerScores) {
-                    s2Data.playerScores.forEach(p => {
-                      if (p.averageScore !== undefined) {
-                        // S1/S2合并分数
-                        if (playerScores[p.playerName]) {
-                          playerScores[p.playerName].total = Number(playerScores[p.playerName].total) + Number(p.averageScore)
-                          playerScores[p.playerName].count += 1
-                        } else {
-                          playerScores[p.playerName] = {
-                            total: Number(p.averageScore),
-                            count: 1
-                          }
-                        }
-                      }
-                    })
-                  }
-                  
-                  semifinalPlayers = Object.entries(playerScores).map(([playerName, data]) => ({
-                    playerName,
-                    averageScore: data.total // 合计分数
-                  }))
-                } catch (err) {
-                  console.warn(`${year} 年S1/S2数据加载失败，尝试加载S数据:`, err)
-                  // 如果S1/S2失败，尝试加载S
-                  const semifinalData = await loadRoundScoreData(year, 'S', yamlDoc)
-                  if (semifinalData?.playerScores) {
-                    semifinalPlayers = semifinalData.playerScores.map(p => ({
-                      playerName: p.playerName,
-                      averageScore: typeof p.averageScore === 'object' && 'toNumber' in p.averageScore ? p.averageScore.toNumber() : Number(p.averageScore)
-                    }))
-                  }
-                }
-              }
-              // 特殊处理2014年半决赛选手未上传的情况
-              else if (year === '2014') {
-                const semifinalData = await loadRoundScoreData(year, 'S', yamlDoc)
-                
-                // 获取所有应该参加半决赛的选手
-                const semiRound = data.rounds?.S
-                const allSemiPlayers: string[] = []
-                
-                if (semiRound?.players) {
-                  // 从YAML中获取所有半决赛选手
-                  if (semiRound.players.I) {
-                    Object.values(semiRound.players.I).forEach(name => allSemiPlayers.push(name as string))
-                  }
-                  if (semiRound.players.II) {
-                    Object.values(semiRound.players.II).forEach(name => allSemiPlayers.push(name as string))
-                  }
-                }
-                
-                // 合并评分数据和YAML数据
-                if (semifinalData?.playerScores) {
-                  semifinalPlayers = semifinalData.playerScores.map(p => ({
-                    playerName: p.playerName,
-                    averageScore: Number(p.averageScore)
-                  }))
-                  
-                  // 查找在YAML中有但评分数据中没有的选手（未上传）
-                  const scoredPlayers = semifinalPlayers.map(p => p.playerName)
-                  const missingPlayers = allSemiPlayers.filter(name => !scoredPlayers.includes(name))
-                  
-                  // 将未上传的选手添加到列表，但分数为0
-                  missingPlayers.forEach(name => {
-                    semifinalPlayers.push({ playerName: name, averageScore: 0 })
-                  })
-                }
-              }
-              // 其他年份的正常半决赛
-              else {
-                const semifinalData = await loadRoundScoreData(year, 'S', yamlDoc)
-                if (semifinalData?.playerScores) {
-                  semifinalPlayers = semifinalData.playerScores.map(p => ({
-                    playerName: p.playerName,
-                    averageScore: Number(p.averageScore)
-                  }))
-                }
-              }
-              
-              if (semifinalPlayers.length > 0) {
+              if (totalPointsData.players && totalPointsData.players.length > 0) {
                 // 获取所有决赛选手的名字
                 const finalistNames = [championInfo.first, championInfo.second].filter(Boolean) as string[]
                 
-                // 找出半决赛中未进入决赛的选手
-                const eliminatedPlayers = semifinalPlayers
-                  .filter(p => !finalistNames.includes(p.playerName))
-                  .sort((a, b) => Number(b.averageScore) - Number(a.averageScore))
+                // 找出晋级半决赛但未进入决赛的选手，按总积分降序排序
+                const eliminatedPlayers = totalPointsData.players
+                  .filter(p => {
+                    // 排除决赛选手
+                    if (finalistNames.includes(p.playerName)) return false
+                    
+                    // 基于YAML检查是否晋级半决赛
+                    const seasonData = yamlDoc.season[year]
+                    const reachedSemifinal = isPlayerInYamlRound(seasonData, 'S', p.playerName) ||
+                                            isPlayerInYamlRound(seasonData, 'S1', p.playerName) ||
+                                            isPlayerInYamlRound(seasonData, 'S2', p.playerName)
+                    
+                    return reachedSemifinal
+                  })
+                  .sort((a, b) => Number(b.totalPoints) - Number(a.totalPoints))
                 
                 if (eliminatedPlayers.length > 0) championInfo.third = eliminatedPlayers[0].playerName
                 if (eliminatedPlayers.length > 1) championInfo.fourth = eliminatedPlayers[1].playerName
