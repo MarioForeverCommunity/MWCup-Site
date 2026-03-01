@@ -700,6 +700,8 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
   // --- 修正最佳战绩为YAML中晋级的最高轮次 ---
   if (yamlData && yamlData.season) {
     const userBestStageLevel: { [unifiedUserId: string]: { stageLevel: number; stage: string; year: number; round: string } } = {};
+    const userMainEventYears: { [unifiedUserId: string]: Set<number> } = {};
+
     for (const [yearStr, yearData] of Object.entries(yamlData.season)) {
       if (!yearData || typeof yearData !== 'object' || !('rounds' in yearData)) continue;
       const year = parseInt(yearStr);
@@ -737,6 +739,14 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           }
           for (const playerName of playerNames) {
             const unifiedUserId = await getUnifiedUserId(playerName as string);
+
+            if (stageLevel > 1) {
+              if (!userMainEventYears[unifiedUserId]) {
+                userMainEventYears[unifiedUserId] = new Set();
+              }
+              userMainEventYears[unifiedUserId].add(year);
+            }
+
             if (!userBestStageLevel[unifiedUserId] || stageLevel > userBestStageLevel[unifiedUserId].stageLevel) {
               userBestStageLevel[unifiedUserId] = { stageLevel, stage: getStageName(stageLevel), year, round };
             }
@@ -745,6 +755,17 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
       }
     }
     // 用YAML晋级最高轮次覆盖playerRecords的bestStageLevel
+
+    for (const [unifiedUserId, years] of Object.entries(userMainEventYears)) {
+      if (playerRecords[unifiedUserId]) {
+        for (const year of years) {
+          if (!playerRecords[unifiedUserId].mainEventYears.includes(year)) {
+            playerRecords[unifiedUserId].mainEventYears.push(year);
+          }
+        }
+      }
+    }
+
     for (const [unifiedUserId, best] of Object.entries(userBestStageLevel)) {
       if (playerRecords[unifiedUserId]) {
         playerRecords[unifiedUserId].bestStageLevel = best.stageLevel;
