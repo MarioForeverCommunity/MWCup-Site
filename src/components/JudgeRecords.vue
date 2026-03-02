@@ -37,7 +37,7 @@
       <div class="section-header">
          <h3>评委详细数据</h3>
       </div>
-        
+      <p class="scoring-note">注：统计数据不包含 2012 年数据。</p>
       <div class="table-wrapper">
         <table class="table-base records-table">
           <thead>
@@ -376,6 +376,12 @@ onMounted(() => {
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.scoring-note {
+  text-align: center;
+  color: #e74c3c;
+  font-size: 14px;
 }
 
 /* 年度卡片布局优化 */

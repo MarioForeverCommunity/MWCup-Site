@@ -63,6 +63,7 @@
       <div class="section-header">
         <h3>选手详细战绩</h3>
       </div>
+      <p class="scoring-note">注：统计数据不包含 2012 年数据。</p>
       <div class="table-wrapper">
         <table class="table-base records-table">
           <thead>
@@ -729,6 +730,12 @@ onMounted(() => {
 
 .medal-cell.bronze .medal-count {
   color: #CD7F32;
+}
+
+.scoring-note {
+  text-align: center;
+  color: #e74c3c;
+  font-size: 14px;
 }
 
 /* 年度卡片布局优化 */

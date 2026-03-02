@@ -874,6 +874,9 @@ export async function analyzeJudgeRecords(): Promise<JudgeRecord[]> {
   const yamlData = await fetchMarioWorkerYaml();
   
   for (const { year, round } of rounds) {
+    // 排除2012年的数据
+    if (year === 2012) continue;
+    
     const data = await loadRoundData(year, round);
     if (data.length === 0) continue;
     // 获取该轮次的评委映射
