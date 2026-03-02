@@ -242,12 +242,21 @@
                           </template>
                         </div>
                       </td>
-                      <td v-for="column in scoreData.columns" 
-                          :key="column" 
-                          class="score-cell">
-                        {{ formatScore(record.scores[column]) }}
+                      <!-- 处理尚未评分：合并所有评分列 -->
+                      <td v-if="isNotYetRated(record)"
+                          :colspan="scoreData.columns.length + 1"
+                          class="not-yet-rated-cell">
+                        尚未评分
                       </td>
-                      <td class="judge-total">{{ formatScore(record.totalScore) }}</td>
+                      <!-- 正常评分显示 -->
+                      <template v-else>
+                        <td v-for="column in scoreData.columns" 
+                            :key="column" 
+                            class="score-cell">
+                          {{ formatScore(record.scores[column]) }}
+                        </td>
+                        <td class="judge-total">{{ formatScore(record.totalScore) }}</td>
+                      </template>
                     </template>
                     <td class="final-score" v-if="recordIndex === 0" :rowspan="playerGroup.records.length">
                       {{ getPlayerAverageScore(record.playerCode) }}
@@ -475,6 +484,7 @@ import {
   type ScoreRecord, 
   buildPlayerJudgeMap,
   type PlayerScore,
+  isNotYetRated,
 } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 
@@ -639,6 +649,7 @@ async function exportDetailedToExcel() {
         const rec = records[idx]
         // 正常行
         const isSpecial = rec.isNoSubmission || rec.isCanceled || rec.isUnworking
+        const isNotRated = isNotYetRated(rec)
         const row: (string | number)[] = [
           idx === 0 ? rec.playerCode : '',
           idx === 0 ? rec.playerName : '',
@@ -654,6 +665,18 @@ async function exportDetailedToExcel() {
           // 最后一列（总分）也留空
           merges.push({ s: { r: data.length, c: judgeCol }, e: { r: data.length, c: lastCol } })
           // 末尾的“最终得分/评委最终得分”仅第一行显示
+          row.push(idx === 0 ? (playerScoreMap.get(rec.playerCode) ?? 0) : '')
+        } else if (isNotRated) {
+          // 尚未评分：评委列正常显示，合并所有评分列（包括总分列）
+          const scoreColStart = 3 // 评委列之后是评分列
+          const lastCol = 2 + cols.length // 评分列 + 总分列
+          // 补齐到 lastCol 列
+          while (row.length <= lastCol) row.push('')
+          // 合并所有评分列（从评分列开始到总分列）
+          merges.push({ s: { r: data.length, c: scoreColStart }, e: { r: data.length, c: lastCol } })
+          // 在第一个评分列显示"尚未评分"
+          row[scoreColStart] = '尚未评分'
+          // 末尾的"最终得分/评委最终得分"仅第一行显示
           row.push(idx === 0 ? (playerScoreMap.get(rec.playerCode) ?? 0) : '')
         } else {
           // 分项分数
@@ -1827,20 +1850,32 @@ const groupedDetailRecords = computed(() => {
   Object.values(groups).forEach((group: any) => {
     const merged: any[] = []
     const mergedMap: Record<string, any> = {}
-    group.records.forEach((rec: any) => {
+    
+    // 按照原始顺序处理记录，保持评委顺序
+    group.records.forEach((rec: any, originalIndex: number) => {
+      // 尚未评分的记录不参与合并，直接添加
+      if (isNotYetRated(rec)) {
+        merged.push({
+          ...rec,
+          _originalIndex: originalIndex
+        })
+        return
+      }
+      
       // 生成评分内容指纹（不含评委信息）
       const scoreFingerprint = JSON.stringify({
         scores: rec.scores,
         totalScore: rec.totalScore
       })
       if (!mergedMap[scoreFingerprint]) {
-        // 新分组
+        // 新分组，记录原始索引
         mergedMap[scoreFingerprint] = {
           ...rec,
           judgeName: rec.judgeName,
           judgeCodes: [rec.judgeCode],
           judgeNames: [rec.judgeName],
-          _mergeCount: 1
+          _mergeCount: 1,
+          _originalIndex: originalIndex // 记录原始顺序
         }
       } else {
         // 合并评委
@@ -1849,16 +1884,23 @@ const groupedDetailRecords = computed(() => {
         mergedMap[scoreFingerprint]._mergeCount++
       }
     })
-    // 合并评委名显示
-    for (const item of Object.values(mergedMap)) {
-      if (item._mergeCount > 1) {
-        // 合并评委名（去重）
-        const judgeNames = Array.from(new Set(item.judgeNames.join(',').split(',').map((j: string) => j.trim()))).join(', ')
-        item.judgeName = judgeNames
-        item.isCollaborative = true
-      }
-      merged.push(item)
-    }
+    
+    // 按照原始顺序添加已评分的记录
+    Object.values(mergedMap)
+      .sort((a: any, b: any) => a._originalIndex - b._originalIndex)
+      .forEach((item: any) => {
+        if (item._mergeCount > 1) {
+          // 合并评委名（去重）
+          const judgeNames = Array.from(new Set(item.judgeNames.join(',').split(',').map((j: string) => j.trim()))).join(', ')
+          item.judgeName = judgeNames
+          item.isCollaborative = true
+        }
+        merged.push(item)
+      })
+    
+    // 按照原始索引排序所有记录
+    merged.sort((a: any, b: any) => a._originalIndex - b._originalIndex)
+    
     group.records = merged
   })
 
@@ -2797,6 +2839,13 @@ onMounted(() => {
   color: #f5a623;
   text-align: center;
   background: rgba(255, 250, 235, 0.8);
+  font-weight: 500;
+}
+
+.not-yet-rated-cell {
+  font-style: italic;
+  color: #888;
+  text-align: center;
   font-weight: 500;
 }
 

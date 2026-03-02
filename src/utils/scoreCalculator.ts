@@ -87,6 +87,19 @@ export const SCORING_SCHEMES = {
 };
 
 /**
+ * 判断记录是否为尚未评分
+ */
+export function isNotYetRated(record: ScoreRecord): boolean {
+  if (!record.scores || Object.keys(record.scores).length === 0) return true
+  const hasValidScore = Object.values(record.scores).some(score => {
+    if (score === null || score === undefined) return false
+    const decimal = score instanceof Decimal ? score : new Decimal(score)
+    return !decimal.isZero()
+  })
+  return !hasValidScore
+}
+
+/**
  * 解析CSV数据为评分记录
  */
 export function parseCsvToScoreRecords(
@@ -238,6 +251,9 @@ export function parseCsvToScoreRecords(
   // 先按选手和评分项组织数据
   for (const record of records) {
     if (record.isRevoked) continue; // 跳过被作废的评分
+    
+    // 尚未评分的记录不参与协商评分检测
+    if (isNotYetRated(record)) continue;
     
     if (!playerJudgeScores[record.playerCode]) {
       playerJudgeScores[record.playerCode] = {};
