@@ -91,7 +91,7 @@
                 <span v-else class="no-data">-</span>
               </td>
               <td class="old-name">
-                <span v-if="user.社区曾用名" class="old-username">{{ user.社区曾用名 }}</span>
+                <span v-if="user.社区曾用名 && user.社区曾用名.length > 0" class="old-username">{{ user.社区曾用名.join(', ') }}</span>
                 <span v-else class="no-data">-</span>
               </td>
               <td class="platform-status">
@@ -149,16 +149,20 @@ const filteredUsers = computed(() => {
       if (user.序号.toString().includes(query) ||
           user.百度用户名.toLowerCase().includes(query) ||
           user.社区用户名.toLowerCase().includes(query) ||
-          user.社区UID.toLowerCase().includes(query) ||
-          user.社区曾用名.toLowerCase().includes(query)) {
+          user.社区UID.toLowerCase().includes(query)) {
         return true;
       }
       
-      // 检查别名（支持多个别名，用逗号分隔）
-      if (user.别名) {
-        const aliases = user.别名.split(',').map(alias => alias.trim()).filter(alias => alias);
-        return aliases.some(alias => alias.toLowerCase().includes(query));
+      // 检查社区曾用名（支持多个）
+      if (user.社区曾用名.some(name => name.toLowerCase().includes(query))) {
+        return true;
       }
+      
+      // 检查别名（支持多个）
+      if (user.别名.some(name => name.toLowerCase().includes(query))) {
+        return true;
+      }
+      
       return false;
     })
   }
@@ -174,7 +178,7 @@ const filteredUsers = computed(() => {
         case 'community-only':
           return !user.百度用户名 && user.社区用户名
         case 'has-old-name':
-          return user.社区曾用名
+          return user.社区曾用名.length > 0
         default:
           return true
       }
@@ -198,7 +202,7 @@ const communityOnlyUsers = computed(() => {
 })
 
 const hasOldNameUsers = computed(() => {
-  return users.value.filter(user => user.社区曾用名).length
+  return users.value.filter(user => user.社区曾用名.length > 0).length
 })
 
 // 获取平台状态

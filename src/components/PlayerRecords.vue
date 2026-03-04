@@ -233,7 +233,9 @@ const getAllPlayerNames = (userId: number): string[] => {
   const collectUserNames = (userData: UserData) => {
     if (userData.百度用户名?.trim()) names.push(userData.百度用户名.trim())
     if (userData.社区用户名?.trim()) names.push(userData.社区用户名.trim())
-    if (userData.社区曾用名?.trim()) names.push(userData.社区曾用名.trim())
+    userData.社区曾用名.forEach(name => {
+      if (name?.trim()) names.push(name.trim())
+    })
   }
   
   // 添加当前用户的用户名

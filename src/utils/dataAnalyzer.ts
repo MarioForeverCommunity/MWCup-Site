@@ -387,8 +387,8 @@ async function getUnifiedUserId(yamlUserName: string): Promise<string> {
       if (user.百度用户名 === yamlUserName) return true;
       // 检查是否匹配社区用户名
       if (user.社区用户名 === yamlUserName) return true;
-      // 检查是否匹配社区曾用名
-      if (user.社区曾用名 === yamlUserName) return true;
+      // 检查是否匹配社区曾用名（支持多个）
+      if (user.社区曾用名.includes(yamlUserName)) return true;
       return false;
     });
     
@@ -426,8 +426,8 @@ async function getPreferredDisplayName(yamlUserName: string): Promise<string> {
       if (user.百度用户名 === yamlUserName) return true;
       // 检查是否匹配社区用户名
       if (user.社区用户名 === yamlUserName) return true;
-      // 检查是否匹配社区曾用名
-      if (user.社区曾用名 === yamlUserName) return true;
+      // 检查是否匹配社区曾用名（支持多个）
+      if (user.社区曾用名.includes(yamlUserName)) return true;
       return false;
     });
     

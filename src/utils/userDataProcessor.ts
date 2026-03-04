@@ -7,8 +7,8 @@ export interface UserData {
   百度用户名: string;
   社区用户名: string;
   社区UID: string;
-  社区曾用名: string;
-  别名: string;
+  社区曾用名: string[];
+  别名: string[];
 }
 
 export interface PlayerRecord {
@@ -83,8 +83,8 @@ export async function loadUserData(): Promise<UserData[]> {
         百度用户名: 百度用户名 || '',
         社区用户名: 社区用户名 || '',
         社区UID: 社区UID || '',
-        社区曾用名: 社区曾用名 || '',
-        别名: 别名 || ''
+        社区曾用名: 社区曾用名 ? 社区曾用名.split(',').map(name => name.trim()).filter(name => name) : [],
+        别名: 别名 ? 别名.split(',').map(name => name.trim()).filter(name => name) : []
       };
     }).filter(user => user.序号 > 0);
 
@@ -105,13 +105,8 @@ export function findUserIdByName(users: UserData[], playerName: string): number 
     if (user.百度用户名 === playerName) return true;
     // 检查社区用户名
     if (user.社区用户名 === playerName) return true;
-    // 检查社区曾用名
-    if (user.社区曾用名 === playerName) return true;
-    // 检查别名（支持多个别名，用逗号分隔）
-    if (user.别名) {
-      const aliases = user.别名.split(',').map(alias => alias.trim()).filter(alias => alias);
-      if (aliases.includes(playerName)) return true;
-    }
+    // 检查社区曾用名（支持多个）
+    if (user.社区曾用名.includes(playerName)) return true;
     return false;
   });
   

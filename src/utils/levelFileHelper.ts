@@ -129,14 +129,12 @@ export function matchPlayerName(
   const playerRecord = users.find(user => {
     // 检查基本用户名
     if (user.百度用户名 === playerName || 
-        user.社区用户名 === playerName || 
-        user.社区曾用名 === playerName) {
+        user.社区用户名 === playerName) {
       return true;
     }
-    // 检查别名（支持多个别名，用逗号分隔）
-    if (user.别名) {
-      const aliases = user.别名.split(',').map(alias => alias.trim()).filter(alias => alias);
-      if (aliases.includes(playerName)) return true;
+    // 检查社区曾用名（支持多个）
+    if (user.社区曾用名.includes(playerName)) {
+      return true;
     }
     return false;
   });
@@ -147,14 +145,9 @@ export function matchPlayerName(
   const namesToCheck = [
     playerRecord.百度用户名,
     playerRecord.社区用户名,
-    playerRecord.社区曾用名
+    ...playerRecord.社区曾用名,
+    ...playerRecord.别名
   ].filter(name => name && name.trim());
-  
-  // 添加所有别名
-  if (playerRecord.别名) {
-    const aliases = playerRecord.别名.split(',').map(alias => alias.trim()).filter(alias => alias);
-    namesToCheck.push(...aliases);
-  }
   
   for (const name of namesToCheck) {
     const lowerName = name.toLowerCase();
@@ -167,13 +160,12 @@ export function matchPlayerName(
   
   // 查找关键词是否匹配其他用户记录，如果匹配，检查是否有相同社区UID
   const keywordMatchedUsers = users.filter(user => {
-    const names = [user.百度用户名, user.社区用户名, user.社区曾用名].filter(name => name && name.trim());
-    
-    // 添加所有别名
-    if (user.别名) {
-      const aliases = user.别名.split(',').map(alias => alias.trim()).filter(alias => alias);
-      names.push(...aliases);
-    }
+    const names = [
+      user.百度用户名,
+      user.社区用户名,
+      ...user.社区曾用名,
+      ...user.别名
+    ].filter(name => name && name.trim());
     
     for (const name of names) {
       const lowerName = name.toLowerCase();
