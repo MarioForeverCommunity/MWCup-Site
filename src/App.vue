@@ -313,7 +313,6 @@ const openCommunity = () => {
     rgba(255, 255, 255, 0.2),
     transparent
   );
-  animation: shimmer 3s ease-in-out infinite;
 }
 
 /* Responsive adjustments for app title */
