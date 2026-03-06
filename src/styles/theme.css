@@ -67,7 +67,7 @@
   --spacing-xl: 30px;
   
   /* 字体 */
-  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-family: Helvetica, Arial, "Microsoft YaHei", "PingFang SC", "WenQuanYi Micro Hei", "Tahoma", sans-serif;
   --font-mono: 'Courier New', monospace;
   
   /* 过渡动画 */
