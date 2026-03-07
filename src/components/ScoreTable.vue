@@ -2192,6 +2192,12 @@ function getPlayerAverageScore(playerCode: string): string {
   const playerScore = scoreData.value.playerScores.find(p => p.playerCode === playerCode);
   if (!playerScore) return '-';
   
+  // 检查该选手是否有尚未评分的记录
+  const hasNotYetRatedRecord = playerScore.records && playerScore.records.some((rec: any) => isNotYetRated(rec));
+  
+  // 如果有尚未评分的记录，显示横杠
+  if (hasNotYetRatedRecord) return '-';
+  
   // 对于评分方案E，使用judgeAverage（评委平均分）
   const scoreToUse = scoreData.value.scoringScheme === 'E' && playerScore.judgeAverage !== undefined 
     ? playerScore.judgeAverage 
