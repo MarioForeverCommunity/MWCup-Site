@@ -33,6 +33,10 @@ import FoldButton from './FoldButton.vue'
 import { marked } from 'marked'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 
+marked.setOptions({
+  breaks: true
+})
+
 interface Props {
   year: string
   round: string

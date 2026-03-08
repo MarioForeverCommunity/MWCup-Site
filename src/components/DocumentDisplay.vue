@@ -29,6 +29,10 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 
+marked.setOptions({
+  breaks: true
+})
+
 interface DocumentInfo {
   key: string
   title: string
