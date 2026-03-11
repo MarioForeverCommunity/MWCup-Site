@@ -1,7 +1,9 @@
 <template>
   <div class="stats-tabs">
     <div class="tab-bar">
-      <button v-for="tab in tabs" :key="tab.key"
+      <button
+        v-for="tab in tabs"
+        :key="tab.key"
         :class="['tab-btn', 'btn-base', activeTab === tab.key ? 'btn-primary' : 'btn-secondary', {active: tab.key === activeTab}]"
         @click="setActiveTab(tab.key)"
       >

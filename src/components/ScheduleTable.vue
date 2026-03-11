@@ -220,10 +220,20 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
                   <td class="link-cell">
                     <template v-if="item.multipleLinks">
                       <div v-for="(link, idx) in filterMultipleLinks(item.multipleLinks, props.round)" :key="link + idx" class="multi-link-container">
-                        <a :href="getLinkHref(link)" target="_blank" class="link-btn hover-scale" v-text="getLinkText(link, !!props.round)"></a>
+                        <a
+                          :href="getLinkHref(link)"
+                          target="_blank"
+                          class="link-btn hover-scale"
+                          v-text="getLinkText(link, !!props.round)"
+                        ></a>
                       </div>
                     </template>
-                    <a v-else-if="item.link" :href="item.link" target="_blank" class="link-btn hover-scale">链接</a>
+                    <a
+                      v-else-if="item.link"
+                      :href="item.link"
+                      target="_blank"
+                      class="link-btn hover-scale"
+                    >链接</a>
                   </td>
                 </tr>
                 <tr

@@ -186,27 +186,35 @@
                       <span class="player-name-text">{{ record.playerName }}</span>
                     </td>
                     <!-- 处理取消资格的选手（未上传关卡） -->
-                    <td v-if="record.isNoSubmission && record.playerCode.startsWith('~')"
-                        :colspan="scoreData.columns.length + 2"
-                        class="canceled-score-cell">
+                    <td
+                      v-if="record.isNoSubmission && record.playerCode.startsWith('~')"
+                      :colspan="scoreData.columns.length + 2"
+                      class="canceled-score-cell"
+                    >
                       取消资格
                     </td>
                     <!-- 处理未上传关卡的选手，将评委到总分的所有列合并为一个"未上传"单元格 -->
-                    <td v-else-if="record.isNoSubmission"
-                        :colspan="scoreData.columns.length + 2"
-                        class="no-submission-cell">
+                    <td
+                      v-else-if="record.isNoSubmission"
+                      :colspan="scoreData.columns.length + 2"
+                      class="no-submission-cell"
+                    >
                       未上传
                     </td>
                     <!-- 处理成绩无效的选手（已上传关卡） -->
-                    <td v-else-if="record.isCanceled"
-                        :colspan="scoreData.columns.length + 2"
-                        class="canceled-score-cell">
+                    <td
+                      v-else-if="record.isCanceled"
+                      :colspan="scoreData.columns.length + 2"
+                      class="canceled-score-cell"
+                    >
                       成绩无效
                     </td>
                     <!-- 处理无法运行的关卡 -->
-                    <td v-else-if="record.isUnworking"
-                        :colspan="scoreData.columns.length + 2"
-                        class="unworking-level-cell">
+                    <td
+                      v-else-if="record.isUnworking"
+                      :colspan="scoreData.columns.length + 2"
+                      class="unworking-level-cell"
+                    >
                       关卡无法运行
                     </td>
                     
@@ -243,16 +251,20 @@
                         </div>
                       </td>
                       <!-- 处理尚未评分：合并所有评分列 -->
-                      <td v-if="isNotYetRated(record)"
-                          :colspan="scoreData.columns.length + 1"
-                          class="not-yet-rated-cell">
+                      <td
+                        v-if="isNotYetRated(record)"
+                        :colspan="scoreData.columns.length + 1"
+                        class="not-yet-rated-cell"
+                      >
                         尚未评分
                       </td>
                       <!-- 正常评分显示 -->
                       <template v-else>
-                        <td v-for="column in scoreData.columns" 
-                            :key="column" 
-                            class="score-cell">
+                        <td
+                          v-for="column in scoreData.columns" 
+                          :key="column" 
+                          class="score-cell"
+                        >
                           {{ formatScore(record.scores[column]) }}
                         </td>
                         <td class="judge-total">{{ formatScore(record.totalScore) }}</td>
@@ -276,16 +288,16 @@
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
           <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
           <p class="scheme-info">
-          评分标准:
-          <a 
-            href="https://www.marioforever.net/thread-3479-1-1.html" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="scheme-link"
-          >
-            2025 版大众评选方案
-          </a>
-        </p>
+            评分标准:
+            <a 
+              href="https://www.marioforever.net/thread-3479-1-1.html" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="scheme-link"
+            >
+              2025 版大众评选方案
+            </a>
+          </p>
           <p class="scoring-note">注：基础分按欣赏性得分×1.5、创新性得分×1.5、设计性得分×3、游戏性得分×4的方式计算</p>
           <div class="table-wrapper">
             <table ref="publicTableRef" class="table-base score-table">

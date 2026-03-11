@@ -3,7 +3,12 @@
     <div class="control-panel animate-fadeInUp">
       <div class="form-group">
         <label for="year-select" class="form-label">届次：</label>
-        <select id="year-select" v-model="selectedYear" @change="onYearChange" class="form-control hover-scale">
+        <select
+          id="year-select"
+          v-model="selectedYear"
+          @change="onYearChange"
+          class="form-control hover-scale"
+        >
           <option v-for="year in availableYears" :key="year" :value="year">
             {{ year }}年第{{ getEditionNumber(year) }}届
           </option>
@@ -12,7 +17,12 @@
       
       <div class="form-group animate-scaleIn" v-if="selectedYear">
         <label for="round-select" class="form-label">轮次：</label>
-        <select id="round-select" v-model="selectedRound" @change="onRoundChange" class="form-control hover-scale">
+        <select
+          id="round-select"
+          v-model="selectedRound"
+          @change="onRoundChange"
+          class="form-control hover-scale"
+        >
           <option value="">请选择轮次</option>
           <option v-for="round in availableRounds" :key="round.code" :value="round.code">
             {{ round.name }}

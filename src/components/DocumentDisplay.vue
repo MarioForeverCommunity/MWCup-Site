@@ -1,6 +1,7 @@
 <template>
   <div class="document-selector">
-    <button v-for="doc in availableDocs"
+    <button
+      v-for="doc in availableDocs"
       :key="doc.key"
       @click="selectDocument(doc.key)"
       :class="['doc-btn', 'btn-base', selectedDoc === doc.key ? 'btn-primary' : 'btn-secondary']"

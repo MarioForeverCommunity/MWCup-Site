@@ -368,7 +368,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
                 let judgeBaseScore = 0;
                 for (const [key, value] of Object.entries(record.scores)) {
                   if (key !== '加分项' && key !== '扣分项') {
-                    let score = typeof value === 'number' ? value : Number(value);
+                    const score = typeof value === 'number' ? value : Number(value);
                     judgeBaseScore += score;
                   }
                 }
@@ -417,7 +417,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
                 let calculatedBaseScore = new Decimal(0);
                 for (const [key, value] of Object.entries(record.scores)) {
                   if (key !== '加分项' && key !== '扣分项') {
-                    let score = typeof value === 'number' ? value : Number(value);
+                    const score = typeof value === 'number' ? value : Number(value);
                     let calculatedScore = new Decimal(score);
                     // 2016年Q2轮次的欣赏性得分需要乘以10/15
                     if (year === '2016' && round === 'Q2' && key === '欣赏性') {

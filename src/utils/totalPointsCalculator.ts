@@ -712,8 +712,8 @@ async function calculate2020PreliminaryScore(playerData: any, playerLevels: Leve
   }
   
   // 2020年规则：第一条截止线前至少上传一关，第二条截止线前至少上传两关
-  let selectedLevels: { roundKey: string; score: Decimal }[] = [];
-  let penalty = 0;
+  const selectedLevels: { roundKey: string; score: Decimal }[] = [];
+  const penalty = 0;
   
   if (deadlines.length >= 2) {
     // 第一关：截止线1前得分最高的关卡
@@ -784,8 +784,8 @@ async function calculate2021PreliminaryScore(playerData: any, playerLevels: Leve
   }
   
   // 2021年复杂选择规则
-  let selectedLevels: { roundKey: string; score: Decimal }[] = [];
-  let penalty = 0;
+  const selectedLevels: { roundKey: string; score: Decimal }[] = [];
+  const penalty = 0;
   
   if (deadlines.length >= 3) {
     // 按截止时间逐个选择关卡

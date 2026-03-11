@@ -975,7 +975,7 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
           
           // 获取轮次名称
           const yearData = seasonData?.[year.toString()];
-          let roundData = yearData?.rounds?.[round];
+          const roundData = yearData?.rounds?.[round];
           const roundChineseName = getRoundChineseName(round, { ...roundData, year: year.toString() });
           
           attendanceData.push({

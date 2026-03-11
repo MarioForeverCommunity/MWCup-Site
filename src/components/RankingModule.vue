@@ -92,9 +92,9 @@
     <div v-if="!loading && !error">
       <!-- 单关排名 -->
       <div v-if="activeTab === 'single'" class="animate-fadeInUp">
-      <div class="section-header">
-        <h3>单关排名 ({{ filteredSingleLevelRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportSingleToExcel">导出表格</button></h3>
-      </div>
+        <div class="section-header">
+          <h3>单关排名 ({{ filteredSingleLevelRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportSingleToExcel">导出表格</button></h3>
+        </div>
         <div class="table-wrapper">
           <table ref="singleTableRef" class="table-base ranking-table">
             <thead>
@@ -130,9 +130,9 @@
       </div>
       <!-- 多关排名 -->
       <div v-if="activeTab === 'multi'" class="animate-fadeInUp">
-      <div class="section-header">
-        <h3>多关排名 ({{ filteredMultiLevelRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportMultiToExcel">导出表格</button></h3>
-      </div>
+        <div class="section-header">
+          <h3>多关排名 ({{ filteredMultiLevelRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportMultiToExcel">导出表格</button></h3>
+        </div>
         <div class="table-wrapper">
           <table ref="multiTableRef" class="table-base ranking-table">
             <thead>
@@ -171,9 +171,9 @@
       </div>
       <!-- 原始得分率排名 -->
       <div v-if="activeTab === 'original'" class="animate-fadeInUp">
-      <div class="section-header">
-        <h3>原始得分率排名 ({{ filteredOriginalScoreRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportOriginalToExcel">导出表格</button></h3>
-      </div>
+        <div class="section-header">
+          <h3>原始得分率排名 ({{ filteredOriginalScoreRanking.length }} 条记录) <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportOriginalToExcel">导出表格</button></h3>
+        </div>
         <div class="table-wrapper">
           <table ref="originalTableRef" class="table-base ranking-table">
             <thead>

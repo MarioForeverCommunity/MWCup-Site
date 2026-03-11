@@ -35,7 +35,7 @@
     <div v-else class="content-panel animate-fadeInUp">
       <!-- 评委数据表格 -->
       <div class="section-header">
-         <h3>评委详细数据</h3>
+        <h3>评委详细数据</h3>
       </div>
       <p class="scoring-note">注：统计数据不包含 2012 年数据。</p>
       <div class="table-wrapper">

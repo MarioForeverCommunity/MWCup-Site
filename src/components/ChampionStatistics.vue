@@ -54,10 +54,12 @@
               <td class="third">{{ champion.third || '-' }}</td>
               <td class="fourth">{{ champion.fourth || '-' }}</td>
               <td class="link">
-                <a v-if="urlMap[champion.year]" 
-                   :href="urlMap[champion.year]" 
-                   target="_blank" 
-                   class="url-btn hover-scale">
+                <a
+                  v-if="urlMap[champion.year]" 
+                  :href="urlMap[champion.year]" 
+                  target="_blank" 
+                  class="url-btn hover-scale"
+                >
                   前往
                 </a>
                 <span v-else>-</span>

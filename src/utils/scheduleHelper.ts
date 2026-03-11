@@ -228,7 +228,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
   for (const year of Object.keys(seasonObj)) {
     const season = seasonObj[year];
     // 合并主 schedule 和所有 rounds 下的 schedule
-    let schedule: Record<string, any> = {};
+    const schedule: Record<string, any> = {};
     if (season && typeof season.rounds === 'object' && season.rounds !== null) {
       for (const [roundKey, roundVal] of Object.entries(season.rounds)) {
         if (roundVal && typeof (roundVal as any).schedule === 'object' && (roundVal as any).schedule !== null) {
@@ -508,7 +508,7 @@ export function getJudgingEndTime(yamlData: any, year: string, roundKey: string)
   const seasonData = yamlData?.season?.[year];
   if (!seasonData) return null;
   
-  let roundData = findRoundData(seasonData, roundKey);
+  const roundData = findRoundData(seasonData, roundKey);
   if (!roundData) return null;
   
   const schedule = roundData.schedule;
@@ -536,7 +536,7 @@ export function getVotingEndTime(yamlData: any, year: string, roundKey: string):
   const seasonData = yamlData?.season?.[year];
   if (!seasonData) return null;
   
-  let roundData = findRoundData(seasonData, roundKey);
+  const roundData = findRoundData(seasonData, roundKey);
   if (!roundData) return null;
   
   const schedule = roundData.schedule;

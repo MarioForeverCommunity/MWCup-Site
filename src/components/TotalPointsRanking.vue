@@ -4,7 +4,12 @@
       <div class="control-panel">
         <div class="form-group">
           <label for="year-select" class="form-label">选择届次：</label>
-          <select id="year-select" v-model="selectedYear" @change="handleYearChange" class="form-control hover-scale">
+          <select
+            id="year-select"
+            v-model="selectedYear"
+            @change="handleYearChange"
+            class="form-control hover-scale"
+          >
             <option v-for="option in availableEditionOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>

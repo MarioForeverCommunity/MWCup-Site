@@ -443,8 +443,8 @@ function parseCSVLine(line: string): string[] {
 export function parseJudgeCode(judgeCode: string) {
   let isRevoked = false;
   let isBackup = false;
-  let isCollaborative = false;
-  let collaborativeJudges: string[] = [];
+  const isCollaborative = false;
+  const collaborativeJudges: string[] = [];
   let originalCode = judgeCode;
 
   // 检查是否被作废（以~开头）
@@ -655,8 +655,8 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
         // 先排序
         const sorted = [...weightedScores].sort((a, b) => a.score.comparedTo(b.score));
         // 找到最高分和最低分的下标
-        let minIdx = 0;
-        let maxIdx = sorted.length - 1;
+        const minIdx = 0;
+        const maxIdx = sorted.length - 1;
         // 记录被去除的评委票数
         let removedJudge = 0;
         let removedPublic = 0;
