@@ -162,7 +162,7 @@ export default defineComponent({
       try {
         const result = await loadTotalPointsData(selectedYear.value, yamlData.value);
         data.value = result;
-      } catch (error) {
+      } catch {
         data.value = {
           year: selectedYear.value,
           players: [],
@@ -325,7 +325,7 @@ export default defineComponent({
       try {
         yamlData.value = await fetchMarioWorkerYaml();
         await loadData();
-      } catch (error) {
+      } catch {
       }
     });
     return {

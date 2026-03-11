@@ -112,7 +112,7 @@ async function loadDocumentContent() {
     } else {
       error.value = '加载文档失败'
     }
-  } catch (err) {
+  } catch {
     error.value = '加载文档失败'
   } finally {
     loading.value = false

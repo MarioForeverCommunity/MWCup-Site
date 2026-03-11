@@ -463,7 +463,7 @@ function searchBySelectorAndKeyword() {
           }
           return a.name.localeCompare(b.name);
         });
-      } catch (error) {
+      } catch {
         results.sort((a, b) => a.name.localeCompare(b.name));
       }
     } else if (selectedYear.value) {
@@ -490,7 +490,7 @@ function searchBySelectorAndKeyword() {
               }
               return a.name.localeCompare(b.name);
             });
-          } catch (error) {
+          } catch {
             files.sort((a, b) => (a.playerCode || '').localeCompare(b.playerCode || ''));
           }
         }
@@ -505,7 +505,7 @@ function searchBySelectorAndKeyword() {
           unknownRoundFiles.sort((a, b) => a.name.localeCompare(b.name));
           results.push(...unknownRoundFiles);
         }
-      } catch (error) {
+      } catch {
         results.sort((a, b) => {
           const aIndex = roundOrder.indexOf(a.roundKey || '');
           const bIndex = roundOrder.indexOf(b.roundKey || '');
