@@ -60,9 +60,9 @@ export async function loadUserData(): Promise<UserData[]> {
     const response = await fetch('/data/users.csv');
     const text = await response.text();
     const lines = text.split('\n').filter(line => line.trim() && !line.startsWith('//'));
-    
+
     if (lines.length === 0) return [];
-    
+
     // 跳过标题行
     const dataLines = lines.slice(1);
     const users: UserData[] = dataLines.map(line => {
@@ -76,7 +76,7 @@ export async function loadUserData(): Promise<UserData[]> {
         }
         return trimmed;
       });
-      
+
       const [序号, 百度用户名, 社区用户名, 社区UID, 社区曾用名, 别名] = parts;
       return {
         序号: parseInt(序号) || 0,
@@ -109,7 +109,7 @@ export function findUserIdByName(users: UserData[], playerName: string): number 
     if (user.社区曾用名.includes(playerName)) return true;
     return false;
   });
-  
+
   return user ? user.序号 : null;
 }
 
@@ -118,10 +118,10 @@ export function findUserIdByName(users: UserData[], playerName: string): number 
  */
 export function getStageLevel(roundCode: string): number {
   const round = roundCode.toUpperCase();
-  
+
   // 决赛 (Final)
   if (round.includes('F')) return 6;
-  // 半决赛 (Semi-final) 
+  // 半决赛 (Semi-final)
   if (round.includes('S')) return 5;
   // 复赛
   if (round.includes('R')) return 4;
@@ -131,7 +131,7 @@ export function getStageLevel(roundCode: string): number {
   if (round.includes('G') || round.includes('I')) return 2;
   // 预选赛/热身赛/资格赛 (Preliminary)
   if (round.includes('P')) return 1;
-  
+
   return 0;
 }
 
@@ -155,18 +155,18 @@ export function getStageName(level: number): string {
  */
 export function isValidJudge(judgeCode: string): boolean {
   if (!judgeCode) return false;
-  
+
   // 排除JZ开头的大众评分
   if (judgeCode.startsWith('JZ')) return false;
-  
+
   // 排除CANCELED评委
   if (judgeCode.toUpperCase().includes('CANCELED')) return false;
   if (judgeCode.toUpperCase().includes('UNWORKING')) return false;
-  
+
   // 处理带波浪号前缀的评委代号
   const cleanCode = judgeCode.replace(/^~/, '');
   if (cleanCode.startsWith('JZ')) return false;
-  
+
   return true;
 }
 

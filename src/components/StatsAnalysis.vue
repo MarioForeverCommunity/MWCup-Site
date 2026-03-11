@@ -64,11 +64,11 @@ const router = useRouter()
 // 检查路由参数来确定初始选择的标签页
 const getInitialTab = () => {
   const statsParam = route.params.stat
-  
+
   if (statsParam && tabs.find(tab => tab.key === statsParam)) {
     return statsParam as string
   }
-  
+
   return 'ranking' // 默认选择关卡排名
 }
 
@@ -81,7 +81,7 @@ const isInitialized = ref(false)
 const setActiveTab = (tabKey: string) => {
   // 更新活动标签页状态
   activeTab.value = tabKey
-  
+
   // 根据标签页类型导航到不同的路由
   if (tabKey === 'ranking') {
     router.push({ name: 'StatsRanking', params: { type: 'single' } })
@@ -116,7 +116,7 @@ onMounted(() => {
     // 根据当前路由名称处理初始化
     const currentName = route.name
     const currentStat = route.params.stat
-    
+
     if (currentName === 'StatsRanking') {
       activeTab.value = 'ranking'
     } else if (currentName === 'StatsTotalPoints') {

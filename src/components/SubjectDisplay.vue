@@ -6,16 +6,16 @@
         <FoldButton :is-folded="!isExpanded" @toggle="toggleExpand" />
       </h3>
     </div>
-    
+
     <div class="panel-collapse" :class="{'is-expanded': isExpanded}">
       <div class="subject-content">
         <div v-if="loading" class="loading-state">
           <div class="loading-spinner"></div>
           <span class="loading-text">加载试题中<span class="loading-dots"></span></span>
         </div>
-        
+
         <p v-else-if="error" class="no-subject">{{ error }}</p>
-        
+
         <div v-else-if="subjectContent" class="subject-content-wrapper">
           <div class="markdown-content" v-html="renderedContent"></div>
           <div v-if="smwpVersion" class="smwp-version">
@@ -81,7 +81,7 @@ const getStageDisplayName = (round: string): string => {
 // 格式化SMWP版本显示文案
 const formatSmwpVersionText = (version: any, stage: string): string => {
   if (!version) return ''
-  
+
   if (Array.isArray(version)) {
     // 数组格式：SMWP v1.7.8 或 v1.7.9
     const formattedVersions = version.map(v => `v${v}`).join('或')
@@ -96,7 +96,7 @@ const formatSmwpVersionText = (version: any, stage: string): string => {
       return `${stage}期间使用的SMWP版本为：SMWP v${version}`
     }
   }
-  
+
   return ''
 }
 
@@ -111,7 +111,7 @@ async function loadSmwpVersion() {
     const yamlDoc = await fetchMarioWorkerYaml()
     const seasonData = extractSeasonData(yamlDoc)
     const yearData = seasonData[props.year]
-    
+
     if (!yearData?.rounds) {
       smwpVersion.value = ''
       return
@@ -119,7 +119,7 @@ async function loadSmwpVersion() {
 
     // 查找对应轮次的数据
     let roundData = yearData.rounds[props.round]
-    
+
     // 如果直接查找失败，尝试在组合轮次中查找
     if (!roundData) {
       for (const [roundKey, data] of Object.entries(yearData.rounds)) {
@@ -135,7 +135,7 @@ async function loadSmwpVersion() {
             // JSON解析失败，继续下一个
           }
         }
-        
+
         // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
         if (roundKey.includes(',')) {
           const singleRounds = roundKey.split(',').map(r => r.trim())
@@ -147,16 +147,16 @@ async function loadSmwpVersion() {
       }
     }
     // 获取SMWP版本，优先使用轮次级别的，如果没有则使用年份级别的
-    let versionToUse = roundData?.smwp_version || yearData.smwp_version
-    
+    const versionToUse = roundData?.smwp_version || yearData.smwp_version
+
     if (versionToUse) {
       let stageName = getStageDisplayName(props.round)
-      
+
       // 特殊处理P1轮次的热身赛情况
       if (props.round === 'P1' && roundData?.is_warmup) {
         stageName = '热身赛'
       }
-      
+
       smwpVersion.value = formatSmwpVersionText(versionToUse, stageName)
     } else {
       smwpVersion.value = ''

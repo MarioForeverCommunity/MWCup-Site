@@ -2,8 +2,8 @@
 <template>
   <div class="content-panel animate-fadeInUp">
     <div class="ranking-tabs">
-      <button 
-        v-for="tab in tabs" 
+      <button
+        v-for="tab in tabs"
         :key="tab.key"
         class="ranking-tab-btn btn-base"
         :class="{ 'btn-primary': activeTab === tab.key, 'btn-secondary': activeTab !== tab.key }"
@@ -16,26 +16,26 @@
     <div class="filters">
       <div class="form-group">
         <label class="form-label">搜索选手名：</label>
-        <input 
-          v-model="filters.searchPlayer" 
-          type="text" 
+        <input
+          v-model="filters.searchPlayer"
+          type="text"
           placeholder="输入选手名..."
           class="form-control hover-scale"
           @input="handleFilterChange"
         />
       </div>
-      
+
       <div class="form-group">
         <label class="form-label">搜索关卡名：</label>
-        <input 
-          v-model="filters.searchLevel" 
-          type="text" 
+        <input
+          v-model="filters.searchLevel"
+          type="text"
           :placeholder="'输入关卡名...'"
           class="form-control hover-scale"
           @input="handleFilterChange"
         />
       </div>
-      
+
       <div class="form-group">
         <label class="form-label">筛选届次：</label>
         <select v-model="filters.selectedYear" class="form-control hover-scale" @change="handleFilterChange">
@@ -45,7 +45,7 @@
           </option>
         </select>
       </div>
-      
+
       <div class="form-group scoring-scheme-filters">
         <label class="form-label">筛选：</label>
         <div class="checkbox-group">
@@ -226,14 +226,14 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { 
-  LevelRankingItem, 
-  MultiLevelRankingItem, 
+import type {
+  LevelRankingItem,
+  MultiLevelRankingItem,
   OriginalScoreRankingItem,
-  RankingFilters 
+  RankingFilters
 } from '../types/ranking'
 import { Decimal } from 'decimal.js'
-import { 
+import {
   calculateSingleLevelRanking,
   calculateMultiLevelRanking,
   calculateOriginalScoreRanking,
@@ -522,33 +522,33 @@ const filteredMultiLevelRanking = computed(() => {
 
 const filteredOriginalScoreRanking = computed(() => {
   const arr = applyOriginalScoreFilters(originalScoreRanking.value, filters)
-  
+
   // 创建两个独立的数组副本来分别计算排名
   const originalRankArr = [...arr]
   const scoreRateRankArr = [...arr]
-  
+
   // 原始分排名 - 基于原始得分率
   originalRankArr.sort((a, b) => b.originalScoreRate - a.originalScoreRate)
   assignRankingWithTies(originalRankArr, 'originalRank', 'originalScoreRate')
-  
+
   // 得分率排名 - 基于最终得分率
   scoreRateRankArr.sort((a, b) => b.scoreRate - a.scoreRate)
   assignRankingWithTies(scoreRateRankArr, 'scoreRateRank', 'scoreRate')
-  
+
   // 创建排名映射
   const originalRankMap = new Map()
   const scoreRateRankMap = new Map()
-  
+
   originalRankArr.forEach(item => {
     const key = `${item.year}-${item.roundKey}-${item.playerCode}`
     originalRankMap.set(key, item.originalRank)
   })
-  
+
   scoreRateRankArr.forEach(item => {
     const key = `${item.year}-${item.roundKey}-${item.playerCode}`
     scoreRateRankMap.set(key, item.scoreRateRank)
   })
-  
+
   // 应用排名到原数组并计算排名升降
   arr.forEach(item => {
     const key = `${item.year}-${item.roundKey}-${item.playerCode}`
@@ -556,7 +556,7 @@ const filteredOriginalScoreRanking = computed(() => {
     item.scoreRateRank = scoreRateRankMap.get(key) || 0
     item.rankChange = item.originalRank - item.scoreRateRank
   })
-  
+
   return arr
 })
 
@@ -584,7 +584,7 @@ async function loadInitialData() {
   try {
     loading.value = true
     error.value = null
-    
+
     // 并行加载所有数据
     const [years, singleData, multiData, originalData, userData, yaml] = await Promise.all([
       getAvailableYears(),
@@ -601,7 +601,7 @@ async function loadInitialData() {
     originalScoreRanking.value = originalData
     userDataCache.value = userData
     yamlData.value = yaml
-    
+
     // 如果没有数据，显示提示信息
     if (singleData.length === 0 && multiData.length === 0 && originalData.length === 0) {
       error.value = '暂无排名数据，请确保数据文件已正确加载'
@@ -649,17 +649,17 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
   let filtered = items
   // 剔除2012年关卡
   filtered = filtered.filter(item => item.year !== 2012)
-  
+
   // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
   if (yamlData.value) {
     filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
   }
-  
+
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.trim()
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
     const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
-    
+
     filtered = filtered.filter(item => {
       if (isExact) {
         return item.author.toLowerCase() === processedKeyword.toLowerCase() ||
@@ -670,20 +670,20 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
       }
     })
   }
-  
+
   if (filters.searchLevel) {
     const searchTerm = filters.searchLevel.toLowerCase()
-    filtered = filtered.filter(item => 
+    filtered = filtered.filter(item =>
       item.levelName.toLowerCase().includes(searchTerm)
     )
   }
-  
+
   if (filters.selectedYear) {
-    filtered = filtered.filter(item => 
+    filtered = filtered.filter(item =>
       item.year.toString() === filters.selectedYear
     )
   }
-  
+
   // 评分方案筛选
   if (filters.scoringSchemes) {
     const enabledSchemes = Object.entries(filters.scoringSchemes)
@@ -703,7 +703,7 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
   if (filters.onlyHighScore) {
     filtered = filtered.filter(item => item.scoreRate > 87)
   }
-  
+
   return filtered
 }
 
@@ -711,17 +711,17 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
   let filtered = items
   // 剔除2012年关卡
   filtered = filtered.filter(item => item.year !== 2012)
-  
+
   // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
   if (yamlData.value) {
     filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
   }
-  
+
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.trim()
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
     const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
-    
+
     filtered = filtered.filter(item => {
       if (isExact) {
         return item.author.toLowerCase() === processedKeyword.toLowerCase() ||
@@ -732,20 +732,20 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
       }
     })
   }
-  
+
   if (filters.searchLevel) {
     const searchTerm = filters.searchLevel.toLowerCase()
-    filtered = filtered.filter(item => 
+    filtered = filtered.filter(item =>
       item.levelName.toLowerCase().includes(searchTerm)
     )
   }
-  
+
   if (filters.selectedYear) {
-    filtered = filtered.filter(item => 
+    filtered = filtered.filter(item =>
       item.year.toString() === filters.selectedYear
     )
   }
-  
+
   // 评分方案筛选
   if (filters.scoringSchemes) {
     const enabledSchemes = Object.entries(filters.scoringSchemes)
@@ -765,7 +765,7 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
   if (filters.onlyHighScore) {
     filtered = filtered.filter(item => item.scoreRate > 87)
   }
-  
+
   return filtered
 }
 
@@ -773,17 +773,17 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: R
   let filtered = items
   // 剔除2012年关卡
   filtered = filtered.filter(item => item.year !== 2012)
-  
+
   // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
   if (yamlData.value) {
     filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
   }
-  
+
   if (filters.searchPlayer) {
     const searchTerm = filters.searchPlayer.trim()
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
     const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
-    
+
     filtered = filtered.filter(item => {
       if (isExact) {
         return item.author.toLowerCase() === processedKeyword.toLowerCase() ||
@@ -794,20 +794,20 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: R
       }
     })
   }
-  
+
   if (filters.searchLevel) {
     const searchTerm = filters.searchLevel.toLowerCase()
-    filtered = filtered.filter(item => 
+    filtered = filtered.filter(item =>
       item.levelName.toLowerCase().includes(searchTerm)
     )
   }
-  
+
   if (filters.selectedYear) {
-    filtered = filtered.filter(item => 
+    filtered = filtered.filter(item =>
       item.year.toString() === filters.selectedYear
     )
   }
-  
+
   // 评分方案筛选
   if (filters.scoringSchemes) {
     const enabledSchemes = Object.entries(filters.scoringSchemes)
@@ -827,7 +827,7 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: R
   if (filters.onlyHighScore) {
     filtered = filtered.filter(item => item.scoreRate > 87)
   }
-  
+
   return filtered
 }
 
@@ -1075,7 +1075,7 @@ td:first-child {
   table {
     font-size: 13px;
   }
-  
+
   th,
   td {
     padding: 6px 8px;
@@ -1087,24 +1087,24 @@ td:first-child {
     flex-direction: column;
     gap: var(--spacing-md);
   }
-  
+
   .filter-group {
     min-width: 100%;
   }
-  
+
   .ranking-tabs {
     justify-content: center;
   }
-  
+
   table {
     font-size: 12px;
   }
-  
+
   th,
   td {
     padding: 4px 6px;
   }
-  
+
   table {
     min-width: 800px;
   }

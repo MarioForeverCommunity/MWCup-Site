@@ -75,8 +75,8 @@
                   </div>
                 </td>
                 <td class="action-cell">
-                  <button 
-                    @click="toggleDetails(record.judgeName)" 
+                  <button
+                    @click="toggleDetails(record.judgeName)"
                     class="detail-btn hover-scale"
                     :class="{
                       'btn-secondary': expandedJudge === record.judgeName
@@ -86,7 +86,7 @@
                   </button>
                 </td>
               </tr>
-              
+
               <!-- 详细信息展开行 -->
               <tr v-if="expandedJudge === record.judgeName" :key="`${record.judgeName}-details`" class="details-row animate-fadeInUp">
                 <td colspan="5">
@@ -95,8 +95,8 @@
                       <h4>{{ record.judgeName }} 的年度详细数据</h4>
                     </div>
                     <div class="yearly-data">
-                      <div 
-                        v-for="(data, year) in getExpandedJudgeData()?.yearlyData" 
+                      <div
+                        v-for="(data, year) in getExpandedJudgeData()?.yearlyData"
                         :key="year"
                         class="year-card"
                       >
@@ -147,7 +147,7 @@ const filteredRecords = computed(() => {
     const query = searchQuery.value.trim()
     const isExact = query.startsWith('"') && query.endsWith('"')
     const processedKeyword = isExact ? query.slice(1, -1) : query
-    
+
     filtered = filtered.filter(record => {
       // 直接匹配评委名
       if (isExact) {
@@ -159,7 +159,7 @@ const filteredRecords = computed(() => {
           return true
         }
       }
-      
+
       // 使用别名匹配
       return matchPlayerName(record.judgeName, processedKeyword, users.value, isExact)
     })
@@ -201,7 +201,7 @@ const refreshData = async () => {
   loading.value = true
   error.value = ''
   expandedJudge.value = null
-  
+
   try {
     const [judgeRecords, userData] = await Promise.all([
       analyzeJudgeRecords(),
@@ -406,15 +406,15 @@ onMounted(() => {
     min-width: 600px;
     white-space: nowrap;
   }
-  
+
   .summary-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .yearly-data {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
-  
+
   .yearly-details {
     padding: var(--spacing-md);
     margin: var(--spacing-sm);

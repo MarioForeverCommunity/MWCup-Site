@@ -9,13 +9,13 @@
       <span class="doc-text">{{ doc.title }}</span>
     </button>
   </div>
-  
+
   <div v-if="selectedDoc" class="document-content">
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
       <span class="loading-text">加载文档中<span class="loading-dots"></span></span>
     </div>
-    
+
     <div v-else-if="error" class="error-state">
       <span>{{ error }}</span>
     </div>
@@ -72,13 +72,13 @@ const selectDocument = (docKey: string) => {
   if (selectedDoc.value !== docKey) {
     selectedDoc.value = docKey
     loadDocumentContent()
-    
+
     // 使用Vue Router更新路由
     router.push({
       name: 'DocsSub',
       params: { doc: docKey }
     })
-    
+
     // 文档切换时滚动到顶部
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -128,7 +128,6 @@ const checkRouteParams = () => {
   // 只有当路由参数不存在或不合法时，才使用第一个文档
   return availableDocs[0]?.key || ''
 }
-
 
 watch(() => route.params.doc, (newDoc) => {
   if (newDoc && typeof newDoc === 'string' && selectedDoc.value !== newDoc) {

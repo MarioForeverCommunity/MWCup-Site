@@ -26,7 +26,7 @@ const activeTab = ref(getActiveTab())
 // 监听标签页变化并保存到 sessionStorage
 const setActiveTab = (tab: string) => {
   activeTab.value = tab as any
-  
+
   // 根据标签页进行路由跳转
   switch (tab) {
     case 'matches':
@@ -47,7 +47,7 @@ const setActiveTab = (tab: string) => {
     default:
       router.push('/matches')
   }
-  
+
   // 移动端点击导航项后自动收起侧边栏
   if (isMobileView.value) {
     isSidebarOpen.value = false
@@ -119,47 +119,47 @@ const openCommunity = () => {
         <h1 class="app-title">Mario Worker 杯官网</h1>
       </header>
       <nav class="sidebar-nav">
-        <button 
-          @click="setActiveTab('matches')" 
+        <button
+          @click="setActiveTab('matches')"
           :class="{ active: activeTab === 'matches' }"
           class="nav-btn hover-scale"
         >
           <span class="nav-icon">📚</span>
           <span class="nav-text">赛事详览</span>
         </button>
-        <button 
-          @click="setActiveTab('upload')" 
+        <button
+          @click="setActiveTab('upload')"
           :class="{ active: activeTab === 'upload' }"
           class="nav-btn hover-scale"
         >
           <span class="nav-icon">📤</span>
           <span class="nav-text">上传系统</span>
         </button>
-        <button 
-          @click="setActiveTab('levels')" 
+        <button
+          @click="setActiveTab('levels')"
           :class="{ active: activeTab === 'levels' }"
           class="nav-btn hover-scale"
         >
           <span class="nav-icon">🎮</span>
           <span class="nav-text">关卡查询</span>
         </button>
-        <button 
-          @click="setActiveTab('stats')" 
+        <button
+          @click="setActiveTab('stats')"
           :class="{ active: activeTab === 'stats' }"
           class="nav-btn hover-scale"
         >
           <span class="nav-icon">📊</span>
           <span class="nav-text">数据统计</span>
         </button>
-        <button 
-          @click="setActiveTab('docs')" 
+        <button
+          @click="setActiveTab('docs')"
           :class="{ active: activeTab === 'docs' }"
           class="nav-btn hover-scale"
         >
           <span class="nav-icon">📄</span>
           <span class="nav-text">规章标准</span>
         </button>
-        <button 
+        <button
           @click="openCommunity"
           class="nav-btn hover-scale"
         >
@@ -171,9 +171,9 @@ const openCommunity = () => {
         <div class="footer-content">
           <span class="version-info">网站版本：v{{ packageJson.version }}</span>
           <span class="divider"> | </span>
-          <a 
-            href="https://github.com/MarioForeverCommunity/MWCup-Site" 
-            target="_blank" 
+          <a
+            href="https://github.com/MarioForeverCommunity/MWCup-Site"
+            target="_blank"
             class="source-link"
           >
             本站源码
@@ -182,9 +182,9 @@ const openCommunity = () => {
       </footer>
     </aside>
     <!-- 遮罩层，移动端且菜单展开时显示 -->
-    <div 
-      v-if="isSidebarOpen && isMobileView" 
-      class="sidebar-mask" 
+    <div
+      v-if="isSidebarOpen && isMobileView"
+      class="sidebar-mask"
       @click="isSidebarOpen = false"
     ></div>
     <main class="main-content" :class="{ 'content-expanded': !isSidebarOpen }">
@@ -194,7 +194,7 @@ const openCommunity = () => {
           <div v-if="route.path.startsWith('/upload')" class="upload-container animate-fadeInUp">
             <component :is="Component" />
           </div>
-          
+
           <!-- 其他页面使用 content-container -->
           <div v-else class="content-container">
             <div class="content-panel animate-fadeInUp">
@@ -204,10 +204,10 @@ const openCommunity = () => {
         </Transition>
       </router-view>
     </main>
-    
+
     <!-- 返回顶部按钮 -->
     <Transition name="fade">
-      <button 
+      <button
         v-if="showBackToTop"
         @click="scrollToTop"
         class="back-to-top-btn"
@@ -326,7 +326,7 @@ const openCommunity = () => {
   .app-title {
     font-size: 18px;
   }
-  
+
   .nav-btn {
     flex-direction: column;
     gap: 6px;
@@ -477,7 +477,7 @@ const openCommunity = () => {
     padding: 25px 0 5px 0;
     width: 100%;
   }
-  
+
   .app-title {
     font-size: 18px;
     margin: 0; /* 消除标题默认外边距 */
@@ -498,7 +498,7 @@ const openCommunity = () => {
     z-index: 1000;
     transition: opacity 0.3s;
   }
-  
+
   /* 侧边栏呼出按钮 */
   .sidebar-open-btn {
     position: fixed;
@@ -519,7 +519,7 @@ const openCommunity = () => {
     transition: transform 0.3s ease, background-color 0.3s ease;
     animation: bounceIn 0.5s ease;
   }
-  
+
   .sidebar-open-btn:hover {
     transform: scale(1.1);
     background-color: var(--accent-color);
@@ -560,7 +560,7 @@ const openCommunity = () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   z-index: 999;
-  
+
   /* 桌面端位置：右下角 */
   bottom: 30px;
   right: 30px;

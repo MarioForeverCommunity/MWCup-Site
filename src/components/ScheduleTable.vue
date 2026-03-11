@@ -29,7 +29,7 @@ function toggleScheduleContent() {
 function calculateRowspans(items: YearSchedule['items']) {
   const rowspans = new Map<string, number>();
   const currentStage = { value: '', count: 0 };
-  
+
   items.forEach((item, index) => {
     if (item.stage === currentStage.value) {
       currentStage.count++;
@@ -41,12 +41,12 @@ function calculateRowspans(items: YearSchedule['items']) {
       currentStage.count = 1;
     }
   });
-  
+
   // 处理最后一组
   if (currentStage.value) {
     rowspans.set(currentStage.value + '_' + (items.length - currentStage.count), currentStage.count);
   }
-  
+
   return rowspans;
 }
 
@@ -57,7 +57,7 @@ const filteredSchedule = computed(() => {
     return schedules.value.length > 0 ? schedules.value[0] : null;
   }
   const yearSchedule = schedules.value.find(ys => ys.year === yearToUse) || null;
-  
+
   // 如果指定了轮次，则过滤相关的赛程项
   if (yearSchedule && props.round) {
     const roundItems = yearSchedule.items.filter(item => {
@@ -95,13 +95,13 @@ const filteredSchedule = computed(() => {
       }
       return false;
     });
-    
+
     return {
       ...yearSchedule,
       items: roundItems
     };
   }
-  
+
   return yearSchedule;
 });
 
@@ -126,10 +126,10 @@ function formatTime(time?: string) {
 onMounted(async () => {
   const doc = await fetchMarioWorkerYaml();
   schedules.value = getYearSchedules(doc);
-  
+
   // 获取所有年份并排序（从新到旧）
   years.value = schedules.value.map(ys => ys.year).sort((a, b) => Number(b) - Number(a));
-  
+
   // 只有在没有通过props传入年份时，才默认选择最近一年
   if (!props.year && years.value.length > 0) {
     selectedYear.value = years.value[0];
@@ -152,18 +152,18 @@ function getLinkText(link: string, useSimpleText = false) {
 // 工具函数：根据轮次过滤多链接
 function filterMultipleLinks(links: string[], round?: string): string[] {
   if (!round || !links) return links;
-  
+
   // 如果没有指定轮次，显示所有链接
   if (!round) return links;
-  
+
   // 提取轮次中的数字（如 G1 -> 1, I2 -> 2）
   const roundMatch = round.match(/[GIQSR](\d+)/);
   if (!roundMatch) return links;
-  
+
   const roundNum = roundMatch[1];
   const cnNum = ['零','一','二','三','四','五','六','七','八','九','十'][Number(roundNum)] || roundNum;
   const targetText = `第${cnNum}题`;
-  
+
   // 过滤出包含目标题目的链接
   return links.filter(link => {
     const linkText = getLinkText(link, false);
@@ -199,8 +199,8 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
               </tr>
               <template v-for="(item, index) in scheduleWithRowspans.items" :key="item.stage + item.content + (item.start||'') + index">
                 <tr class="schedule-row">
-                  <td 
-                    v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)" 
+                  <td
+                    v-if="scheduleWithRowspans.rowspans.has(item.stage + '_' + index)"
                     :rowspan="scheduleWithRowspans.rowspans.get(item.stage + '_' + index)"
                     class="stage-cell"
                   >

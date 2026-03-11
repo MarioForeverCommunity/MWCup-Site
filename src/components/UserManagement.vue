@@ -104,7 +104,6 @@
         </table>
       </div>
 
-
     </div>
 
     <div class="help-section animate-fadeInUp">
@@ -152,17 +151,17 @@ const filteredUsers = computed(() => {
           user.社区UID.toLowerCase().includes(query)) {
         return true;
       }
-      
+
       // 检查社区曾用名（支持多个）
       if (user.社区曾用名.some(name => name.toLowerCase().includes(query))) {
         return true;
       }
-      
+
       // 检查别名（支持多个）
       if (user.别名.some(name => name.toLowerCase().includes(query))) {
         return true;
       }
-      
+
       return false;
     })
   }
@@ -225,7 +224,7 @@ const getPlatformStatusClass = (user: UserData): string => {
 const refreshData = async () => {
   loading.value = true
   error.value = ''
-  
+
   try {
     const userData = await loadUserData()
     users.value = userData
@@ -460,11 +459,11 @@ onMounted(() => {
     font-size: 12px;
     white-space: nowrap;
   }
-  
+
   .summary-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .pagination-controls {
     flex-direction: column;
     gap: var(--spacing-md);

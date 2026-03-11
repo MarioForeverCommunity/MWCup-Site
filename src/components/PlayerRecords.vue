@@ -97,8 +97,8 @@
                     <span class="participation-count">{{ getParticipatedYearsWithout2012(record).length }}届</span>
                     <span class="main-event-count">（正赛{{ record.mainEventYears.filter(year => year !== 2012).length }}届）</span>
                     <div class="participation-years">
-                      <span 
-                        v-for="year in record.participatedYears.filter(y => y !== 2012)" 
+                      <span
+                        v-for="year in record.participatedYears.filter(y => y !== 2012)"
                         :key="year"
                         :class="{ 'preliminary-only': !record.mainEventYears.includes(year) }"
                       >{{ year }}</span>
@@ -126,9 +126,9 @@
                   <span class="medal-count">{{ record.thirdPlaceCount || '-' }}</span>
                 </td>
                 <td class="action-cell">
-                  <button 
+                  <button
                     v-if="record.mainEventYears.filter(year => year !== 2012).length > 0"
-                    @click="toggleDetails(record.userId)" 
+                    @click="toggleDetails(record.userId)"
                     class="detail-btn hover-scale"
                     :class="{
                       'btn-secondary': expandedPlayer === record.userId
@@ -138,7 +138,7 @@
                   </button>
                 </td>
               </tr>
-              
+
               <!-- 详细信息展开行 -->
               <tr v-if="expandedPlayer === record.userId" :key="`${record.userId}-details`" class="details-row animate-fadeInUp">
                 <td colspan="10">
@@ -147,8 +147,8 @@
                       <h4>{{ getPlayerName(record.userId) }} 的年度详细战绩（正赛）</h4>
                     </div>
                     <div class="yearly-data">
-                      <div 
-                        v-for="yearData in getExpandedPlayerData(record.userId)" 
+                      <div
+                        v-for="yearData in getExpandedPlayerData(record.userId)"
                         :key="yearData.year"
                         class="year-card"
                       >
@@ -172,7 +172,6 @@
           </tbody>
         </table>
       </div>
-
 
     </div>
   </div>
@@ -226,9 +225,9 @@ const getExpandedPlayerData = (userId: number): YearlyPlayerData[] => {
 const getAllPlayerNames = (userId: number): string[] => {
   const user = users.value.find(u => u.序号 === userId)
   if (!user) return [`用户${userId}`]
-  
+
   const names: string[] = []
-  
+
   // 收集当前用户的用户名
   const collectUserNames = (userData: UserData) => {
     if (userData.百度用户名?.trim()) names.push(userData.百度用户名.trim())
@@ -237,18 +236,18 @@ const getAllPlayerNames = (userId: number): string[] => {
       if (name?.trim()) names.push(name.trim())
     })
   }
-  
+
   // 添加当前用户的用户名
   collectUserNames(user)
-  
+
   // 如果有社区UID，查找所有相同社区UID的用户的用户名
   if (user.社区UID?.trim()) {
-    const sameUidUsers = users.value.filter(u => 
+    const sameUidUsers = users.value.filter(u =>
       u.社区UID?.trim() === user.社区UID?.trim() && u.序号 !== userId
     )
     sameUidUsers.forEach(collectUserNames)
   }
-  
+
   // 去重并过滤空字符串
   return [...new Set(names)].filter(name => name)
 }
@@ -256,13 +255,13 @@ const getAllPlayerNames = (userId: number): string[] => {
 // 加载选手年度数据
 const loadPlayerYearlyData = async (userId: number) => {
   if (!yamlData.value) return
-  
+
   const playerRecord = records.value.find(r => r.userId === userId)
   if (!playerRecord) return
-  
+
   const allPlayerNames = getAllPlayerNames(userId)
   const yearlyData: YearlyPlayerData[] = []
-  
+
   // 过滤掉只参加预选赛/热身赛/资格赛的年份，以及2012年
   for (const year of playerRecord.participatedYears.filter(y => y !== 2012)) {
     try {
@@ -270,21 +269,21 @@ const loadPlayerYearlyData = async (userId: number) => {
       if (!totalPointsData.hasData || totalPointsData.players.length === 0) {
         continue // 该年份没有正式比赛数据，跳过
       }
-      
+
       // 计算并列排名
       const playersWithRank = calculateRankingWithTies(totalPointsData.players, 'totalPoints', 'validRoundsCount')
-      
+
       // 查找该选手在当年的排名和积分 - 使用所有可能的用户名进行匹配
       const playerData = playersWithRank.find(p => {
         // 检查选手名是否匹配任何一个可能的用户名
         if (allPlayerNames.includes(p.playerName)) return true
-        
+
         // 检查选手码是否包含任何一个可能的用户名
-        return p.playerCodes.some(code => 
+        return p.playerCodes.some(code =>
           allPlayerNames.some(name => code.includes(name))
         )
       })
-      
+
       if (playerData) {
         yearlyData.push({
           year,
@@ -300,7 +299,7 @@ const loadPlayerYearlyData = async (userId: number) => {
       console.warn(`加载${year}年数据失败:`, error)
     }
   }
-  
+
   playerYearlyData.value[userId] = yearlyData.sort((a, b) => b.year - a.year)
 }
 
@@ -308,9 +307,9 @@ const loadPlayerYearlyData = async (userId: number) => {
 const formatBestStageDisplay = (record: PlayerRecord) => {
   const bestStage = record.bestStage;
   const yearsWithout2012 = getParticipatedYearsWithout2012(record);
-  const bestYear = record.bestStageYear && record.bestStageYear !== 2012 ? record.bestStageYear : 
-                  (yearsWithout2012.length > 0 ? Math.max(...yearsWithout2012) : Math.max(...record.participatedYears));
-  
+  const bestYear = record.bestStageYear && record.bestStageYear !== 2012 ? record.bestStageYear :
+    (yearsWithout2012.length > 0 ? Math.max(...yearsWithout2012) : Math.max(...record.participatedYears));
+
   // 特殊处理2012年：如果选手参加了2012年且没有明确的bestStage，显示为初赛/15强
   // 但现在我们排除2012年，所以这个逻辑需要调整
   if (!bestStage || bestStage === '' || bestStage === '无' || bestStage === '未知' || bestStage === '小组赛/初赛') {
@@ -319,7 +318,7 @@ const formatBestStageDisplay = (record: PlayerRecord) => {
       yamlData: yamlData.value
     });
   }
-  
+
   return formatResultDisplay(bestStage, {
     year: bestYear.toString(),
     yamlData: yamlData.value
@@ -329,35 +328,35 @@ const formatBestStageDisplay = (record: PlayerRecord) => {
 // 筛选和排序后的记录
 const filteredRecords = computed(() => {
   let filtered = records.value
-  
+
   // 过滤掉只参加过2012年的选手
   filtered = filtered.filter(record => {
     const yearsWithout2012 = getParticipatedYearsWithout2012(record)
     return yearsWithout2012.length > 0
   })
-  
+
   // 搜索过滤
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.trim()
     const isExact = query.startsWith('"') && query.endsWith('"')
     const processedKeyword = isExact ? query.slice(1, -1) : query
-    
+
     filtered = filtered.filter(record => {
       const playerName = getPlayerName(record.userId)
-      
+
       // 直接匹配选手名或用户ID
       if (isExact) {
-        if (playerName.toLowerCase() === processedKeyword.toLowerCase() || 
+        if (playerName.toLowerCase() === processedKeyword.toLowerCase() ||
             record.userId.toString() === processedKeyword) {
           return true
         }
       } else {
-        if (playerName.toLowerCase().includes(processedKeyword.toLowerCase()) || 
+        if (playerName.toLowerCase().includes(processedKeyword.toLowerCase()) ||
             record.userId.toString().includes(processedKeyword)) {
           return true
         }
       }
-      
+
       // 使用别名匹配
       return matchPlayerName(playerName, processedKeyword, users.value, isExact)
     })
@@ -412,12 +411,12 @@ const championPlayersCount = computed(() => {
     // 检查该选手是否在2012年之后获得过冠军
     const yearsWithout2012 = getParticipatedYearsWithout2012(record)
     if (yearsWithout2012.length === 0) return false
-    
+
     // 检查该选手的最佳战绩年份是否在2012年之后
     if (record.bestStageYear && record.bestStageYear > 2012) {
       return record.championCount > 0
     }
-    
+
     // 如果最佳战绩年份是2012年或未定义，需要检查其他年份
     return record.championCount > 0 && yearsWithout2012.length > 0
   }).length
@@ -427,7 +426,7 @@ const championPlayersCount = computed(() => {
 const getPlayerName = (userId: number): string => {
   const user = users.value.find(u => u.序号 === userId)
   if (!user) return `用户${userId}`
-  
+
   // 优先显示社区用户名，其次百度用户名
   return user.社区用户名 || user.百度用户名 || `用户${userId}`
 }
@@ -445,14 +444,14 @@ const refreshData = async () => {
   error.value = ''
   expandedPlayer.value = null
   playerYearlyData.value = {}
-  
+
   try {
     const [playerRecords, userData, yaml] = await Promise.all([
       analyzePlayerRecords(),
       loadUserData(),
       fetchMarioWorkerYaml()
     ])
-    
+
     records.value = playerRecords
     users.value = userData
     yamlData.value = yaml
@@ -766,22 +765,22 @@ onMounted(() => {
   .summary-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .yearly-data {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
-  
+
   .yearly-details {
     padding: var(--spacing-md);
     margin: var(--spacing-sm);
   }
-  
+
   .records-table th,
   .records-table td {
     padding: var(--spacing-sm);
     font-size: var(--text-sm);
   }
-  
+
   .pagination-controls {
     flex-direction: column;
     gap: var(--spacing-md);

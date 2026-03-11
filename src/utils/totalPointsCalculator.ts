@@ -47,10 +47,10 @@ export function getDeadlines(yamlData: any, year: string, roundKey: string): str
   if (!seasonData) {
     return [];
   }
-  
+
   // 查找轮次数据
   let roundData = seasonData.rounds?.[roundKey];
-  
+
   // 如果直接找不到，检查是否在多轮次键中
   if (!roundData && seasonData.rounds) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
@@ -72,13 +72,13 @@ export function getDeadlines(yamlData: any, year: string, roundKey: string): str
       }
     }
   }
-  
+
   if (!roundData) {
     return [];
   }
-  
+
   // 获取截止时间
-  
+
   if (roundData?.schedule?.match?.deadlines) {
     return roundData.schedule.match.deadlines;
   } else if (roundData?.schedule?.deadlines) {
@@ -86,14 +86,14 @@ export function getDeadlines(yamlData: any, year: string, roundKey: string): str
   } else if (roundData?.deadlines) {
     return roundData.deadlines;
   }
-  
+
   return [];
 }
 
 // 获取选手在指定年份的所有关卡上传记录
 export function getPlayerLevels(levelFiles: LevelFile[], playerCode: string, year: number): LevelFile[] {
-  return levelFiles.filter(file => 
-    file.playerCode === playerCode && 
+  return levelFiles.filter(file =>
+    file.playerCode === playerCode &&
     file.year === year
   );
 }
@@ -107,27 +107,27 @@ function parseGMTTime(timeStr: string): Date {
 export function isLevelUploadedBeforeDeadline(level: LevelFile, deadline: string): boolean {
   const uploadTime = parseGMTTime(level.mtime);
   const deadlineTime = parseGMTTime(deadline);
-  
+
   // 增加1分钟冗余时间（即允许在deadline后1分钟内上传）
   const deadlineWithTolerance = new Date(deadlineTime.getTime() + 60 * 1000);
-  
+
   return uploadTime <= deadlineWithTolerance;
 }
 
 // 计算基于累计上传数量的超时扣分（用于2019-2021年）
 function calculateCumulativeTimeoutPenalty(playerLevels: LevelFile[], deadlines: string[]): number {
   let totalPenalty = 0;
-  
+
   // 对每个deadline检查累计上传数量
   for (let i = 0; i < deadlines.length; i++) {
     const deadline = deadlines[i];
     const expectedCount = i + 1; // 第N个deadline应该上传N关
-    
+
     // 统计在该deadline前上传的关卡数量
-    const uploadedCount = playerLevels.filter(level => 
+    const uploadedCount = playerLevels.filter(level =>
       isLevelUploadedBeforeDeadline(level, deadline)
     ).length;
-    
+
     // 计算扣分：每少上传一关，扣5分
     if (uploadedCount < expectedCount) {
       const shortage = expectedCount - uploadedCount;
@@ -135,7 +135,7 @@ function calculateCumulativeTimeoutPenalty(playerLevels: LevelFile[], deadlines:
       totalPenalty += penalty;
     }
   }
-  
+
   return totalPenalty;
 }
 
@@ -180,10 +180,10 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
       if (!shouldShowScoreData(yamlData, year, round)) {
         continue;
       }
-      
+
       // 首先检查是否为特殊的总分制评分（如2015年半决赛）
       let roundData = seasonData.rounds[round];
-      
+
       // 如果直接找不到，检查是否在多轮次键中
       if (!roundData && seasonData.rounds) {
         for (const [key, data] of Object.entries(seasonData.rounds)) {
@@ -201,12 +201,12 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
           }
         }
       }
-      
+
       if (roundData?.scoring_scheme === 'S' && roundData?.scores) {
         validRounds.push(round);
         continue;
       }
-      
+
       // 检查CSV文件是否存在
       const response = await fetch(`/data/scores/${year}${round}.csv`);
       if (response.ok) {
@@ -226,16 +226,16 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
     playerCodes: string[];
     roundScores: { [round: string]: any }; // 存储各轮次原始数据用于特殊计算
   } } = {};
-  
+
   // 先收集所有轮次的原始数据
   for (const round of validRounds) {
     try {
       const roundData = await loadRoundScoreData(year, round, yamlData);
-      
+
       // 收集该轮次的选手数据
       for (const playerScore of roundData.playerScores) {
         const playerName = playerScore.playerName;
-        
+
         if (!playerDataByName[playerName]) {
           playerDataByName[playerName] = {
             totalPoints: 0,
@@ -246,10 +246,10 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
         }
 
         const player = playerDataByName[playerName];
-        
+
         // 存储轮次数据
         player.roundScores[round] = playerScore;
-        
+
         if (!player.participatedRounds.includes(round)) {
           player.participatedRounds.push(round);
         }
@@ -260,10 +260,10 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
       // 继续处理其他轮次
     }
   }
-  
+
   // 处理特殊年份的0分选手（如2019年D4，2020年B4等）
   await addSpecialYearZeroScorePlayers(year, levelIndexData, yamlData, playerDataByName);
-    // 计算每个选手的总积分（应用特殊年份规则）
+  // 计算每个选手的总积分（应用特殊年份规则）
   for (const [, playerData] of Object.entries(playerDataByName)) {
     const totalScore = await calculatePlayerTotalScore(year, playerData, yamlData);
     playerData.totalPoints = totalScore.toNumber();
@@ -308,7 +308,7 @@ export async function loadTotalPointsData(year: string, yamlData: any): Promise<
  */
 function extractRounds(roundsConfig: any): string[] {
   const rounds: string[] = [];
-  
+
   for (const [key] of Object.entries(roundsConfig)) {
     if (key.startsWith('[') && key.endsWith(']')) {
       // 处理方括号格式的多轮次键，如 [G1, G2, G3]
@@ -331,7 +331,7 @@ function extractRounds(roundsConfig: any): string[] {
       rounds.push(key);
     }
   }
-  
+
   // 去重并按轮次顺序排序
   const uniqueRounds = [...new Set(rounds)];
   return sortRounds(uniqueRounds);
@@ -355,11 +355,11 @@ function sortRounds(rounds: string[]): string[] {
   return rounds.sort((a, b) => {
     const priorityA = roundPriority[a as keyof typeof roundPriority] || 999;
     const priorityB = roundPriority[b as keyof typeof roundPriority] || 999;
-    
+
     if (priorityA !== priorityB) {
       return priorityA - priorityB;
     }
-    
+
     // 如果优先级相同，按字符串排序
     return a.localeCompare(b);
   });
@@ -372,7 +372,7 @@ function sortRounds(rounds: string[]): string[] {
 function getRealBestStageFromYaml(yamlData: any, year: string, playerName: string): string | null {
   const seasonData = yamlData.season?.[year];
   if (!seasonData?.rounds) return null;
-  
+
   // 定义轮次优先级（从高到低）
   const stageInfo = [
     { rounds: ['F'], stageName: '决赛' },
@@ -382,7 +382,7 @@ function getRealBestStageFromYaml(yamlData: any, year: string, playerName: strin
     { rounds: ['G1', 'G2', 'G3', 'G4'], stageName: '小组赛' },
     { rounds: ['I1', 'I2', 'I3', 'I4'], stageName: '初赛' }
   ];
-  
+
   // 从最高阶段开始检查
   for (const stage of stageInfo) {
     for (const roundKey of stage.rounds) {
@@ -391,7 +391,7 @@ function getRealBestStageFromYaml(yamlData: any, year: string, playerName: strin
       }
     }
   }
-  
+
   return null;
 }
 
@@ -401,7 +401,7 @@ function getRealBestStageFromYaml(yamlData: any, year: string, playerName: strin
 function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: string): boolean {
   // 首先尝试直接查找轮次
   let roundData = seasonData.rounds[roundKey];
-  
+
   // 如果没有找到，检查多轮次键
   if (!roundData) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
@@ -431,9 +431,9 @@ function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: stri
       }
     }
   }
-  
+
   if (!roundData?.players) return false;
-  
+
   // 检查选手是否在该轮次的players中
   if (Array.isArray(roundData.players)) {
     return roundData.players.includes(playerName);
@@ -454,7 +454,7 @@ function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: stri
       }
     }
   }
-  
+
   return false;
 }
 
@@ -488,19 +488,19 @@ function calculateBestResult(participatedRounds: string[], roundScores?: { [roun
       return realBestStage;
     }
   }
-  
+
   // 如果没有参与任何轮次，返回特殊标识
   if (participatedRounds.length === 0) {
     return '仅报名'; // 将在formatResultDisplay中替换为小组赛/XX强或初赛/XX强
   }
-  
+
   // 按轮次重要性判断最好成绩
   if (participatedRounds.includes('F')) {
     // 如果参加了决赛，需要根据排名判断具体成绩
     if (roundScores && roundScores['F']) {
       // 尝试从roundScores中获取排名信息
       const finalRoundData = roundScores['F'];
-      
+
       // 如果有具体的排名数据
       if (finalRoundData.rank !== undefined) {
         const rank = finalRoundData.rank;
@@ -510,7 +510,7 @@ function calculateBestResult(participatedRounds: string[], roundScores?: { [roun
         if (rank === 4) return '决赛/4强';
         return `决赛/第${rank}名`;
       }
-      
+
       // 如果有ranking字段
       if (finalRoundData.ranking !== undefined) {
         const rank = finalRoundData.ranking;
@@ -520,7 +520,7 @@ function calculateBestResult(participatedRounds: string[], roundScores?: { [roun
         if (rank === 4) return '决赛/4强';
         return `决赛/第${rank}名`;
       }
-      
+
       // 如果没有具体排名，但有分数，可以尝试通过分数推断
       // 这里暂时返回决赛，后续可以通过其他方式改进
     }
@@ -536,7 +536,7 @@ function calculateBestResult(participatedRounds: string[], roundScores?: { [roun
   } else if (participatedRounds.some(r => r.startsWith('I'))) {
     return '初赛';
   }
-  
+
   return '参赛';
 }
 /**
@@ -544,7 +544,7 @@ function calculateBestResult(participatedRounds: string[], roundScores?: { [roun
  */
 async function calculatePlayerTotalScore(year: string, playerData: any, yamlData: any): Promise<Decimal> {
   let totalScore: Decimal;
-  
+
   // 特殊年份需要特殊处理
   if (year === '2019') {
     // 2019年小组赛：4关取最高3关计算总分
@@ -559,7 +559,7 @@ async function calculatePlayerTotalScore(year: string, playerData: any, yamlData
     // 普通年份：累加所有轮次分数
     totalScore = calculateNormalTotalScore(playerData);
   }
-  
+
   return totalScore;
 }
 
@@ -570,14 +570,14 @@ export async function calculate2019TotalScore(playerData: any, yamlData: any): P
   let totalScore = new Decimal(0);
   const playerCode = playerData.playerCodes[0];
   const groupRounds = ['G1', 'G2', 'G3', 'G4'];
-  
+
   // 加载关卡数据
   const levelFiles = await loadLevelIndexData();
   const playerLevels = getPlayerLevels(levelFiles, playerCode, 2019);
-  
+
   // 获取小组赛截止时间
   const deadlines = getDeadlines(yamlData, '2019', 'G1'); // 2019年小组赛统一截止时间
-  
+
   // 收集所有小组赛轮次的分数
   const allGroupScores: Decimal[] = [];
   for (const round of groupRounds) {
@@ -585,7 +585,7 @@ export async function calculate2019TotalScore(playerData: any, yamlData: any): P
       allGroupScores.push(new Decimal(playerData.roundScores[round].averageScore));
     }
   }
-  
+
   // 计算截止时间扣分
   let timeoutPenalty = 0;
   if (deadlines.length >= 3) {
@@ -593,18 +593,18 @@ export async function calculate2019TotalScore(playerData: any, yamlData: any): P
     for (let i = 0; i < 3; i++) {
       const deadline = deadlines[i];
       const requiredLevels = i + 1; // 第i+1个截止时间前需要i+1个关卡
-      
-      const levelsBeforeDeadline = playerLevels.filter(level => 
-        groupRounds.includes(level.roundKey) && 
+
+      const levelsBeforeDeadline = playerLevels.filter(level =>
+        groupRounds.includes(level.roundKey) &&
         isLevelUploadedBeforeDeadline(level, deadline)
       ).length;
-      
+
       if (levelsBeforeDeadline < requiredLevels) {
         timeoutPenalty += (requiredLevels - levelsBeforeDeadline) * 5;
       }
     }
   }
-  
+
   if (allGroupScores.length >= 3) {
     allGroupScores.sort((a, b) => b.comparedTo(a)); // 降序排序
     const bestThreeSum = allGroupScores[0].plus(allGroupScores[1]).plus(allGroupScores[2]);
@@ -617,7 +617,7 @@ export async function calculate2019TotalScore(playerData: any, yamlData: any): P
   } else {
     totalScore = new Decimal(0);
   }
-  
+
   // 其他轮次正常累加
   for (const round of playerData.participatedRounds) {
     if (!groupRounds.includes(round) && playerData.roundScores[round]) {
@@ -625,10 +625,9 @@ export async function calculate2019TotalScore(playerData: any, yamlData: any): P
       totalScore = totalScore.plus(roundScore);
     }
   }
-  
+
   return totalScore;
 }
-
 
 /**
  * 有效关卡制总分计算（2020年之后的初赛）- 重构版本，不依赖validLevel.json
@@ -643,10 +642,10 @@ export async function calculateValidLevelTotalScore(year: string, playerData: an
   // 加载关卡数据
   const levelFiles = await loadLevelIndexData();
   const playerLevels = getPlayerLevels(levelFiles, playerCode, yearNum);
-  
+
   // 获取初赛截止时间
   const deadlines = getDeadlines(yamlData, year, 'I1');
-  
+
   if (yearNum === 2020) {
     // 2020年：3道题选2道，2个截止时间
     preliminaryScore = await calculate2020PreliminaryScore(playerData, playerLevels, deadlines, penaltyForMissing);
@@ -691,7 +690,7 @@ export async function calculateValidLevelTotalScore(year: string, playerData: an
  */
 async function calculate2020PreliminaryScore(playerData: any, playerLevels: LevelFile[], deadlines: string[], _penaltyForMissing: boolean): Promise<Decimal> {
   const prelimRounds = ['I1', 'I2', 'I3'];
-  
+
   // 获取所有初赛关卡得分
   const levelScores: { roundKey: string; score: Decimal; level: LevelFile }[] = [];
   for (const round of prelimRounds) {
@@ -706,53 +705,53 @@ async function calculate2020PreliminaryScore(playerData: any, playerLevels: Leve
       }
     }
   }
-  
+
   if (levelScores.length === 0) {
     return new Decimal(0);
   }
-  
+
   // 2020年规则：第一条截止线前至少上传一关，第二条截止线前至少上传两关
   const selectedLevels: { roundKey: string; score: Decimal }[] = [];
   const penalty = 0;
-  
+
   if (deadlines.length >= 2) {
     // 第一关：截止线1前得分最高的关卡
-    const levelsBeforeDeadline1 = levelScores.filter(ls => 
+    const levelsBeforeDeadline1 = levelScores.filter(ls =>
       isLevelUploadedBeforeDeadline(ls.level, deadlines[0])
     );
-    
+
     if (levelsBeforeDeadline1.length > 0) {
       levelsBeforeDeadline1.sort((a, b) => b.score.comparedTo(a.score));
       selectedLevels.push({ roundKey: levelsBeforeDeadline1[0].roundKey, score: levelsBeforeDeadline1[0].score });
     }
     // 注意：不再在这里扣分，扣分统一由累计上传数量机制处理
-    
+
     // 第二关：除第一关外，截止线2前得分最高的关卡
-    const remainingLevels = levelScores.filter(ls => 
+    const remainingLevels = levelScores.filter(ls =>
       !selectedLevels.some(sl => sl.roundKey === ls.roundKey) &&
       isLevelUploadedBeforeDeadline(ls.level, deadlines[1])
     );
-    
+
     if (remainingLevels.length > 0) {
       remainingLevels.sort((a, b) => b.score.comparedTo(a.score));
       selectedLevels.push({ roundKey: remainingLevels[0].roundKey, score: remainingLevels[0].score });
     }
     // 注意：不再在这里扣分，扣分统一由累计上传数量机制处理
   }
-  
+
   // 如果选择的关卡不足2个，从剩余关卡中补充
   if (selectedLevels.length < 2) {
-    const remainingLevels = levelScores.filter(ls => 
+    const remainingLevels = levelScores.filter(ls =>
       !selectedLevels.some(sl => sl.roundKey === ls.roundKey)
     );
     remainingLevels.sort((a, b) => b.score.comparedTo(a.score));
-    
+
     for (const level of remainingLevels) {
       if (selectedLevels.length >= 2) break;
       selectedLevels.push({ roundKey: level.roundKey, score: level.score });
     }
   }
-  
+
   const totalScore = selectedLevels.reduce((sum, level) => sum.plus(level.score), new Decimal(0));
   const afterPenalty = totalScore.minus(penalty);
   return afterPenalty.isNegative() ? new Decimal(0) : afterPenalty;
@@ -763,7 +762,7 @@ async function calculate2020PreliminaryScore(playerData: any, playerLevels: Leve
  */
 async function calculate2021PreliminaryScore(playerData: any, playerLevels: LevelFile[], deadlines: string[], _penaltyForMissing: boolean): Promise<Decimal> {
   const prelimRounds = ['I1', 'I2', 'I3', 'I4'];
-  
+
   // 获取所有初赛关卡得分
   const levelScores: { roundKey: string; score: Decimal; level: LevelFile }[] = [];
   for (const round of prelimRounds) {
@@ -778,26 +777,26 @@ async function calculate2021PreliminaryScore(playerData: any, playerLevels: Leve
       }
     }
   }
-  
+
   if (levelScores.length === 0) {
     return new Decimal(0);
   }
-  
+
   // 2021年复杂选择规则
   const selectedLevels: { roundKey: string; score: Decimal }[] = [];
   const penalty = 0;
-  
+
   if (deadlines.length >= 3) {
     // 按截止时间逐个选择关卡
     for (let i = 0; i < 3; i++) {
       const deadline = deadlines[i];
-      
+
       // 选取该轮截止前未被选取的得分最高的关卡
-      let availableLevels = levelScores.filter(ls => 
+      let availableLevels = levelScores.filter(ls =>
         !selectedLevels.some(sl => sl.roundKey === ls.roundKey) &&
         isLevelUploadedBeforeDeadline(ls.level, deadline)
       );
-      
+
       if (availableLevels.length > 0) {
         availableLevels.sort((a, b) => b.score.comparedTo(a.score));
         selectedLevels.push({ roundKey: availableLevels[0].roundKey, score: availableLevels[0].score });
@@ -805,11 +804,11 @@ async function calculate2021PreliminaryScore(playerData: any, playerLevels: Leve
         // 不存在符合要求的关卡，选取下一轮截止线前未被选取的得分最高的关卡，并扣5分
         if (i < 2) { // 还有下一轮
           const nextDeadline = deadlines[i + 1];
-          availableLevels = levelScores.filter(ls => 
+          availableLevels = levelScores.filter(ls =>
             !selectedLevels.some(sl => sl.roundKey === ls.roundKey) &&
             isLevelUploadedBeforeDeadline(ls.level, nextDeadline)
           );
-          
+
           if (availableLevels.length > 0) {
             availableLevels.sort((a, b) => b.score.comparedTo(a.score));
             selectedLevels.push({ roundKey: availableLevels[0].roundKey, score: availableLevels[0].score });
@@ -819,20 +818,20 @@ async function calculate2021PreliminaryScore(playerData: any, playerLevels: Leve
       }
     }
   }
-  
+
   // 如果选择的关卡不足3个，从剩余关卡中补充
   if (selectedLevels.length < 3) {
-    const remainingLevels = levelScores.filter(ls => 
+    const remainingLevels = levelScores.filter(ls =>
       !selectedLevels.some(sl => sl.roundKey === ls.roundKey)
     );
     remainingLevels.sort((a, b) => b.score.comparedTo(a.score));
-    
+
     for (const level of remainingLevels) {
       if (selectedLevels.length >= 3) break;
       selectedLevels.push({ roundKey: level.roundKey, score: level.score });
     }
   }
-  
+
   const totalScore = selectedLevels.reduce((sum, level) => sum.plus(level.score), new Decimal(0));
   const afterPenalty = totalScore.minus(penalty);
   return afterPenalty.isNegative() ? new Decimal(0) : afterPenalty;
@@ -843,7 +842,7 @@ async function calculate2021PreliminaryScore(playerData: any, playerLevels: Leve
  */
 async function calculate2022OnwardsPreliminaryScore(playerData: any, playerLevels: LevelFile[], deadlines: string[]): Promise<Decimal> {
   const prelimRounds = ['I1', 'I2', 'I3'];
-  
+
   // 获取所有初赛关卡得分
   const levelScores: { roundKey: string; score: Decimal; level: LevelFile }[] = [];
   for (const round of prelimRounds) {
@@ -858,30 +857,30 @@ async function calculate2022OnwardsPreliminaryScore(playerData: any, playerLevel
       }
     }
   }
-  
+
   if (levelScores.length === 0) {
     return new Decimal(0);
   }
-  
+
   // 2022年之后简单规则
   let selectedLevels: { roundKey: string; score: Decimal }[] = [];
-  
+
   if (deadlines.length >= 2) {
     // 第一关：第一轮截止前得分最高的关卡
-    const levelsBeforeDeadline1 = levelScores.filter(ls => 
+    const levelsBeforeDeadline1 = levelScores.filter(ls =>
       isLevelUploadedBeforeDeadline(ls.level, deadlines[0])
     );
-    
+
     if (levelsBeforeDeadline1.length > 0) {
       levelsBeforeDeadline1.sort((a, b) => b.score.comparedTo(a.score));
       selectedLevels.push({ roundKey: levelsBeforeDeadline1[0].roundKey, score: levelsBeforeDeadline1[0].score });
     }
-    
+
     // 第二关：未被第一轮选取的关卡中得分最高的关卡
-    const remainingLevels = levelScores.filter(ls => 
+    const remainingLevels = levelScores.filter(ls =>
       !selectedLevels.some(sl => sl.roundKey === ls.roundKey)
     );
-    
+
     if (remainingLevels.length > 0) {
       remainingLevels.sort((a, b) => b.score.comparedTo(a.score));
       selectedLevels.push({ roundKey: remainingLevels[0].roundKey, score: remainingLevels[0].score });
@@ -891,7 +890,7 @@ async function calculate2022OnwardsPreliminaryScore(playerData: any, playerLevel
     levelScores.sort((a, b) => b.score.comparedTo(a.score));
     selectedLevels = levelScores.slice(0, 2).map(ls => ({ roundKey: ls.roundKey, score: ls.score }));
   }
-  
+
   return selectedLevels.reduce((sum, level) => sum.plus(level.score), new Decimal(0));
 }
 
@@ -900,14 +899,14 @@ async function calculate2022OnwardsPreliminaryScore(playerData: any, playerLevel
  */
 function calculateNormalTotalScore(playerData: any): Decimal {
   let totalScore = new Decimal(0);
-  
+
   for (const round of playerData.participatedRounds) {
     if (playerData.roundScores[round]) {
       const roundScore = new Decimal(playerData.roundScores[round].averageScore || 0);
       totalScore = totalScore.plus(roundScore);
     }
   }
-  
+
   return totalScore;
 }
 
@@ -920,7 +919,7 @@ async function addSpecialYearZeroScorePlayers(year: string, levelIndexData: Leve
   // 2014、2018、2019年：处理小组赛未上传任何关卡的选手
   if (['2014', '2018', '2019'].includes(year)) {
     let groupRoundKey: string | undefined;
-    
+
     // 查找小组赛配置键（不同年份可能格式不同）
     if (seasonData.rounds['[G1, G2, G3, G4]']) {
       groupRoundKey = '[G1, G2, G3, G4]';
@@ -928,17 +927,17 @@ async function addSpecialYearZeroScorePlayers(year: string, levelIndexData: Leve
       groupRoundKey = '[G1, G2, G3]';
     } else {
       // 查找其他可能的格式
-      const possibleKeys = Object.keys(seasonData.rounds).filter(key => 
+      const possibleKeys = Object.keys(seasonData.rounds).filter(key =>
         key.includes('G1') && key.includes('G2')
       );
       if (possibleKeys.length > 0) {
         groupRoundKey = possibleKeys[0];
       }
     }
-    
+
     if (groupRoundKey && seasonData.rounds[groupRoundKey]?.players) {
       const groupPlayers = seasonData.rounds[groupRoundKey].players;
-      
+
       // 遍历所有组
       Object.entries(groupPlayers).forEach(([_, players]) => {
         // 遍历该组的所有选手
@@ -960,7 +959,7 @@ async function addSpecialYearZeroScorePlayers(year: string, levelIndexData: Leve
   // 2020年之后：处理初赛未上传任何关卡的选手
   if (parseInt(year) >= 2020) {
     let prelimRoundKey: string | undefined;
-    
+
     // 查找初赛配置键（不同年份可能格式不同）
     const prelimKeys = ['[I1, I2, I3, I4]', '[I1, I2, I3]', 'I1,I2,I3,I4', 'I1,I2,I3'];
     for (const key of prelimKeys) {
@@ -969,20 +968,20 @@ async function addSpecialYearZeroScorePlayers(year: string, levelIndexData: Leve
         break;
       }
     }
-    
+
     // 如果没有找到，查找其他可能的格式
     if (!prelimRoundKey) {
-      const possibleKeys = Object.keys(seasonData.rounds).filter(key => 
+      const possibleKeys = Object.keys(seasonData.rounds).filter(key =>
         key.includes('I1') && key.includes('I2')
       );
       if (possibleKeys.length > 0) {
         prelimRoundKey = possibleKeys[0];
       }
     }
-    
+
     if (prelimRoundKey && seasonData.rounds[prelimRoundKey]?.players) {
       const prelimPlayers = seasonData.rounds[prelimRoundKey].players;
-      
+
       // 遍历所有组
       Object.entries(prelimPlayers).forEach(([_, players]) => {
         // 遍历该组的所有选手
@@ -991,12 +990,12 @@ async function addSpecialYearZeroScorePlayers(year: string, levelIndexData: Leve
           if (!playerDataByName[playerName]) {
             // 检查该选手是否在levelIndexData中有任何初赛关卡上传记录
             const yearNum = parseInt(year);
-            const playerLevels = levelIndexData.filter(level => 
-              level.playerCode === playerCode && 
+            const playerLevels = levelIndexData.filter(level =>
+              level.playerCode === playerCode &&
               level.year === yearNum &&
               ['I1', 'I2', 'I3', 'I4'].includes(level.roundKey)
             );
-            
+
             // 如果没有任何初赛关卡上传记录，则添加为0分选手
             if (playerLevels.length === 0) {
               playerDataByName[playerName] = {
@@ -1031,7 +1030,7 @@ async function calculateFinalRankings(year: string, yamlData: any, playerDataByN
       const sortedPlayers = [...scoreData.playerScores].sort(
         (a, b) => Number(b.averageScore ?? 0) - Number(a.averageScore ?? 0)
       );
-      
+
       // 为每个决赛选手分配排名
       sortedPlayers.forEach((playerScore, index) => {
         const playerName = playerScore.playerName;
@@ -1046,17 +1045,17 @@ async function calculateFinalRankings(year: string, yamlData: any, playerDataByN
       const finalRound = seasonData?.rounds?.F;
       if (finalRound?.players) {
         const allFinalists: string[] = [];
-        
+
         // 收集所有从YAML获取的决赛选手
         if (finalRound.players.M) allFinalists.push(finalRound.players.M);
         if (finalRound.players.W) allFinalists.push(finalRound.players.W);
         if (finalRound.players.S) allFinalists.push(finalRound.players.S);
         if (finalRound.players.P) allFinalists.push(finalRound.players.P);
-        
+
         // 找出在YAML中存在但在评分数据中不存在的选手（未上传作品的选手）
         const scoredFinalists = sortedPlayers.map(p => p.playerName);
         const missingFinalists = allFinalists.filter(name => !scoredFinalists.includes(name));
-        
+
         // 为缺失的决赛选手分配排名（排在有成绩选手之后）
         missingFinalists.forEach((playerName, index) => {
           if (playerDataByName[playerName]) {
@@ -1089,8 +1088,8 @@ async function calculateFinalRankings(year: string, yamlData: any, playerDataByN
 /**
  * 计算并返回2019小组赛选中关卡和超时罚分
  */
-export async function get2019ValidLevelInfo(playerData: any, yamlData: any): Promise<{ 
-  validRounds: string[]; 
+export async function get2019ValidLevelInfo(playerData: any, yamlData: any): Promise<{
+  validRounds: string[];
   timeoutPenalty: number;
   roundSelections: { roundIndex: number; selectedTopic: string; isTimeout: boolean }[];
   deadlineCount: number;
@@ -1115,7 +1114,7 @@ export async function get2019ValidLevelInfo(playerData: any, yamlData: any): Pro
   if (deadlines.length > 0) {
     penalty = calculateCumulativeTimeoutPenalty(playerLevels, deadlines);
   }
-  
+
   if (roundScoreEntries.length === 0) {
     // 为没有上传关卡的选手生成空的轮次选择信息
     const roundSelections = Array.from({ length: deadlines.length }, (_, i) => ({
@@ -1123,9 +1122,9 @@ export async function get2019ValidLevelInfo(playerData: any, yamlData: any): Pro
       selectedTopic: '未上传',
       isTimeout: true
     }));
-    
-    return { 
-      validRounds: [], 
+
+    return {
+      validRounds: [],
       timeoutPenalty: penalty,
       roundSelections,
       deadlineCount: deadlines.length
@@ -1136,7 +1135,7 @@ export async function get2019ValidLevelInfo(playerData: any, yamlData: any): Pro
   const selected = roundScoreEntries.slice(0, 3);
 
   // penalty 变量已在上面声明和计算
-  
+
   // 生成轮次选择信息（简化处理）
   const roundSelections = Array.from({ length: deadlines.length }, (_, i) => {
     const selectedInThisRound = selected[i];
@@ -1157,9 +1156,9 @@ export async function get2019ValidLevelInfo(playerData: any, yamlData: any): Pro
       };
     }
   });
-  
-  return { 
-    validRounds: selected.map(s => s.roundKey), 
+
+  return {
+    validRounds: selected.map(s => s.roundKey),
     timeoutPenalty: penalty,
     roundSelections,
     deadlineCount: deadlines.length
@@ -1170,8 +1169,8 @@ export async function get2019ValidLevelInfo(playerData: any, yamlData: any): Pro
  * 计算并返回初赛选中关卡和超时罚分
  * 返回详细的轮次选择信息，支持正确的有效题目列显示
  */
-export async function getPreliminaryValidInfo(year: string, playerData: any, yamlData: any): Promise<{ 
-  validRounds: string[]; 
+export async function getPreliminaryValidInfo(year: string, playerData: any, yamlData: any): Promise<{
+  validRounds: string[];
   timeoutPenalty: number;
   roundSelections: { roundIndex: number; selectedTopic: string; isTimeout: boolean }[];
   deadlineCount: number;
@@ -1194,7 +1193,7 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
   if (yearNum === 2020 || yearNum === 2021) {
     penalty = calculateCumulativeTimeoutPenalty(playerLevels, deadlines);
   }
-  
+
   if (levelScores.length === 0) {
     // 为没有上传关卡的选手生成空的轮次选择信息
     const roundSelections = Array.from({ length: deadlines.length }, (_, i) => ({
@@ -1202,12 +1201,12 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
       selectedTopic: '未上传',
       isTimeout: true
     }));
-    
-    return { 
-      validRounds: [], 
-      timeoutPenalty: penalty, 
-      roundSelections, 
-      deadlineCount: deadlines.length 
+
+    return {
+      validRounds: [],
+      timeoutPenalty: penalty,
+      roundSelections,
+      deadlineCount: deadlines.length
     };
   }
 
@@ -1217,13 +1216,13 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
   // penalty 变量已在上面声明和计算
 
   if (deadlines.length >= 2) {
-    
+
     // 第一截止线
     const before1 = levelScores.filter(ls => {
       const isBeforeDeadline = isLevelUploadedBeforeDeadline(ls.level, deadlines[0]);
       return isBeforeDeadline;
     });
-    
+
     if (before1.length) {
       before1.sort((a, b) => b.score.comparedTo(a.score));
       selected.push(before1[0]);
@@ -1237,7 +1236,7 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
           const notSelected = !selected.some(s => s.roundKey === ls.roundKey);
           return isBeforeDeadline && notSelected;
         });
-        
+
         if (before2.length) {
           before2.sort((a, b) => b.score.comparedTo(a.score));
           selected.push(before2[0]);
@@ -1245,7 +1244,7 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
       } else {
         // 非2021年规则：第二轮选择剩余关卡中得分最高的，不限制上传时间
         const remaining1 = levelScores.filter(ls => !selected.some(s => s.roundKey === ls.roundKey));
-        
+
         if (remaining1.length) {
           remaining1.sort((a, b) => b.score.comparedTo(a.score));
           // 确保第二轮选择的关卡被放在第二个位置（索引1）
@@ -1276,7 +1275,7 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
   if (selected.filter(s => s).length < selectCount) {
     const rest = levelScores.filter(ls => !selected.some(s => s && s.roundKey === ls.roundKey));
     rest.sort((a, b) => b.score.comparedTo(a.score));
-    
+
     // 找出未填充的轮次索引
     const emptyIndices = [];
     for (let i = 0; i < selectCount; i++) {
@@ -1284,7 +1283,7 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
         emptyIndices.push(i);
       }
     }
-    
+
     // 填充未填充的轮次
     for (let i = 0; i < Math.min(emptyIndices.length, rest.length); i++) {
       const roundIndex = emptyIndices[i];
@@ -1334,9 +1333,9 @@ export function calculateRankingWithTies(
     const currScore = player[scoreField as keyof PlayerTotalPoints];
     const currSecondary = player[secondaryField as keyof PlayerTotalPoints];
 
-    const currScoreStr = typeof currScore === 'number' ? currScore.toFixed(3) : 
-                         currScore instanceof Decimal ? currScore.toFixed(3) : 
-                         String(currScore);
+    const currScoreStr = typeof currScore === 'number' ? currScore.toFixed(3) :
+      currScore instanceof Decimal ? currScore.toFixed(3) :
+        String(currScore);
     const currSecondaryNum = typeof currSecondary === 'number' ? currSecondary : 0;
 
     if (

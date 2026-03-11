@@ -1,5 +1,5 @@
 <template>
-  <button 
+  <button
     @click="onClick"
     :class="['fold-btn', isFolded ? 'btn-primary' : 'btn-secondary']"
   >

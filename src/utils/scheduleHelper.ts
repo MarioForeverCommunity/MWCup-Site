@@ -66,10 +66,10 @@ function getStageZh(mainStage: string, season?: any) {
   if (drawMatch) {
     const stageType = drawMatch[1];
     return stageType === 'I' ? '初赛' :
-           stageType === 'G' ? '小组赛' :
-           stageType === 'Q' ? '四分之一决赛' :
-           stageType === 'S' ? '半决赛' :
-           stageType === 'R' ? '复赛' : mainStage;
+      stageType === 'G' ? '小组赛' :
+        stageType === 'Q' ? '四分之一决赛' :
+          stageType === 'S' ? '半决赛' :
+            stageType === 'R' ? '复赛' : mainStage;
   }
 
   // 处理带有批量轮次的情况（如 I1,I2,I3,I4-I1）
@@ -77,10 +77,10 @@ function getStageZh(mainStage: string, season?: any) {
   if (batchMatch) {
     const stageType = batchMatch[1];
     return stageType === 'I' ? '初赛' :
-           stageType === 'G' ? '小组赛' :
-           stageType === 'Q' ? '四分之一决赛' :
-           stageType === 'S' ? '半决赛' :
-           stageType === 'R' ? '复赛' : mainStage;
+      stageType === 'G' ? '小组赛' :
+        stageType === 'Q' ? '四分之一决赛' :
+          stageType === 'S' ? '半决赛' :
+            stageType === 'R' ? '复赛' : mainStage;
   }
 
   // 处理热身赛标记
@@ -95,16 +95,16 @@ function getStageZh(mainStage: string, season?: any) {
   // 处理单个轮次的情况
   const m = mainStage.match(/^([GIQSR])(\d+)?$/);
   if (m) return roundMap[m[1]] || mainStage;
-  
+
   // 处理单轮比赛阶段的情况
   const m2 = mainStage.match(/^([GIQSR])-\w+$/);
   if (m2) return roundMap[m2[1]] || mainStage;
-  
+
   return stageMap[mainStage] || mainStage;
 }
 
 function getContentZh(mainStage: string, contentKey: string, season?: any, scheduleObj?: any) {
-  
+
   // 处理deadline的情况
   const deadlineMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-deadline(\d+)$/);
   if (deadlineMatch) {
@@ -188,13 +188,13 @@ function getContentZh(mainStage: string, contentKey: string, season?: any, sched
   const contentZh = stageMap[contentKey] || contentKey;
   if (roundStr && contentZh) return `${roundStr}${contentZh}`;
   if (roundStr) return roundStr;
-  
+
   // 处理单轮比赛阶段的情况
   const m2 = mainStage.match(/^([GIQSR])-(\w+)$/);
   if (m2 && contentKey === '') {
     return stageMap[m2[2]] || m2[2];
   }
-  
+
   return contentZh || '';
 }
 
@@ -212,7 +212,7 @@ function getContentWeight(content: string) {
   if (content.startsWith('评分')) return 4.6;
   if (content.includes('题公布')) return 4.2;
   if (content === '比赛开始') return 4;
-  
+
   // 对于基础内容类型使用预定义的权重
   for (const [key, weight] of Object.entries(contentOrder)) {
     if (content === stageMap[key]) return weight;
@@ -233,7 +233,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
       for (const [roundKey, roundVal] of Object.entries(season.rounds)) {
         if (roundVal && typeof (roundVal as any).schedule === 'object' && (roundVal as any).schedule !== null) {
           const scheduleObj = (roundVal as any).schedule;
-          
+
           // 处理带有topics和deadlines的轮次（初赛、小组赛、复赛等）
           if (scheduleObj.topics || scheduleObj.deadlines || scheduleObj.draw || scheduleObj.match?.deadlines) {
 
@@ -268,7 +268,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
                   // 与 judging 类似，处理多个题目链接
                   const matchTids = scheduleObj.match.mf_tid;
                   const links: string[] = [];
-                  
+
                   for (const [topic, tid] of Object.entries(matchTids)) {
                     if (tid) {
                       const num = topic.match(/[GIQSR](\d+)/)?.[1] || topic.match(/(\d+)$/)?.[1];
@@ -277,7 +277,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
                       links.push(`<a href="${getTidLink(tid as string, 'mf')}" target="_blank">${cnNum}</a>`);
                     }
                   }
-                  
+
                   schedule[`${roundKey}-match`] = {
                     start: scheduleObj.match.start,
                     links
@@ -290,7 +290,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
                     mf_tid: scheduleObj.match.mf_tid
                   };
                 }
-                
+
                 // 添加每轮截止时间
                 scheduleObj.match.deadlines.forEach((deadline: string, index: number) => {
                   schedule[`${roundKey}-deadline${index + 1}`] = {
@@ -314,13 +314,13 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
                 });
               }
               // 处理评分帖
-              if ((judgingData.mf_tid && typeof judgingData.mf_tid === 'object') || 
+              if ((judgingData.mf_tid && typeof judgingData.mf_tid === 'object') ||
                   (judgingData.tieba_tid && typeof judgingData.tieba_tid === 'object')) {
                 // 如果有mf_tid就用mf_tid，否则用tieba_tid
                 const usesMfTid = judgingData.mf_tid && typeof judgingData.mf_tid === 'object';
                 const judgingTids = usesMfTid ? judgingData.mf_tid : (judgingData.tieba_tid || {});
                 const linkType = usesMfTid ? 'mf' : 'tieba';
-                
+
                 const links: string[] = [];
                 for (const [topic, tid] of Object.entries(judgingTids)) {
                   if (tid) {
@@ -340,16 +340,16 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
               }
             }
           }
-          
+
           // 分类全局性内容和轮次性内容
           const globalKeys = ['draw', 'registration', 'pre_match_checkin', 'post_match_checkin', 'promotion'];
-          
+
           // 处理全局性内容
           for (const [subStage, subValue] of Object.entries(scheduleObj)) {
             if (globalKeys.includes(subStage)) {
               const key = `${roundKey}-${subStage}`;
               if (!schedule[key] || (
-                (typeof subValue === 'object' && subValue !== null) && 
+                (typeof subValue === 'object' && subValue !== null) &&
                 ((subValue as any).start || (subValue as any).time)
               )) {
                 schedule[key] = subValue;
@@ -374,11 +374,11 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
             }
 
             // 处理普通内容
-            const timeKey = typeof subValue === 'object' && subValue !== null ? 
+            const timeKey = typeof subValue === 'object' && subValue !== null ?
               `${(subValue as any).start}-${(subValue as any).end}` : '';
             for (const rk of roundKey.split(',')) {
               const newKey = `${rk}-${subStage}`;
-              if (timeKey && Object.entries(schedule).some(([k, v]) => 
+              if (timeKey && Object.entries(schedule).some(([k, v]) =>
                 typeof v === 'object' && v !== null &&
                 `${(v as any).start}-${(v as any).end}` === timeKey &&
                 k.endsWith(`-${subStage}`)
@@ -472,16 +472,16 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
         }
         roundGroups.get(item.stage)!.push(item);
       }
-      
+
       // 对每个轮次内的内容进行排序
       const sortedItems: ScheduleItem[] = [];
       for (const [, roundItems] of roundGroups) {
         roundItems.sort((a, b) => {
           const weightA = getContentWeight(a.content);
           const weightB = getContentWeight(b.content);
-          
+
           if (weightA !== weightB) return weightA - weightB;
-          
+
           // 如果权重相同，按照时间排序
           if (a.start && b.start) return new Date(a.start).getTime() - new Date(b.start).getTime();
           if (a.start) return -1;
@@ -490,7 +490,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
         });
         sortedItems.push(...roundItems);
       }
-      
+
       result.push({ year, items: sortedItems });
     }
   }
@@ -507,21 +507,21 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
 export function getJudgingEndTime(yamlData: any, year: string, roundKey: string): string | null {
   const seasonData = yamlData?.season?.[year];
   if (!seasonData) return null;
-  
+
   const roundData = findRoundData(seasonData, roundKey);
   if (!roundData) return null;
-  
+
   const schedule = roundData.schedule;
   if (!schedule) return null;
-  
+
   if (schedule.judging?.end) {
     return schedule.judging.end;
   }
-  
+
   if (schedule.voting?.end) {
     return schedule.voting.end;
   }
-  
+
   return null;
 }
 
@@ -535,17 +535,17 @@ export function getJudgingEndTime(yamlData: any, year: string, roundKey: string)
 export function getVotingEndTime(yamlData: any, year: string, roundKey: string): string | null {
   const seasonData = yamlData?.season?.[year];
   if (!seasonData) return null;
-  
+
   const roundData = findRoundData(seasonData, roundKey);
   if (!roundData) return null;
-  
+
   const schedule = roundData.schedule;
   if (!schedule) return null;
-  
+
   if (schedule.voting?.end) {
     return schedule.voting.end;
   }
-  
+
   return null;
 }
 
@@ -556,7 +556,7 @@ function findRoundData(seasonData: any, roundKey: string): any {
   if (seasonData.rounds?.[roundKey]) {
     return seasonData.rounds[roundKey];
   }
-  
+
   if (seasonData.rounds) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
       if (key.startsWith('[') && key.endsWith(']')) {
@@ -579,7 +579,7 @@ function findRoundData(seasonData: any, roundKey: string): any {
       }
     }
   }
-  
+
   return null;
 }
 
@@ -593,10 +593,10 @@ function findRoundData(seasonData: any, roundKey: string): any {
 export function isJudgingEnded(yamlData: any, year: string, roundKey: string): boolean {
   const endTime = getJudgingEndTime(yamlData, year, roundKey);
   if (!endTime) return true;
-  
+
   const endDate = new Date(endTime);
   const now = new Date();
-  
+
   return now >= endDate;
 }
 
@@ -610,10 +610,10 @@ export function isJudgingEnded(yamlData: any, year: string, roundKey: string): b
 export function isVotingEnded(yamlData: any, year: string, roundKey: string): boolean {
   const endTime = getVotingEndTime(yamlData, year, roundKey);
   if (!endTime) return true;
-  
+
   const endDate = new Date(endTime);
   const now = new Date();
-  
+
   return now >= endDate;
 }
 
@@ -638,6 +638,6 @@ export function shouldShowScoreData(yamlData: any, year: string, roundKey: strin
   if (!shouldApplyDeadlineFilter(year)) {
     return true;
   }
-  
+
   return isJudgingEnded(yamlData, year, roundKey);
 }

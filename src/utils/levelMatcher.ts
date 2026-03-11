@@ -59,7 +59,7 @@ export async function extractAllPlayers(): Promise<PlayerInfo[]> {
       if (!typedRoundData.players) continue
 
       const roundName = getRoundDisplayName(roundKey)
-      
+
       // 处理不同的选手数据结构
       if (Array.isArray(typedRoundData.players)) {
         // P2 轮次格式：数组
@@ -76,7 +76,7 @@ export async function extractAllPlayers(): Promise<PlayerInfo[]> {
         // 其他轮次格式：对象
         for (const [groupKey, groupData] of Object.entries(typedRoundData.players)) {
           const groupName = getGroupDisplayName(groupKey)
-          
+
           if (typeof groupData === 'string') {
             // 简单的 code: name 格式
             players.push({
@@ -108,14 +108,14 @@ export async function extractAllPlayers(): Promise<PlayerInfo[]> {
  * 根据年份、轮次、选手码查找选手信息
  */
 export async function findPlayerInfo(
-  year: number, 
-  roundKey: string, 
+  year: number,
+  roundKey: string,
   playerCode: string
 ): Promise<PlayerInfo | null> {
   const players = await extractAllPlayers()
-  return players.find(p => 
-    p.roundInfo.year === year && 
-    p.roundInfo.roundKey === roundKey && 
+  return players.find(p =>
+    p.roundInfo.year === year &&
+    p.roundInfo.roundKey === roundKey &&
     p.code.toUpperCase() === playerCode.toUpperCase()
   ) || null
 }
@@ -125,7 +125,7 @@ export async function findPlayerInfo(
  */
 export async function findPlayersByCode(playerCode: string): Promise<PlayerInfo[]> {
   const players = await extractAllPlayers()
-  return players.filter(p => 
+  return players.filter(p =>
     p.code.toUpperCase() === playerCode.toUpperCase()
   )
 }
@@ -157,7 +157,7 @@ export async function matchLevelFiles(): Promise<LevelMatch[]> {
 
     if (year && roundInfo) {
       // 精确匹配：年份、轮次、选手码都匹配
-      bestMatch = players.find(p => 
+      bestMatch = players.find(p =>
         p.roundInfo.year === year &&
         p.roundInfo.roundKey === roundInfo.roundKey &&
         levelFile.playerCode && p.code.toUpperCase() === levelFile.playerCode.toUpperCase()
@@ -167,7 +167,7 @@ export async function matchLevelFiles(): Promise<LevelMatch[]> {
         confidence = 'exact'
       } else {
         // 部分匹配：年份和选手码匹配，但轮次可能不同
-        bestMatch = players.find(p => 
+        bestMatch = players.find(p =>
           p.roundInfo.year === year &&
           levelFile.playerCode && p.code.toUpperCase() === levelFile.playerCode.toUpperCase()
         ) || null
@@ -179,7 +179,7 @@ export async function matchLevelFiles(): Promise<LevelMatch[]> {
     }
     if (!bestMatch) {
       // 模糊匹配：只根据选手码匹配
-      bestMatch = players.find(p => 
+      bestMatch = players.find(p =>
         levelFile.playerCode && p.code.toUpperCase() === levelFile.playerCode.toUpperCase()
       ) || null
     }
@@ -296,12 +296,12 @@ export function getGroupDisplayName(groupKey: string): string {
   if (/^\d+$/.test(groupKey)) {
     return `${groupKey}组`
   }
-  
+
   // 字母分组
   if (/^[A-Z]$/i.test(groupKey)) {
     return `${groupKey}组`
   }
-  
+
   // 特殊分组
   const specialGroups: Record<string, string> = {
     'II': 'II组', 'III': 'III组',
@@ -309,7 +309,7 @@ export function getGroupDisplayName(groupKey: string): string {
     '①': '①组', '②': '②组', '③': '③组',
     'walk-in': '免报名组'
   }
-  
+
   return specialGroups[groupKey] || groupKey
 }
 

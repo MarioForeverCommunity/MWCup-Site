@@ -118,15 +118,15 @@ export function parseCsvToScoreRecords(
     const headers = lines[0].split(',').map(h => h.trim());
     let playerCodeIndex = headers.findIndex(h => h === '选手码');
     let isUsernameFormat = false;
-    
+
     // 如果找不到"选手码"，尝试查找"选手用户名"（用于2022P2和2023P2等特殊格式）
     if (playerCodeIndex === -1) {
       playerCodeIndex = headers.findIndex(h => h === '选手用户名');
       isUsernameFormat = true;
     }
-    
+
     const judgeCodeIndex = headers.findIndex(h => h === '评委');
-    
+
     if (playerCodeIndex === -1) {
       throw new Error('暂无选手评分数据');
     }
@@ -137,7 +137,7 @@ export function parseCsvToScoreRecords(
     // 获取当前轮次的评分方案
     const seasonData = yamlData.season[year];
     let scoringScheme: keyof typeof SCORING_SCHEMES = (seasonData?.scoring_scheme as keyof typeof SCORING_SCHEMES) || 'A';
-    
+
     // 检查轮次特定的评分方案
     const roundData = seasonData?.rounds?.[round];
     if (roundData?.scoring_scheme) {
@@ -148,42 +148,41 @@ export function parseCsvToScoreRecords(
     if (!SCORING_SCHEMES[scoringScheme]) {
       throw new Error(`未知的评分方案: ${scoringScheme}`);
     }
-    
 
     const playerMap = buildPlayerJudgeMap(yamlData, year, round);
     const records: ScoreRecord[] = [];
     const canceledPlayers: Set<string> = new Set();
     const unworkingPlayers: Set<string> = new Set();
-    
+
     // 解析每一行
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
       if (values.length < headers.length) continue;
-      
+
       const originalPlayerValue = values[playerCodeIndex]?.trim();
       const judgeCode = values[judgeCodeIndex]?.trim();
-      
+
       // 标记成绩无效的选手
       if (originalPlayerValue && judgeCode === 'CANCELED') {
         canceledPlayers.add(originalPlayerValue);
         continue;
       }
-      
+
       // 标记关卡无法运行的选手
       if (originalPlayerValue && judgeCode === 'UNWORKING') {
         unworkingPlayers.add(originalPlayerValue);
         continue;
       }
-      
+
       if (!originalPlayerValue || !judgeCode) continue;
 
       // 解析评委信息
       const judgeInfo = parseJudgeCode(judgeCode);
-      
+
       // 处理选手信息：根据CSV格式决定playerCode和playerName
       let playerCode: string;
       let playerName: string;
-      
+
       if (isUsernameFormat) {
         // "选手用户名"格式：原值是用户名，需要生成或查找对应的代码
         playerName = originalPlayerValue;
@@ -204,12 +203,12 @@ export function parseCsvToScoreRecords(
       for (let j = 2; j < headers.length && j < values.length; j++) {
         const header = headers[j].trim();
         const value = values[j]?.trim();
-        
+
         if (value && value !== '') {
           const numValue = new Decimal(value);
           if (!numValue.isNaN()) {
             scores[header] = numValue;
-            
+
             if (header === '加分项') {
               bonusPoints = numValue;
             } else if (header === '扣分项') {
@@ -223,12 +222,12 @@ export function parseCsvToScoreRecords(
 
       // 计算最终总分（四舍五入到一位小数）
       const finalScore = totalScore.plus(bonusPoints).plus(penaltyPoints).toDecimalPlaces(1);
-      
+
       // 如果是协商评分，直接从YAML中查找评委名称而不是使用CSV中的judgeCode
-      const judgeName = judgeInfo.isCollaborative 
+      const judgeName = judgeInfo.isCollaborative
         ? judgeInfo.collaborativeJudges?.map(j => getJudgeName(j, playerMap, playerCode)).join(', ') || ''
         : '';
-        
+
       records.push({
         playerCode,
         judgeCode: judgeInfo.originalCode,
@@ -245,163 +244,163 @@ export function parseCsvToScoreRecords(
         collaborativeJudges: judgeInfo.collaborativeJudges
       });
     }
-  // 检测协商评分（相同选手两个评委的所有评分子项均相同时视为协商评分）
-  const playerJudgeScores: { [key: string]: { [key: string]: ScoreRecord } } = {};
-  
-  // 先按选手和评分项组织数据
-  for (const record of records) {
-    if (record.isRevoked) continue; // 跳过被作废的评分
-    
-    // 尚未评分的记录不参与协商评分检测
-    if (isNotYetRated(record)) continue;
-    
-    if (!playerJudgeScores[record.playerCode]) {
-      playerJudgeScores[record.playerCode] = {};
-    }
-    
-    // 生成评分指纹（所有分数项组合）
-    const scoreFingerprint = Object.entries(record.scores)
-      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-      .map(([key, value]) => `${key}:${value}`)
-      .join('|');
-      
-    // 记录该指纹对应的评委
-    if (!playerJudgeScores[record.playerCode][scoreFingerprint]) {
-      playerJudgeScores[record.playerCode][scoreFingerprint] = record;
-    } else {
-      // 如果找到相同指纹的评分，则这两个评委进行了协商评分
-      const existingRecord = playerJudgeScores[record.playerCode][scoreFingerprint];
-      // 标记两条记录都为协商评分
-      existingRecord.isCollaborative = true;
-      record.isCollaborative = true;
-      // 收集协商评委
-      existingRecord.collaborativeJudges = [existingRecord.judgeCode, record.judgeCode];
-      record.collaborativeJudges = [existingRecord.judgeCode, record.judgeCode];
-      // 修复：协商评分时，isBackup 只要有一个为 true，两个都设为 true
-      if (existingRecord.isBackup || record.isBackup) {
-        existingRecord.isBackup = true;
-        record.isBackup = true;
-      }
-    }
-  }
-  
-  // 现在填充评委名称（可以访问所有记录来判断重评）
-  for (const record of records) {
-    // 协商评分特殊处理
-    if (record.isCollaborative && record.collaborativeJudges && record.collaborativeJudges.length > 0) {
-      record.judgeName = record.collaborativeJudges.map(j => 
-        getJudgeName(j, playerMap, record.playerCode)).join(', ');
-    } else {
-      record.judgeName = getJudgeName(record.judgeCode, playerMap, record.playerCode);
-    }
-  }
-  // 为所有记录添加评分方案信息
-  records.forEach(record => {
-    record.scoringScheme = scoringScheme;
-  });
+    // 检测协商评分（相同选手两个评委的所有评分子项均相同时视为协商评分）
+    const playerJudgeScores: { [key: string]: { [key: string]: ScoreRecord } } = {};
 
-  // 计算选手总分
-  const playerScores = calculatePlayerScores(records);
-  // 确定要显示的列（排除全为空的列）
-  const displayColumns = determineDisplayColumns(headers, records);
-  
-  // 为成绩无效的选手创建特殊记录
-  if (canceledPlayers.size > 0) {
-    for (const playerCode of canceledPlayers) {
-      // 根据CSV格式决定playerCode和playerName
-      let actualPlayerCode: string;
-      let playerName: string;
-      
-      if (isUsernameFormat) {
-        playerName = playerCode;
-        actualPlayerCode = playerCode;
-      } else {
-        actualPlayerCode = playerCode;
-        playerName = getPlayerName(actualPlayerCode, playerMap);
+    // 先按选手和评分项组织数据
+    for (const record of records) {
+      if (record.isRevoked) continue; // 跳过被作废的评分
+
+      // 尚未评分的记录不参与协商评分检测
+      if (isNotYetRated(record)) continue;
+
+      if (!playerJudgeScores[record.playerCode]) {
+        playerJudgeScores[record.playerCode] = {};
       }
-      
-      // 创建一个成绩无效记录
-      const canceledRecord: ScoreRecord = {
-        playerCode: actualPlayerCode,
-        judgeCode: "canceled",
-        originalJudgeCode: "CANCELED",
-        playerName,
-        judgeName: "成绩无效",
-        scores: {},
-        totalScore: new Decimal(0),
-        isCanceled: true
-      };
-      
-      records.push(canceledRecord);
-      
-      // 添加到playerScores中，但不计入排名
-      playerScores.push({
-        playerCode: actualPlayerCode,
-        playerName,
-        records: [canceledRecord],
-        totalSum: new Decimal(0),
-        averageScore: new Decimal(0),
-        validRecordsCount: 0,
-        publicScore: new Decimal(0),
-        finalScore: new Decimal(0),
-        judgeAverage: new Decimal(0),
-        judgeSum: new Decimal(0)
-      });
-    }
-  }
-  
-  // 为无法运行关卡的选手创建特殊记录
-  if (unworkingPlayers.size > 0) {
-    for (const playerCode of unworkingPlayers) {
-      // 根据CSV格式决定playerCode和playerName
-      let actualPlayerCode: string;
-      let playerName: string;
-      
-      if (isUsernameFormat) {
-        playerName = playerCode;
-        actualPlayerCode = playerCode;
+
+      // 生成评分指纹（所有分数项组合）
+      const scoreFingerprint = Object.entries(record.scores)
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+        .map(([key, value]) => `${key}:${value}`)
+        .join('|');
+
+      // 记录该指纹对应的评委
+      if (!playerJudgeScores[record.playerCode][scoreFingerprint]) {
+        playerJudgeScores[record.playerCode][scoreFingerprint] = record;
       } else {
-        actualPlayerCode = playerCode;
-        playerName = getPlayerName(actualPlayerCode, playerMap);
+      // 如果找到相同指纹的评分，则这两个评委进行了协商评分
+        const existingRecord = playerJudgeScores[record.playerCode][scoreFingerprint];
+        // 标记两条记录都为协商评分
+        existingRecord.isCollaborative = true;
+        record.isCollaborative = true;
+        // 收集协商评委
+        existingRecord.collaborativeJudges = [existingRecord.judgeCode, record.judgeCode];
+        record.collaborativeJudges = [existingRecord.judgeCode, record.judgeCode];
+        // 修复：协商评分时，isBackup 只要有一个为 true，两个都设为 true
+        if (existingRecord.isBackup || record.isBackup) {
+          existingRecord.isBackup = true;
+          record.isBackup = true;
+        }
       }
-      
-      // 创建一个关卡无法运行记录
-      const unworkingRecord: ScoreRecord = {
-        playerCode: actualPlayerCode,
-        judgeCode: "unworking",
-        originalJudgeCode: "UNWORKING",
-        playerName,
-        judgeName: "关卡无法运行",
-        scores: {},
-        totalScore: new Decimal(0),
-        isUnworking: true
-      };
-      
-      records.push(unworkingRecord);
-      // 添加到playerScores中，得分为0但计入排名
-      playerScores.push({
-        playerCode: actualPlayerCode,
-        playerName,
-        records: [unworkingRecord],
-        totalSum: new Decimal(0),
-        averageScore: new Decimal(0),
-        validRecordsCount: 0,  // 设为0表示无有效评分，但仍计入排名
-        publicScore: new Decimal(0),
-        finalScore: new Decimal(0),
-        judgeAverage: new Decimal(0),
-        judgeSum: new Decimal(0)
-      });
     }
-  }
-  
-  return {
-    year,
-    round,
-    scoringScheme,
-    columns: displayColumns,
-    playerScores,
-    allRecords: records
-  };
+
+    // 现在填充评委名称（可以访问所有记录来判断重评）
+    for (const record of records) {
+    // 协商评分特殊处理
+      if (record.isCollaborative && record.collaborativeJudges && record.collaborativeJudges.length > 0) {
+        record.judgeName = record.collaborativeJudges.map(j =>
+          getJudgeName(j, playerMap, record.playerCode)).join(', ');
+      } else {
+        record.judgeName = getJudgeName(record.judgeCode, playerMap, record.playerCode);
+      }
+    }
+    // 为所有记录添加评分方案信息
+    records.forEach(record => {
+      record.scoringScheme = scoringScheme;
+    });
+
+    // 计算选手总分
+    const playerScores = calculatePlayerScores(records);
+    // 确定要显示的列（排除全为空的列）
+    const displayColumns = determineDisplayColumns(headers, records);
+
+    // 为成绩无效的选手创建特殊记录
+    if (canceledPlayers.size > 0) {
+      for (const playerCode of canceledPlayers) {
+      // 根据CSV格式决定playerCode和playerName
+        let actualPlayerCode: string;
+        let playerName: string;
+
+        if (isUsernameFormat) {
+          playerName = playerCode;
+          actualPlayerCode = playerCode;
+        } else {
+          actualPlayerCode = playerCode;
+          playerName = getPlayerName(actualPlayerCode, playerMap);
+        }
+
+        // 创建一个成绩无效记录
+        const canceledRecord: ScoreRecord = {
+          playerCode: actualPlayerCode,
+          judgeCode: "canceled",
+          originalJudgeCode: "CANCELED",
+          playerName,
+          judgeName: "成绩无效",
+          scores: {},
+          totalScore: new Decimal(0),
+          isCanceled: true
+        };
+
+        records.push(canceledRecord);
+
+        // 添加到playerScores中，但不计入排名
+        playerScores.push({
+          playerCode: actualPlayerCode,
+          playerName,
+          records: [canceledRecord],
+          totalSum: new Decimal(0),
+          averageScore: new Decimal(0),
+          validRecordsCount: 0,
+          publicScore: new Decimal(0),
+          finalScore: new Decimal(0),
+          judgeAverage: new Decimal(0),
+          judgeSum: new Decimal(0)
+        });
+      }
+    }
+
+    // 为无法运行关卡的选手创建特殊记录
+    if (unworkingPlayers.size > 0) {
+      for (const playerCode of unworkingPlayers) {
+      // 根据CSV格式决定playerCode和playerName
+        let actualPlayerCode: string;
+        let playerName: string;
+
+        if (isUsernameFormat) {
+          playerName = playerCode;
+          actualPlayerCode = playerCode;
+        } else {
+          actualPlayerCode = playerCode;
+          playerName = getPlayerName(actualPlayerCode, playerMap);
+        }
+
+        // 创建一个关卡无法运行记录
+        const unworkingRecord: ScoreRecord = {
+          playerCode: actualPlayerCode,
+          judgeCode: "unworking",
+          originalJudgeCode: "UNWORKING",
+          playerName,
+          judgeName: "关卡无法运行",
+          scores: {},
+          totalScore: new Decimal(0),
+          isUnworking: true
+        };
+
+        records.push(unworkingRecord);
+        // 添加到playerScores中，得分为0但计入排名
+        playerScores.push({
+          playerCode: actualPlayerCode,
+          playerName,
+          records: [unworkingRecord],
+          totalSum: new Decimal(0),
+          averageScore: new Decimal(0),
+          validRecordsCount: 0,  // 设为0表示无有效评分，但仍计入排名
+          publicScore: new Decimal(0),
+          finalScore: new Decimal(0),
+          judgeAverage: new Decimal(0),
+          judgeSum: new Decimal(0)
+        });
+      }
+    }
+
+    return {
+      year,
+      round,
+      scoringScheme,
+      columns: displayColumns,
+      playerScores,
+      allRecords: records
+    };
   } catch (error) {
     console.error(`解析${year}${round}评分数据失败:`, error);
     if (error instanceof Error) {
@@ -419,10 +418,10 @@ function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
-  
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    
+
     if (char === '"') {
       inQuotes = !inQuotes;
     } else if (char === ',' && !inQuotes) {
@@ -432,7 +431,7 @@ function parseCSVLine(line: string): string[] {
       current += char;
     }
   }
-  
+
   result.push(current);
   return result;
 }
@@ -473,7 +472,7 @@ export function parseJudgeCode(judgeCode: string) {
 export function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
   const seasonData = yamlData.season[year];
   let roundData = seasonData?.rounds?.[round];
-  
+
   // 如果直接找不到，检查是否在多轮次键中
   if (!roundData && seasonData?.rounds) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
@@ -491,7 +490,7 @@ export function buildPlayerJudgeMap(yamlData: any, year: string, round: string) 
       }
     }
   }
-  
+
   if (!roundData) {
     return { players: {}, judges: {} };
   }
@@ -641,13 +640,13 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
       for (const rec of judgeRecords) {
         // 评委评分员：J1/J2（或以J开头且不是JZ）
         if (/^J\d+$/i.test(rec.judgeCode)) {
-          weightedScores.push({score: rec.totalScore, judgeType: 'judge', record: rec});
-          weightedScores.push({score: rec.totalScore, judgeType: 'judge', record: rec});
+          weightedScores.push({ score: rec.totalScore, judgeType: 'judge', record: rec });
+          weightedScores.push({ score: rec.totalScore, judgeType: 'judge', record: rec });
         } else if (/^JZ\d+$/i.test(rec.judgeCode)) {
-          weightedScores.push({score: rec.totalScore, judgeType: 'public', record: rec});
+          weightedScores.push({ score: rec.totalScore, judgeType: 'public', record: rec });
         } else {
           // 其他类型（如协商、预备等）按大众票处理
-          weightedScores.push({score: rec.totalScore, judgeType: 'public', record: rec});
+          weightedScores.push({ score: rec.totalScore, judgeType: 'public', record: rec });
         }
       }
       // 去除一个最高分和一个最低分（评委的两票只去除一票）
@@ -690,7 +689,7 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
       // 方案E：计算所有评委总分的平均分
       const isCanceled = validRecords.some(r => r.isCanceled);
       const isUnworking = validRecords.some(r => r.isUnworking);
-      
+
       // 对于成绩无效或关卡无法运行的记录，所有分数设为0
       if (isCanceled || isUnworking) {
         const playerScore: PlayerScore = {
@@ -708,13 +707,13 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
         playerScores.push(playerScore);
         continue;
       }
-      
+
       const judgeScores = validRecords.map(r => r.totalScore);
       const judgeSum = judgeScores.reduce((sum, score) => sum.plus(score), new Decimal(0));
-      const judgeAverage = judgeScores.length > 0 
+      const judgeAverage = judgeScores.length > 0
         ? judgeSum.div(judgeScores.length).toDecimalPlaces(1)
         : new Decimal(0);
-      
+
       // 创建PlayerScore对象，publicScore和finalScore将在加载大众评分后设置
       const playerScore: PlayerScore = {
         playerCode,
@@ -728,7 +727,7 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
         judgeAverage,                // 保存评委平均分
         judgeSum                     // 保存评委总分
       };
-      
+
       playerScores.push(playerScore);
       continue;
     } else {
@@ -770,8 +769,8 @@ function determineDisplayColumns(headers: string[], records: ScoreRecord[]): str
       continue; // 这些列不在scores中，单独处理
     }
     // 检查这一列是否有非空值
-    const hasValue = records.some(record => 
-      record.scores[header] !== undefined && 
+    const hasValue = records.some(record =>
+      record.scores[header] !== undefined &&
       record.scores[header] !== null &&
       !(record.scores[header] instanceof Decimal && record.scores[header].isZero())
     );
@@ -790,7 +789,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   if (!year || !round) {
     throw new Error('年份和轮次参数不能为空');
   }
-  
+
   if (!yamlData || !yamlData.season) {
     throw new Error('YAML配置数据无效');
   }
@@ -801,7 +800,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   }
   // 查找轮次数据，支持多轮次键
   let roundData = seasonData.rounds?.[round];
-    // 如果直接找不到，检查是否在多轮次键中
+  // 如果直接找不到，检查是否在多轮次键中
   if (!roundData && seasonData.rounds) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
       // 检查方括号格式的多轮次键，如 [G1, G2, G3]
@@ -818,7 +817,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
       }
     }
   }
-  
+
   if (!roundData) {
     throw new Error(`找不到${year}年${getRoundChineseName(round, { ...roundData, year: String(year) })}的比赛数据`);
   }
@@ -829,9 +828,9 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   if (directScores) {
     return directScores;
   }
-  
+
   const csvUrl = `/data/scores/${year}${round}.csv`;
-  
+
   try {
     const response = await fetch(csvUrl);
     if (!response.ok) {
@@ -843,19 +842,19 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
         throw new Error(`网络错误 (${response.status}): 无法加载评分数据`);
       }
     }
-    
+
     const csvText = await response.text();
     if (!csvText.trim()) {
       throw new Error(`评分文件 ${year}${round}.csv 为空`);
     }
-    
+
     const scoreData = parseCsvToScoreRecords(csvText, yamlData, year, round);
-    
+
     // 方案E：加载大众评分数据
     if (scoreData.scoringScheme === 'E') {
       const publicScores = await loadPublicVotingData(year, round, yamlData);
       scoreData.publicScores = publicScores;
-      
+
       // 创建玩家代码到大众评分的映射
       const publicScoreMap = new Map<string, Decimal>();
       if (publicScores && publicScores.length > 0) {
@@ -863,12 +862,12 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
           publicScoreMap.set(ps.playerCode, new Decimal(ps.finalPublicScore));
         });
       }
-      
+
       // 更新playerScores中的publicScore和finalScore
       scoreData.playerScores = scoreData.playerScores.map(ps => {
         // 检查是否有无效或无法运行的记录
         const hasInvalidRecord = ps.records.some(r => r.isCanceled || r.isUnworking);
-        
+
         if (hasInvalidRecord) {
           // 如果存在无效记录，所有分数设为0
           return {
@@ -880,12 +879,12 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
             judgeSum: new Decimal(0)
           };
         }
-        
+
         const publicScore = publicScoreMap.get(ps.playerCode) || new Decimal(0);
         const judgeAverage = ps.judgeAverage || new Decimal(0);
         const rawFinalScore = judgeAverage.times(0.75).plus(publicScore.times(0.25));
         const finalScore = Decimal.max(0, rawFinalScore).toDecimalPlaces(1);
-        
+
         return {
           ...ps,
           publicScore,
@@ -895,7 +894,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
         };
       });
     }
-    
+
     return scoreData;
   } catch (error) {
     console.error(`加载 ${year}${round} 评分数据失败:`, error);
@@ -916,7 +915,7 @@ export async function loadPublicVotingData(year: string, round: string, yamlData
       console.warn(`大众评分数据文件不存在: ${year}${round}.csv`);
       return [];
     }
-    
+
     const csvText = await response.text();
     return await parsePublicVotingCsv(csvText, yamlData, year, round);
   } catch (error) {
@@ -932,31 +931,31 @@ async function loadUserMappings(): Promise<{[key: string]: string}> {
   try {
     const response = await fetch('/data/users.csv');
     if (!response.ok) return {};
-    
+
     const csvText = await response.text();
     const lines = csvText.trim().split('\n');
     if (lines.length < 2) return {};
-    
+
     const headers = lines[0].split(',').map(h => h.trim());
     const idIndex = headers.findIndex(h => h === '序号');
     const usernameIndex = headers.findIndex(h => h === '社区用户名');
-    
+
     if (idIndex === -1 || usernameIndex === -1) return {};
-    
+
     const userMappings: {[key: string]: string} = {};
-    
+
     for (let i = 1; i < lines.length; i++) {
       const cells = lines[i].split(',').map(cell => cell.trim());
       if (cells.length <= Math.max(idIndex, usernameIndex)) continue;
-      
+
       const id = cells[idIndex];
       const username = cells[usernameIndex] || `用户${id}`; // 如果没有社区用户名，使用默认格式
-      
+
       if (id) {
         userMappings[id] = username;
       }
     }
-    
+
     return userMappings;
   } catch (error) {
     console.error('加载用户数据失败:', error);
@@ -970,10 +969,10 @@ async function loadUserMappings(): Promise<{[key: string]: string}> {
 async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string, round: string): Promise<PlayerPublicScore[]> {
   const lines = csvText.trim().split('\n');
   if (lines.length === 0) return [];
-  
+
   // 加载用户映射
   const userMappings = await loadUserMappings();
-  
+
   const headers = lines[0].split(',').map(h => h.trim());
   const playerCodeIndex = headers.findIndex(h => h === '选手码');
   const voterIndex = headers.findIndex(h => h === '大众评分员');
@@ -983,11 +982,11 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
   const gameplayIndex = headers.findIndex(h => h === '游戏性');
   const bonusIndex = headers.findIndex(h => h === '附加分');
   const penaltyIndex = headers.findIndex(h => h === '扣分');
-  
+
   if ([playerCodeIndex, voterIndex, appreciationIndex, innovationIndex, designIndex, gameplayIndex, bonusIndex].some(i => i === -1)) {
     throw new Error('未找到大众评分数据');
   }
-  
+
   // 加载maxScore.json获取附加分设置
   let maxScores: any = {};
   try {
@@ -999,17 +998,17 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
   } catch (error) {
     console.warn('加载maxScore.json失败:', error);
   }
-  
+
   // 获取附加分满分设置，优先使用maxScore.json中的配置
   const bonusFullScore = maxScores.bonus_score || 5;
-  
+
   const votes: PublicVoteRecord[] = [];
   const playerMap = buildPlayerJudgeMap(yamlData, year, round);
-  
+
   for (let i = 1; i < lines.length; i++) {
     const cells = parseCSVLine(lines[i]);
     if (cells.length < headers.length) continue;
-    
+
     const playerCode = cells[playerCodeIndex]?.trim();
     const voterId = cells[voterIndex]?.trim();
     const voterName = userMappings[voterId] || `用户${voterId}`; // 使用映射的用户名，如果没有则使用默认格式
@@ -1019,15 +1018,15 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
     const gameplay = parseFloat(cells[gameplayIndex]) || 0;
     const bonus = parseFloat(cells[bonusIndex]) || 0;
     const penalty = penaltyIndex !== -1 ? (parseFloat(cells[penaltyIndex]) || 0) : 0;
-    
+
     if (!playerCode || !voterName) continue;
-    
+
     // 计算总分：欣赏性×1.5 + 创新性×1.5 + 设计性×3 + 游戏性×4
     let totalScore = new Decimal(appreciation * 1.5)
       .plus(innovation * 1.5)
       .plus(design * 3)
       .plus(gameplay * 4);
-    
+
     // 处理附加分
     let adjustedBonus = new Decimal(bonus);
     if (bonusFullScore === 8) {
@@ -1035,13 +1034,13 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
     } else if (bonusFullScore === 10) {
       adjustedBonus = adjustedBonus.times(2);
     }
-    
+
     // 应用附加分和扣分
     totalScore = totalScore.plus(adjustedBonus).plus(penalty || 0);
-    
+
     // 换算后总分允许负分，只需四舍五入到1位小数
     totalScore = totalScore.toDecimalPlaces(1);
-    
+
     votes.push({
       playerCode,
       voterName,
@@ -1054,10 +1053,10 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
       totalScore: totalScore.toNumber()
     });
   }
-  
+
   // 按选手分组并计算最终大众评分
   const playerScores = new Map<string, PlayerPublicScore>();
-  
+
   for (const vote of votes) {
     if (!playerScores.has(vote.playerCode)) {
       const playerName = getPlayerName(vote.playerCode, playerMap);
@@ -1069,11 +1068,11 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
         validVotesCount: 0
       });
     }
-    
+
     const playerScore = playerScores.get(vote.playerCode)!;
     playerScore.votes.push(vote);
   }
-  
+
   // 计算每个选手的最终大众评分
   for (const playerScore of playerScores.values()) {
     // 所有投票都参与计算，包括负分投票
@@ -1083,7 +1082,7 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
     playerScore.finalPublicScore = finalScore.toNumber();
     playerScore.validVotesCount = playerScore.votes.length;
   }
-  
+
   return Array.from(playerScores.values());
 }
 
@@ -1112,16 +1111,16 @@ export function calculateFinalPublicScore(scores: Decimal[]): Decimal {
 export function handleDirectScores(yamlData: any, year: string, round: string): RoundScoreData | null {
   const seasonData = yamlData.season[year];
   const roundData = seasonData?.rounds?.[round];
-    if (roundData?.scoring_scheme === 'S' && roundData?.scores) {
+  if (roundData?.scoring_scheme === 'S' && roundData?.scores) {
     const playerMap = buildPlayerJudgeMap(yamlData, year, round);
     const records: ScoreRecord[] = [];
     const playerScores: PlayerScore[] = [];
-    
+
     for (const [playerCode, score] of Object.entries(roundData.scores)) {
       if (typeof score === 'number') {
         const playerName = getPlayerName(playerCode, playerMap);
         const decimalScore = new Decimal(score);
-        
+
         const record: ScoreRecord = {
           playerCode,
           judgeCode: 'TOTAL',
@@ -1135,9 +1134,9 @@ export function handleDirectScores(yamlData: any, year: string, round: string): 
           isCollaborative: false,
           collaborativeJudges: []
         };
-        
+
         records.push(record);
-          playerScores.push({
+        playerScores.push({
           playerCode,
           playerName,
           records: [record],
@@ -1147,7 +1146,7 @@ export function handleDirectScores(yamlData: any, year: string, round: string): 
         });
       }
     }
-    
+
     return {
       year,
       round,
@@ -1157,6 +1156,6 @@ export function handleDirectScores(yamlData: any, year: string, round: string): 
       allRecords: records
     };
   }
-  
+
   return null;
 }

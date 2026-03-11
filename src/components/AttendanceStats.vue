@@ -77,9 +77,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr 
-              v-for="(item, index) in filteredData" 
-              :key="`${item.year}-${item.round}`" 
+            <tr
+              v-for="(item, index) in filteredData"
+              :key="`${item.year}-${item.round}`"
               class="attendance-row"
               :style="{ animationDelay: `${index * 0.05}s` }"
             >
@@ -102,8 +102,8 @@
               <td class="attendance-rate">
                 <div class="rate-display">
                   <div class="rate-bar">
-                    <div 
-                      class="rate-fill animate-slideInLeft" 
+                    <div
+                      class="rate-fill animate-slideInLeft"
                       :style="{ width: `${item.attendanceRate}%` }"
                       :class="getAttendanceClass(item.attendanceRate)"
                     ></div>
@@ -115,7 +115,6 @@
           </tbody>
         </table>
       </div>
-
 
     </div>
   </div>
@@ -220,7 +219,7 @@ const getAttendanceClass = (rate: number): string => {
 const refreshData = async () => {
   loading.value = true
   error.value = ''
-  
+
   try {
     const data = await analyzeAttendanceData()
     attendanceData.value = data
@@ -274,7 +273,6 @@ onMounted(() => {
 .legend-item.good { color: var(--warning-color); }
 .legend-item.average { color: var(--info-color); }
 .legend-item.poor { color: var(--danger-color); }
-
 
 .bar-content {
   display: flex;
@@ -442,19 +440,19 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .summary-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .stat-card .stat-value {
     font-size: 1.5rem;
   }
-  
+
   .rate-bar {
     display: none;
   }
-  
+
   .pagination-controls {
     flex-direction: column;
     gap: var(--spacing-md);

@@ -22,9 +22,9 @@
       <div class="form-group" style="min-width:220px;flex:1;">
         <label class="form-label">关键词：</label>
         <div class="search-input-group">
-          <input 
-            v-model="searchKeyword" 
-            type="text" 
+          <input
+            v-model="searchKeyword"
+            type="text"
             placeholder="输入选手名或文件名关键词"
             class="form-control hover-scale"
           >
@@ -58,9 +58,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr 
-            v-for="(file) in searchResults" 
-            :key="file.path" 
+          <tr
+            v-for="(file) in searchResults"
+            :key="file.path"
             class="table-row"
           >
             <td>
@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import { 
+import {
   fetchLevelFilesFromLocal,
   matchPlayerName,
   type LevelFile
@@ -120,8 +120,6 @@ const error = ref('')
 const searchResults = ref<LevelFile[]>([])
 const searched = ref(false)
 
-
-
 // 缓存的 YAML 数据
 let yamlData: any = null
 
@@ -145,11 +143,11 @@ async function loadYamlData() {
 function onYearChange() {
   selectedRound.value = ''
   availableRounds.value = []
-  
+
   if (selectedYear.value && yamlData?.season?.[selectedYear.value]?.rounds) {
     const rounds = yamlData.season[selectedYear.value].rounds
     const roundList: { key: string; name: string }[] = []
-    
+
     for (const [roundKey, roundData] of Object.entries(rounds)) {
       // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
       if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
@@ -168,7 +166,7 @@ function onYearChange() {
           // JSON解析失败，按普通轮次处理
         }
       }
-      
+
       // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
       if (roundKey.includes(',')) {
         const singleRounds = roundKey.split(',').map(r => r.trim());
@@ -180,14 +178,14 @@ function onYearChange() {
         }
         continue;
       }
-      
+
       // 处理普通的单轮次
       roundList.push({
         key: roundKey,
         name: getRoundChineseName(roundKey, Object.assign({}, roundData, { year: String(selectedYear.value) }))
       });
     }
-    
+
     // 按轮次类型排序
     roundList.sort((a, b) => {
       const order = ['P1', 'P2', 'I1', 'I2', 'I3', 'I4', 'G1', 'G2', 'G3', 'G4', 'Q1', 'Q2', 'Q', 'R1', 'R2', 'R3', 'R', 'S1', 'S2', 'S', 'F']
@@ -198,7 +196,7 @@ function onYearChange() {
       if (bIndex === -1) return -1
       return aIndex - bIndex
     })
-    
+
     availableRounds.value = roundList
   }
 }
@@ -207,7 +205,7 @@ function onRoundChange() {
   if (selectedYear.value && selectedRound.value && yamlData?.season?.[selectedYear.value]?.rounds) {
     const rounds = yamlData.season[selectedYear.value].rounds
     let targetRoundData: any = null
-    
+
     // 查找包含当前选中轮次的轮次数据
     for (const [roundKey, roundData] of Object.entries(rounds)) {
       // 检查是否是数组表示的轮次
@@ -222,7 +220,7 @@ function onRoundChange() {
           // JSON解析失败，继续下一个
         }
       }
-      
+
       // 检查是否是逗号分隔的多轮次
       else if (roundKey.includes(',')) {
         const singleRounds = roundKey.split(',').map(r => r.trim());
@@ -231,26 +229,26 @@ function onRoundChange() {
           break;
         }
       }
-      
+
       // 直接匹配单轮次
       else if (roundKey === selectedRound.value) {
         targetRoundData = roundData;
         break;
       }
     }
-    
+
     if (targetRoundData && targetRoundData.players) {
       const playerList: { code: string; name: string }[] = []
-      
+
       // 检查选手数据格式
       if (Array.isArray(targetRoundData.players)) {
         // 数组格式（如P2轮次）：[选手名1, 选手名2, ...]
         // 对于数组格式，直接使用选手名作为code，不添加编号
         targetRoundData.players.forEach((playerName: string) => {
           if (typeof playerName === 'string') {
-            playerList.push({ 
-              code: playerName, 
-              name: playerName 
+            playerList.push({
+              code: playerName,
+              name: playerName
             })
           }
         })
@@ -272,7 +270,7 @@ function onRoundChange() {
           }
         }
       }
-      
+
       // 过滤掉选手码以波浪号（~）开头的选手
       availablePlayers.value = playerList.filter(player => !player.code.startsWith('~'))
     }
@@ -379,12 +377,12 @@ function getRefinedRoundType(file: LevelFile): string {
   else {
     roundName = file.roundType || '-';
   }
-  
+
   // 添加subject信息，直接显示在轮次名称旁，不加空格
   if (file.subject) {
     roundName += file.subject;
   }
-  
+
   return roundName;
 }
 
@@ -417,7 +415,7 @@ function searchBySelectorAndKeyword() {
   error.value = '';
   searchResults.value = [];
   searched.value = false;
-  
+
   Promise.all([
     fetchLevelFilesFromLocal(),
     loadUserData()

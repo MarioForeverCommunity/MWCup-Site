@@ -21,7 +21,7 @@ export async function loadUserMapping(): Promise<UserMapping> {
   try {
     const yamlData = await fetchMarioWorkerYaml();
     const mapping: UserMapping = {};
-    
+
     // 遍历所有年份和轮次，收集选手和评委的映射关系
     if (yamlData && yamlData.season) {
       for (const [, seasonData] of Object.entries(yamlData.season)) {
@@ -40,7 +40,7 @@ export async function loadUserMapping(): Promise<UserMapping> {
                   }
                 }
               }
-              
+
               // 收集评委映射
               if ((roundData as any).judges) {
                 for (const group of Object.values((roundData as any).judges)) {
@@ -58,7 +58,7 @@ export async function loadUserMapping(): Promise<UserMapping> {
         }
       }
     }
-    
+
     userMappingCache = mapping;
     return mapping;
   } catch (error) {

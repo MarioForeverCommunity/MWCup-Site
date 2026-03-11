@@ -55,8 +55,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr 
-              v-for="player in playersWithRank" 
+            <tr
+              v-for="player in playersWithRank"
               :key="player.playerName"
               class="ranking-row"
               :class="getRankingClass(player.displayRank)"
@@ -157,7 +157,7 @@ export default defineComponent({
     // 加载数据
     const loadData = async () => {
       if (!yamlData.value) return;
-      
+
       isLoading.value = true;
       try {
         const result = await loadTotalPointsData(selectedYear.value, yamlData.value);
@@ -230,28 +230,28 @@ export default defineComponent({
     // 获取特定轮次的选手数量
     const getPlayerCountForRound = (roundCode: string): number => {
       if (!yamlData.value?.season?.[selectedYear.value]?.rounds) return 0;
-      
+
       const rounds = yamlData.value.season[selectedYear.value].rounds;
       let playerCount = 0;
-      
+
       // 查找对应轮次的配置
-      const roundData = rounds[roundCode] || 
-                       rounds[`[${roundCode}]`] || 
+      const roundData = rounds[roundCode] ||
+                       rounds[`[${roundCode}]`] ||
                        rounds[`${roundCode}`] ||
                        Object.entries(rounds).find(([key]) => key.includes(roundCode))?.[1];
-      
+
       if (!roundData?.players) return 0;
-      
+
       // 计算选手数量（每个组的选手总和）
       Object.values(roundData.players).forEach((group: any) => {
         if (typeof group === 'object') {
           playerCount += Object.keys(group).length;
         }
       });
-      
+
       return playerCount;
     };
-    
+
     // 格式化成绩显示
     const formatResultDisplay = (bestResult: string) => {
       return formatResult(bestResult, {
@@ -475,19 +475,19 @@ export default defineComponent({
     font-size: 12px;
     white-space: nowrap;
   }
-  
+
   .player-col {
     width: 120px;
   }
-  
+
   .rounds-col {
     width: 180px;
   }
-  
+
   .result-col {
     width: 100px;
   }
-  
+
   .total-col {
     width: 80px;
   }

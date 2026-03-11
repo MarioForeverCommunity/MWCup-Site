@@ -21,18 +21,18 @@
       <div class="control-panel">
         <div class="form-group">
           <label class="form-label">搜索选手：</label>
-          <input 
-            type="text" 
-            v-model="searchPlayer" 
+          <input
+            type="text"
+            v-model="searchPlayer"
             placeholder="输入选手名称..."
             class="form-control hover-scale"
           />
         </div>
         <div class="form-group">
           <label class="form-label">搜索评委：</label>
-          <input 
-            type="text" 
-            v-model="searchJudge" 
+          <input
+            type="text"
+            v-model="searchJudge"
             placeholder="输入评委名称..."
             class="form-control hover-scale"
           />
@@ -119,9 +119,9 @@
         <p class="scheme-info">
           评分标准:
           <template v-if="getSchemeLink(scoreData.scoringScheme)">
-            <a 
-              :href="getSchemeLink(scoreData.scoringScheme)!" 
-              target="_blank" 
+            <a
+              :href="getSchemeLink(scoreData.scoringScheme)!"
+              target="_blank"
               rel="noopener noreferrer"
               class="scheme-link"
             >
@@ -129,8 +129,8 @@
             </a>
           </template>
           <template v-else-if="scoreData.scoringScheme === 'C' || 'E'">
-            <a 
-              href="#" 
+            <a
+              href="#"
               @click.prevent="navigateToDocumentStandard"
               class="scheme-link"
             >
@@ -217,27 +217,27 @@
                     >
                       关卡无法运行
                     </td>
-                    
+
                     <!-- 正常选手的评委和分数显示 -->
                     <template v-else>
                       <td class="judge-name">
                         <!-- 手动处理协商评分的评委 -->
                         <div v-if="record.judgeName && record.judgeName.includes(',')" class="collaborative-judges">
-                          <div 
-                            v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())" 
+                          <div
+                            v-for="(judgeCode, index) in record.judgeName.split(',').map((j: string) => j.trim())"
                             :key="index"
                             class="collaborative-judge-item"
                           >
                             <!-- 显示评委名 -->
                             {{ getUserDisplayName(judgeCode, userMapping) }}
                             <span class="collaborative-tag">协商</span>
-                            
+
                             <!-- 显示重评、预备或大众评委标签 -->
                             <span v-if="isBackupJudge(judgeCode)" class="backup-tag">预备</span>
                             <span v-else-if="isPublicJudge(judgeCode)" class="public-tag">大众</span>
                           </div>
                         </div>
-                        
+
                         <!-- 处理正常评委 -->
                         <div v-else>
                           <!-- 显示评委名称，使用judgeName而不是judgeCode查询用户映射 -->
@@ -261,8 +261,8 @@
                       <!-- 正常评分显示 -->
                       <template v-else>
                         <td
-                          v-for="column in scoreData.columns" 
-                          :key="column" 
+                          v-for="column in scoreData.columns"
+                          :key="column"
                           class="score-cell"
                         >
                           {{ formatScore(record.scores[column]) }}
@@ -283,15 +283,15 @@
             </tbody>
           </table>
         </div>
-        
+
         <!-- 大众评分表 (仅评分方案E)，截止前不显示 -->
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
           <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
           <p class="scheme-info">
             评分标准:
-            <a 
-              href="https://www.marioforever.net/thread-3479-1-1.html" 
-              target="_blank" 
+            <a
+              href="https://www.marioforever.net/thread-3479-1-1.html"
+              target="_blank"
               rel="noopener noreferrer"
               class="scheme-link"
             >
@@ -349,7 +349,7 @@
             </table>
           </div>
         </div>
-        
+
         <!-- 总分排名表 -->
         <div v-if="shouldShowTotalRanking" class="player-totals">
           <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格</button></h4>
@@ -397,9 +397,9 @@
                     <td class="level-file">
                       <template v-if="player.playerCode.startsWith('~')">取消资格</template>
                       <template v-else-if="player.records.length > 0 && player.records[0].isUnworking">
-                        <span 
-                          v-if="getPlayerLevelFile(player.playerCode)" 
-                          class="level-file-link unworking-level" 
+                        <span
+                          v-if="getPlayerLevelFile(player.playerCode)"
+                          class="level-file-link unworking-level"
                           @click="downloadLevelFile(player.playerCode)"
                         >
                           {{ getPlayerLevelFileName(player.playerCode) }}（无法运行）
@@ -407,9 +407,9 @@
                         <span v-else class="unworking-level">{{ getPlayerLevelFileName(player.playerCode) }}（无法运行）</span>
                       </template>
                       <template v-else>
-                        <span 
-                          v-if="getPlayerLevelFile(player.playerCode)" 
-                          class="level-file-link" 
+                        <span
+                          v-if="getPlayerLevelFile(player.playerCode)"
+                          class="level-file-link"
                           @click="downloadLevelFile(player.playerCode)"
                         >
                           {{ getPlayerLevelFileName(player.playerCode) }}
@@ -454,7 +454,7 @@
             </table>
           </div>
         </div>
-        
+
         <!-- 评分截止时间提示 -->
         <div v-if="!shouldShowTotalRanking" class="total-ranking-hidden">
           <div class="error-state">
@@ -490,10 +490,10 @@ async function getXLSX() {
   return _XLSX
 }
 import FoldButton from './FoldButton.vue'
-import { 
-  loadRoundScoreData, 
-  type RoundScoreData, 
-  type ScoreRecord, 
+import {
+  loadRoundScoreData,
+  type RoundScoreData,
+  type ScoreRecord,
   buildPlayerJudgeMap,
   type PlayerScore,
   isNotYetRated,
@@ -505,9 +505,9 @@ import { fetchLevelFilesFromLocal, type LevelFile, matchPlayerName } from '../ut
 import { loadUserData, type UserData } from '../utils/userDataProcessor'
 import { Decimal } from 'decimal.js'
 import { getRoundChineseName } from '../utils/roundNames'
-import { 
-  calculate2019TotalScore, 
-  calculateValidLevelTotalScore, 
+import {
+  calculate2019TotalScore,
+  calculateValidLevelTotalScore,
   get2019ValidLevelInfo
 } from '../utils/totalPointsCalculator';
 import { getPreliminaryValidInfoEnhanced } from '../utils/preliminaryValidInfoHelper';
@@ -959,7 +959,7 @@ async function calculateOverallRoundData() {
     if (scoreB === 0) {
       return { resultA: 'win', resultB: 'loss', pointsA: 2, pointsB: 0 };
     }
-    
+
     // 正常判定：分差大于1分
     const diff = Math.abs(scoreA - scoreB);
     if (diff > 1) {
@@ -992,8 +992,8 @@ async function calculateOverallRoundData() {
   }
 
   // 判断匹配到的轮次组是否为多轮次（数组轮次）
-  const isMultiRound = matchedRoundGroup && 
-    (matchedRoundGroup[0].includes('[') && matchedRoundGroup[0].includes(']') || 
+  const isMultiRound = matchedRoundGroup &&
+    (matchedRoundGroup[0].includes('[') && matchedRoundGroup[0].includes(']') ||
      matchedRoundGroup[0].includes(','));
 
   // 只有多轮次才显示赛况总表
@@ -1025,7 +1025,7 @@ async function calculateOverallRoundData() {
   // 2020年及以后的初赛轮次显示有效题目列
   const isShowValidLevel = ['2020', '2021', '2022', '2023', '2024', '2025', '2026'].includes(props.year) && roundCodes.some(code => code.startsWith('I'));
   const is2019 = props.year === '2019' && roundCodes.some(code => code.startsWith('G'));
-  
+
   // 有效题目列内容（2020年及以后初赛）
   // 注意：这里应该基于deadline数量来确定列数，而不是题目数量
   let validLevelColumns: { roundIndex: number, label: string }[] = [];
@@ -1044,9 +1044,9 @@ async function calculateOverallRoundData() {
     // 基础信息
     const playerName = (playerMapResult.players as Record<string, string>)[playerCode] || playerCode;
     const group = playerMapResult.playerGroups ? playerMapResult.playerGroups[playerCode] : '';
-    
+
     // 每题得分：遍历每个子轮次，查找该选手在该轮的评分数据
-    let roundScores: (Decimal | number)[] = roundCodes.map(roundCode => {
+    const roundScores: (Decimal | number)[] = roundCodes.map(roundCode => {
       const roundData = multiRoundScores.value[roundCode];
       if (!roundData) return new Decimal(0);
       const player = roundData.playerScores.find(p => p.playerCode === playerCode);
@@ -1074,12 +1074,12 @@ async function calculateOverallRoundData() {
     // 仅2019~2021年有超时扣分
     let timeoutPenalty = 0;
     const yearNum = parseInt(props.year);
-    
+
     if (is2019) {
       // 2019年小组赛
       const validInfo = await get2019ValidLevelInfo(playerDataForCalculator, yamlData.value);
       timeoutPenalty = validInfo.timeoutPenalty;
-      
+
       // 构造validRounds显示信息
       validRounds = roundCodes.map(roundCode => {
         const isSelected = validInfo.validRounds.includes(roundCode);
@@ -1100,7 +1100,7 @@ async function calculateOverallRoundData() {
       } else {
         timeoutPenalty = 0;
       }
-      
+
       // 构造validRounds显示信息（基于轮次选择）
       // 根据年份确定应该显示的轮次数：2021年为3轮，其他为2轮
       const expectedRoundCount = yearNum === 2021 ? 3 : 2;
@@ -1108,7 +1108,7 @@ async function calculateOverallRoundData() {
         const roundSelection = validInfo.roundSelections[index];
         const selectedTopic = roundSelection?.selectedTopic;
         const hasScore = selectedTopic && playerDataForCalculator.roundScores[selectedTopic]?.averageScore > 0;
-        
+
         return {
           round: `round${index + 1}`, // 轮次标识
           valid: Boolean(selectedTopic), // 是否有选中的题目
@@ -1118,7 +1118,7 @@ async function calculateOverallRoundData() {
           exclamation: roundSelection?.isTimeout || false
         };
       });
-      
+
       // 同时更新validLevelColumns以匹配期望的轮次数
       validLevelColumns = Array.from({ length: expectedRoundCount }, (_, i) => ({
         roundIndex: i + 1,
@@ -1128,8 +1128,8 @@ async function calculateOverallRoundData() {
 
     // 2018年单循环赛制：计算胜平负统计和对阵积分
     let wins = 0, draws = 0, losses = 0, matchPoints = 0;
-    let headToHeadPoints: Record<string, number> = {}; // 相互战绩积分
-    
+    const headToHeadPoints: Record<string, number> = {}; // 相互战绩积分
+
     if (is2018RoundRobin && group) {
       const groupMatches = roundRobinMatches[group as keyof typeof roundRobinMatches];
       if (groupMatches) {
@@ -1138,27 +1138,27 @@ async function calculateOverallRoundData() {
           roundMatches.forEach(([playerA, playerB]) => {
             if (playerA === playerCode || playerB === playerCode) {
               const opponent = playerA === playerCode ? playerB : playerA;
-              const myScore = roundScores[roundIndex] instanceof Decimal ? 
+              const myScore = roundScores[roundIndex] instanceof Decimal ?
                 (roundScores[roundIndex] as Decimal).toNumber() : Number(roundScores[roundIndex]);
-              
+
               // 获取对手得分
               const opponentRoundData = multiRoundScores.value[roundCodes[roundIndex]];
               const opponentPlayer = opponentRoundData?.playerScores.find(p => p.playerCode === opponent);
               const opponentScore = opponentPlayer ? opponentPlayer.averageScore.toNumber() : 0;
-              
+
               // 判定比赛结果（注意：第一个参数是我的得分，第二个参数是对手得分）
               const result = determineMatchResult(myScore, opponentScore);
               const myResult = result.resultA; // 我的结果总是 resultA，因为 myScore 传给了 scoreA
               const myPoints = result.pointsA; // 我的积分总是 pointsA
-              
+
               // 统计胜平负
               if (myResult === 'win') wins++;
               else if (myResult === 'draw') draws++;
               else losses++;
-              
+
               // 累计对阵积分
               matchPoints += myPoints;
-              
+
               // 记录相互战绩积分（用于排名）
               if (!headToHeadPoints[opponent]) headToHeadPoints[opponent] = 0;
               headToHeadPoints[opponent] += myPoints;
@@ -1213,7 +1213,7 @@ async function calculateOverallRoundData() {
   const playerData = await Promise.all(playerDataPromises);
 
   // 计算排名（考虑并列名次）
-  let sortedPlayers = [...playerData]
+  const sortedPlayers = [...playerData]
     .sort((a, b) => b.totalScore.minus(a.totalScore).toNumber());
 
   // 计算总排名（处理并列情况）
@@ -1234,7 +1234,7 @@ async function calculateOverallRoundData() {
     // 计算小组内排名
     const groupPlayers = arr.filter(p => p.group === player.group);
     let groupRank = 1;
-    
+
     if (is2018RoundRobin) {
       // 2018年小组排名规则：总积分>总得分>相互战绩积分
       const sortedGroupPlayers = [...groupPlayers].sort((a, b) => {
@@ -1242,20 +1242,20 @@ async function calculateOverallRoundData() {
         if (a.matchPoints !== b.matchPoints) {
           return b.matchPoints - a.matchPoints;
         }
-        
+
         // 2. 相同总积分下，总得分多者，名次列前
         const scoreDiff = b.totalScore.minus(a.totalScore).toNumber();
         if (Math.abs(scoreDiff) > 0.001) {
           return scoreDiff;
         }
-        
+
         // 3. 相同总积分和总得分下，在相互之间的比赛中总积分多者，名次列前
         // 计算两人之间的相互战绩积分
         const aVsB = a.headToHeadPoints[b.playerCode] || 0;
         const bVsA = b.headToHeadPoints[a.playerCode] || 0;
         return bVsA - aVsB;
       });
-      
+
       groupRank = sortedGroupPlayers.findIndex(p => p.playerCode === player.playerCode) + 1;
     } else {
       // 其他年份的小组排名逻辑（按总得分）
@@ -1351,16 +1351,16 @@ watch([scoreData, yamlData, multiRoundScores], async () => {
 // 计算未上传关卡的选手
 const noSubmissionPlayers = computed(() => {
   if (!scoreData.value || !yamlData.value) return [];
-  
+
   try {
     // 检测是否为特殊格式：检查YAML中对应轮次的players是否为数组
     const seasonData = yamlData.value.season[props.year];
     const roundData = seasonData?.rounds?.[props.round];
     const isSpecialFormat = Array.isArray(roundData?.players);
-    
+
     // 获取原始评分记录中的选手信息
     const existingPlayerSet = new Set();
-    
+
     scoreData.value.allRecords.forEach(record => {
       if (isSpecialFormat) {
         // 对于特殊格式，使用playerName作为唯一标识
@@ -1370,31 +1370,31 @@ const noSubmissionPlayers = computed(() => {
         existingPlayerSet.add(record.playerCode);
       }
     });
-    
+
     // 获取成绩无效的选手代码
     const canceledPlayerCodes = new Set(
       scoreData.value.allRecords
         .filter(record => record.isCanceled)
         .map(record => isSpecialFormat ? record.playerName : record.playerCode)
     );
-    
+
     // 从 YAML 获取全部选手信息
     const playerMapResult = buildPlayerJudgeMap(
-      yamlData.value, 
-      scoreData.value.year, 
+      yamlData.value,
+      scoreData.value.year,
       scoreData.value.round
     );
-    
+
     // 找出未上传关卡的选手
     const noSubmissionRecords: ScoreRecord[] = [];
-    
+
     // 按照 YAML 文件中选手码的顺序创建未提交记录
     for (const [playerCode, playerNameValue] of Object.entries(playerMapResult.players)) {
       const playerName = String(playerNameValue); // 确保转换为字符串
-      
+
       // 根据格式确定要检查的key
       const checkKey = isSpecialFormat ? playerName : playerCode;
-      
+
       // 排除已有记录和成绩无效的选手
       if (!existingPlayerSet.has(checkKey) && !canceledPlayerCodes.has(checkKey)) {
         // 为未提交关卡的选手创建一个记录
@@ -1411,7 +1411,7 @@ const noSubmissionPlayers = computed(() => {
         noSubmissionRecords.push(noSubmissionRecord);
       }
     }
-    
+
     return noSubmissionRecords;
   } catch (error) {
     console.error('处理未上传关卡选手时出错:', error);
@@ -1430,11 +1430,11 @@ function isPlayerAdvanced(playerName: string): boolean {
   // 查找当前轮次所属的轮次组和下一个轮次组
   const rounds = Object.keys(seasonData.rounds);
   let currentRoundIndex = -1;
-  
+
   // 查找包含当前轮次的轮次组
   for (let i = 0; i < rounds.length; i++) {
     const roundKey = rounds[i];
-    
+
     // 检查是否是数组轮次（包含方括号和逗号）
     if (roundKey.includes('[') && roundKey.includes(']')) {
       const roundCodes = roundKey.replace(/\[|\]/g, '').split(',').map(r => r.trim());
@@ -1453,17 +1453,17 @@ function isPlayerAdvanced(playerName: string): boolean {
       break;
     }
   }
-  
+
   // 如果找不到当前轮次或是最后一轮，返回false
   if (currentRoundIndex === -1 || currentRoundIndex === rounds.length - 1) return false;
-  
+
   // 获取下一轮的数据
   const nextRoundKey = rounds[currentRoundIndex + 1];
   const nextRoundData = seasonData.rounds[nextRoundKey];
-  
+
   // 如果没有下一轮的数据，返回false
   if (!nextRoundData?.players) return false;
-  
+
   // 检查选手是否在下一轮的players列表中
   // 遍历所有组和位置
   if (Array.isArray(nextRoundData.players)) {
@@ -1484,7 +1484,7 @@ function isPlayerAdvanced(playerName: string): boolean {
       }
     }
   }
-  
+
   return false;
 }
 
@@ -1502,10 +1502,10 @@ function isPublicJudge(judgeCode: string): boolean {
 function isReEvaluationJudge(judgeCode: string, record: any): boolean {
   // 首先检查是否是JR评委
   if (!isBackupJudge(judgeCode) || !scoreData.value) return false;
-  
+
   // 检查当前选手是否有被作废的评分记录
-  return scoreData.value.allRecords.some(r => 
-    r.playerCode === record.playerCode && 
+  return scoreData.value.allRecords.some(r =>
+    r.playerCode === record.playerCode &&
     r.isRevoked
   );
 }
@@ -1537,26 +1537,26 @@ function getDisplayedBonus(originalBonus: number): string {
   if (!maxScoreData.value || !props.year || !props.round) {
     return originalBonus.toString();
   }
-  
+
   const yearData = maxScoreData.value.maxScore?.[props.year];
   if (!yearData) {
     return originalBonus.toString();
   }
-  
+
   const roundData = yearData[props.round];
   if (!roundData) {
     return originalBonus.toString();
   }
-  
+
   const bonusFullScore = roundData.bonus_score || 5;
   let adjustedBonus = new Decimal(originalBonus);
-  
+
   if (bonusFullScore === 8) {
     adjustedBonus = adjustedBonus.times(1.6);
   } else if (bonusFullScore === 10) {
     adjustedBonus = adjustedBonus.times(2);
   }
-  
+
   return adjustedBonus.toDecimalPlaces(1).toString();
 }
 
@@ -1565,53 +1565,53 @@ function calculateScoreRate(finalScore: number | Decimal): string {
   if (!maxScoreData.value || !props.year || !props.round) {
     return '-';
   }
-  
+
   const yearData = maxScoreData.value.maxScore?.[props.year];
   if (!yearData) {
     return '-';
   }
-  
+
   const roundData = yearData[props.round];
   if (!roundData) {
     return '-';
   }
-  
+
   const baseScore = new Decimal(roundData.base_score || 100);
   const bonusScore = new Decimal(roundData.bonus_score || 0);
   const maxPossibleScore = baseScore.plus(bonusScore);
-  
+
   if (maxPossibleScore.isZero()) {
     return '-';
   }
-  
+
   const finalScoreDecimal = finalScore instanceof Decimal ? finalScore : new Decimal(finalScore);
   const scoreRate = finalScoreDecimal.dividedBy(maxPossibleScore);
-  
+
   return scoreRate.times(100).toFixed(3) + '%';
 }
 
 // 过滤和排序大众评分数据，按YAML中的选手顺序排序
 const filteredPublicScores = computed(() => {
   if (!scoreData.value || !scoreData.value.publicScores || !yamlData.value) return [];
-  
+
   try {
     // 从YAML获取选手顺序
     const playerMapResult = buildPlayerJudgeMap(
-      yamlData.value, 
-      scoreData.value.year, 
+      yamlData.value,
+      scoreData.value.year,
       scoreData.value.round
     );
-    
+
     // 创建一个根据YAML中的选手码顺序排序的映射
     const playerCodeOrderMap = new Map(
       Object.keys(playerMapResult.players).map((code, index) => [code, index])
     );
-    
+
     // 按照YAML中的选手顺序排序
     return scoreData.value.publicScores.slice().sort((a, b) => {
       const orderA = playerCodeOrderMap.get(a.playerCode);
       const orderB = playerCodeOrderMap.get(b.playerCode);
-      
+
       // 如果都有序号，按序号排序
       if (orderA !== undefined && orderB !== undefined) {
         return orderA - orderB;
@@ -1640,13 +1640,13 @@ const filteredPublicScores = computed(() => {
 // 应用选手和评委搜索过滤的公共评分
 const filteredPublicScoresWithSearch = computed(() => {
   let result = [...filteredPublicScores.value];
-  
+
   // 选手筛选
   if (searchPlayer.value.trim()) {
     const searchTerm = searchPlayer.value.trim();
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"');
     const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm;
-    
+
     result = result.filter(p => {
       // 直接匹配选手名或选手码
       if (isExact) {
@@ -1659,53 +1659,53 @@ const filteredPublicScoresWithSearch = computed(() => {
       }
     });
   }
-  
+
   // 评委筛选
   if (searchJudge.value.trim()) {
     const searchTerm = searchJudge.value.trim().toLowerCase();
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"');
     const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm;
-    
+
     result = result.map(player => {
       if (!player.votes) return player;
-      
+
       // 筛选该选手的投票记录
       const filteredVotes = player.votes.filter(vote => {
         if (isExact) {
           return vote.voterName.toLowerCase() === processedKeyword;
         } else {
-          return vote.voterName.toLowerCase().includes(processedKeyword) || 
+          return vote.voterName.toLowerCase().includes(processedKeyword) ||
                  matchPlayerName(vote.voterName, processedKeyword, userData.value, false);
         }
       });
-      
+
       // 返回包含筛选后投票的选手副本
       return {
         ...player,
         votes: filteredVotes,
         // 如果有筛选，更新最终得分为筛选后的平均值（如果适用）
-        finalPublicScore: filteredVotes.length > 0 
+        finalPublicScore: filteredVotes.length > 0
           ? filteredVotes.reduce((sum, vote) => sum + (vote.totalScore || 0), 0) / filteredVotes.length
           : 0
       };
     }).filter(player => player.votes.length > 0); // 只保留有匹配投票记录的选手
   }
-  
+
   // 为每个投票添加是否是最高分/最低分的标记
   return result.map(player => {
     if (!player.votes || player.votes.length === 0) return player;
-    
+
     // 提取所有评分
     const scores = player.votes.map(vote => vote.totalScore);
     const minScore = Math.min(...scores);
     const maxScore = Math.max(...scores);
     const voteCount = player.votes.length;
-    
+
     // 为每个投票添加标记
     const votesWithFlags = player.votes.map(vote => {
       const isMin = vote.totalScore === minScore;
       const isMax = vote.totalScore === maxScore;
-      
+
       return {
         ...vote,
         isMin,
@@ -1714,7 +1714,7 @@ const filteredPublicScoresWithSearch = computed(() => {
         isRemoved: (voteCount > 5 && (isMin || isMax))
       };
     });
-    
+
     return {
       ...player,
       votes: votesWithFlags
@@ -1741,7 +1741,7 @@ const formatScore = (score: number | Decimal | null | undefined): string => {
 // 筛选详细评分记录
 const filteredDetailRecords = computed(() => {
   if (!scoreData.value || !yamlData.value) return []
-  
+
   // 合并原始评分记录和未提交关卡的选手记录
   let records = [...scoreData.value.allRecords, ...noSubmissionPlayers.value]
 
@@ -1750,7 +1750,7 @@ const filteredDetailRecords = computed(() => {
     const searchTerm = searchPlayer.value.trim()
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
     const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
-    
+
     records = records.filter(record => {
       // 直接匹配选手名或选手码
       if (isExact) {
@@ -1764,22 +1764,22 @@ const filteredDetailRecords = computed(() => {
           return true
         }
       }
-      
+
       // 使用别名匹配
       return matchPlayerName(record.playerName, processedKeyword, userData.value, isExact)
     })
   }
-  
+
   // 按评委名称搜索
   if (searchJudge.value.trim()) {
     const searchTerm = searchJudge.value.trim()
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
     const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
-    
+
     records = records.filter(record => {
       // 对于未提交的记录，不进行评委筛选
       if (record.isNoSubmission) return false
-      
+
       // 直接匹配评委名称或评委代码
       if (isExact) {
         if (record.judgeName.toLowerCase() === processedKeyword.toLowerCase() ||
@@ -1792,32 +1792,32 @@ const filteredDetailRecords = computed(() => {
           return true
         }
       }
-      
+
       // 使用别名匹配评委名称
       return matchPlayerName(record.judgeName, processedKeyword, userData.value, isExact)
     })
   }
-  
+
   // 按YAML中的选手顺序对所有记录进行排序
   if (yamlData.value) {
     try {
       // 从YAML获取选手顺序
       const playerMapResult = buildPlayerJudgeMap(
-        yamlData.value, 
-        scoreData.value.year, 
+        yamlData.value,
+        scoreData.value.year,
         scoreData.value.round
       );
-      
+
       // 创建一个根据YAML中的选手码顺序排序的映射
       const playerCodeOrderMap = new Map(
         Object.keys(playerMapResult.players).map((code, index) => [code, index])
       );
-      
+
       // 按照YAML中的选手顺序排序
       records.sort((a, b) => {
         const orderA = playerCodeOrderMap.get(a.playerCode);
         const orderB = playerCodeOrderMap.get(b.playerCode);
-        
+
         // 如果都有序号，按序号排序
         if (orderA !== undefined && orderB !== undefined) {
           return orderA - orderB;
@@ -1832,7 +1832,7 @@ const filteredDetailRecords = computed(() => {
       console.error('按选手顺序排序时出错:', error);
     }
   }
-  
+
   return records
 })
 
@@ -1862,7 +1862,7 @@ const groupedDetailRecords = computed(() => {
   Object.values(groups).forEach((group: any) => {
     const merged: any[] = []
     const mergedMap: Record<string, any> = {}
-    
+
     // 按照原始顺序处理记录，保持评委顺序
     group.records.forEach((rec: any, originalIndex: number) => {
       // 尚未评分的记录不参与合并，直接添加
@@ -1873,7 +1873,7 @@ const groupedDetailRecords = computed(() => {
         })
         return
       }
-      
+
       // 生成评分内容指纹（不含评委信息）
       const scoreFingerprint = JSON.stringify({
         scores: rec.scores,
@@ -1896,7 +1896,7 @@ const groupedDetailRecords = computed(() => {
         mergedMap[scoreFingerprint]._mergeCount++
       }
     })
-    
+
     // 按照原始顺序添加已评分的记录
     Object.values(mergedMap)
       .sort((a: any, b: any) => a._originalIndex - b._originalIndex)
@@ -1909,10 +1909,10 @@ const groupedDetailRecords = computed(() => {
         }
         merged.push(item)
       })
-    
+
     // 按照原始索引排序所有记录
     merged.sort((a: any, b: any) => a._originalIndex - b._originalIndex)
-    
+
     group.records = merged
   })
 
@@ -1923,10 +1923,10 @@ const groupedDetailRecords = computed(() => {
 // 筛选选手总分
 const filteredPlayerScores = computed(() => {
   if (!scoreData.value || !yamlData.value) return []
-  
+
   // 基于现有的选手分数
   let players = [...scoreData.value.playerScores];
-  
+
   // 为未上传关卡的选手创建成绩记录
   const noSubmissionPlayerScores = noSubmissionPlayers.value.map(record => {
     return {
@@ -1940,16 +1940,16 @@ const filteredPlayerScores = computed(() => {
       finalScore: new Decimal(0)    // 最终得分为0
     } as PlayerScore;
   });
-  
+
   // 合并已有成绩和未上传关卡的选手
   players = [...players, ...noSubmissionPlayerScores];
-  
+
   // 按选手名称搜索
   if (searchPlayer.value.trim()) {
     const searchTerm = searchPlayer.value.trim()
     const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"')
     const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm
-    
+
     players = players.filter(player => {
       // 直接匹配选手名或选手码
       if (isExact) {
@@ -1963,39 +1963,39 @@ const filteredPlayerScores = computed(() => {
           return true
         }
       }
-      
+
       // 使用别名匹配
       return matchPlayerName(player.playerName, processedKeyword, userData.value, isExact)
     })
   }
-  
+
   // 首先把未上传的选手排到最后，其余按最终得分从高到低排序
   players = [...players].sort((a, b) => {
     const aNoSubmission = a.validRecordsCount === 0 && getPlayerLevelFileName(a.playerCode) === '未上传';
     const bNoSubmission = b.validRecordsCount === 0 && getPlayerLevelFileName(b.playerCode) === '未上传';
     if (aNoSubmission && !bNoSubmission) return 1;
     if (!aNoSubmission && bNoSubmission) return -1;
-    
+
     // 使用最终得分排序
     const aScore = a.finalScore || new Decimal(0);
     const bScore = b.finalScore || new Decimal(0);
     return bScore.comparedTo(aScore);
   });
-  
+
   // 然后，对于同分数的选手，按YAML中的选手顺序排序
   try {
     // 从YAML获取选手顺序
     const playerMapResult = buildPlayerJudgeMap(
-      yamlData.value, 
-      scoreData.value.year, 
+      yamlData.value,
+      scoreData.value.year,
       scoreData.value.round
     )
-    
+
     // 创建一个根据YAML中的选手码顺序排序的映射
     const playerCodeOrderMap = new Map(
       Object.keys(playerMapResult.players).map((code, index) => [code, index])
     )
-    
+
     // 二次排序：对于平均分相同的选手，按照YAML中的选手顺序排序，未上传始终排最后
     players = players.sort((a, b) => {
       const aNoSubmission = a.validRecordsCount === 0 && getPlayerLevelFileName(a.playerCode) === '未上传';
@@ -2018,7 +2018,7 @@ const filteredPlayerScores = computed(() => {
   } catch (error) {
     console.error('按选手顺序排序时出错:', error);
   }
-  
+
   return players
 })
 
@@ -2055,18 +2055,18 @@ const shouldShowTotalRanking = computed(() => {
   if (!shouldApplyDeadlineFilter(props.year)) {
     return true
   }
-  
+
   if (!yamlData.value) {
     return true
   }
-  
+
   return shouldShowScoreData(yamlData.value, props.year, props.round)
 })
 
 // 获取评分截止时间提示
 const totalRankingDeadlineHint = computed(() => {
   if (shouldShowTotalRanking.value || !yamlData.value) return ''
-  
+
   const endTime = getJudgingEndTime(yamlData.value, props.year, props.round)
   if (endTime) {
     const endDate = new Date(endTime)
@@ -2081,17 +2081,17 @@ const totalRankingDeadlineHint = computed(() => {
 // 筛选赛况总表数据
 const filteredOverallRoundData = computed(() => {
   if (!overallRoundData.value) return null;
-  
+
   // 如果没有搜索词，直接返回原始数据
   if (!searchPlayer.value.trim()) return overallRoundData.value;
-  
+
   const searchTerm = searchPlayer.value.trim();
   const isExact = searchTerm.startsWith('"') && searchTerm.endsWith('"');
   const processedKeyword = isExact ? searchTerm.slice(1, -1) : searchTerm;
-  
+
   // 创建深拷贝以避免修改原始数据
   const filteredData = JSON.parse(JSON.stringify(overallRoundData.value));
-  
+
   // 过滤每个小组的选手
   if (filteredData.groupedPlayers) {
     Object.keys(filteredData.groupedPlayers).forEach(group => {
@@ -2107,13 +2107,13 @@ const filteredOverallRoundData = computed(() => {
         }
       });
     });
-    
+
     // 更新小组顺序，只保留有选手的小组
-    filteredData.groupOrder = filteredData.groupOrder.filter((group: string) => 
+    filteredData.groupOrder = filteredData.groupOrder.filter((group: string) =>
       filteredData.groupedPlayers[group] && filteredData.groupedPlayers[group].length > 0
     );
   }
-  
+
   return filteredData;
 });
 
@@ -2122,10 +2122,10 @@ async function loadScoreData() {
     console.warn('年份或轮次为空，停止加载')
     return
   }
-  
+
   loading.value = true
   error.value = null
-  
+
   try {
     // 加载YAML数据
     const yamlDoc = await fetchMarioWorkerYaml()
@@ -2140,11 +2140,11 @@ async function loadScoreData() {
     ])
     userMapping.value = userMappingData
     userData.value = userDataResult
-    
+
     // 加载评分数据
     const data = await loadRoundScoreData(props.year, props.round, { season: seasonData })
     scoreData.value = data
-    
+
     // 加载关卡文件数据
     try {
       levelFiles.value = await fetchLevelFilesFromLocal()
@@ -2163,7 +2163,7 @@ async function loadScoreData() {
 // 将评分方案字母映射为对应的年份标准
 function getScoringSchemeDisplayName(scheme: string | undefined): string {
   if (!scheme) return '未知标准'
-  
+
   const schemeMap: { [key: string]: string } = {
     'A': '2009 版评分标准',
     'B': '2014 版评分标准',
@@ -2172,21 +2172,21 @@ function getScoringSchemeDisplayName(scheme: string | undefined): string {
     'E': '2020 版评分标准',
     'S': '2015 半决赛'
   }
-  
+
   return schemeMap[scheme] || scheme
 }
 
 // 获取评分标准对应的链接
 function getSchemeLink(scheme: string | undefined): string | null {
   if (!scheme) return null
-  
+
   const linkMap: { [key: string]: string } = {
     'A': 'https://archive.marioforever.net/post/650057027',
     'B': 'https://archive.marioforever.net/post/2833085201',
     'D': 'https://www.marioforever.net/thread-2530-1-1.html',
     'S': 'https://archive.marioforever.net/post/3966722003'
   }
-  
+
   return linkMap[scheme] || null
 }
 
@@ -2203,23 +2203,23 @@ function getPlayerAverageScore(playerCode: string): string {
   if (!scoreData.value) return '-';
   const playerScore = scoreData.value.playerScores.find(p => p.playerCode === playerCode);
   if (!playerScore) return '-';
-  
+
   // 检查该选手是否有尚未评分的记录
   const hasNotYetRatedRecord = playerScore.records && playerScore.records.some((rec: any) => isNotYetRated(rec));
-  
+
   // 如果有尚未评分的记录，显示横杠
   if (hasNotYetRatedRecord) return '-';
-  
+
   // 对于评分方案E，使用judgeAverage（评委平均分）
-  const scoreToUse = scoreData.value.scoringScheme === 'E' && playerScore.judgeAverage !== undefined 
-    ? playerScore.judgeAverage 
+  const scoreToUse = scoreData.value.scoringScheme === 'E' && playerScore.judgeAverage !== undefined
+    ? playerScore.judgeAverage
     : playerScore.averageScore;
-  
+
   // 创建Decimal对象，兼容两种类型
-  const decimal = typeof scoreToUse === 'object' && 'toFixed' in scoreToUse 
+  const decimal = typeof scoreToUse === 'object' && 'toFixed' in scoreToUse
     ? scoreToUse
     : new Decimal(scoreToUse);
-    
+
   // 规范化显示格式
   const formattedScore = decimal.toFixed(2)
   if (formattedScore.endsWith('.00')) {
@@ -2235,10 +2235,10 @@ function getPlayerAverageScore(playerCode: string): string {
 function getPlayerLevelFileName(playerCode: string): string {
   if (!levelFiles.value.length) return '加载中...';
   if (!scoreData.value) return '未上传';
-  
+
   const currentYear = parseInt(scoreData.value.year);
   const currentRound = scoreData.value.round;
-  
+
   // 首先查找多关卡文件夹
   const multiLevelFiles = levelFiles.value.filter(file => {
     return file.playerCode === playerCode &&
@@ -2246,36 +2246,36 @@ function getPlayerLevelFileName(playerCode: string): string {
            file.roundKey === currentRound &&
            file.isMultiLevel === true;
   });
-  
+
   // 如果找到多关卡文件夹，返回文件夹名称
   if (multiLevelFiles.length > 0 && multiLevelFiles[0].multiLevelFolder) {
     const folderName = multiLevelFiles[0].multiLevelFolder.folderName || multiLevelFiles[0].name;
     const subject = multiLevelFiles[0].subject;
     return subject ? `${folderName} (${subject})` : folderName;
   }
-  
+
   // 如果没有多关卡文件夹，使用单个关卡文件
   const exactMatch = levelFiles.value.find(file => {
     return file.playerCode === playerCode &&
            file.year === currentYear &&
            file.roundKey === currentRound;
   });
-  
+
   if (exactMatch) {
     const subject = exactMatch.subject;
     return subject ? `${exactMatch.name} (${subject})` : exactMatch.name;
   }
-  
+
   return '未上传';
 }
 
 // 获取选手的关卡文件对象
 function getPlayerLevelFile(playerCode: string): LevelFile | null {
   if (!levelFiles.value.length || !scoreData.value) return null;
-  
+
   const currentYear = parseInt(scoreData.value.year);
   const currentRound = scoreData.value.round;
-  
+
   // 首先查找多关卡文件夹
   const multiLevelFiles = levelFiles.value.filter(file => {
     return file.playerCode === playerCode &&
@@ -2283,19 +2283,19 @@ function getPlayerLevelFile(playerCode: string): LevelFile | null {
            file.roundKey === currentRound &&
            file.isMultiLevel === true;
   });
-  
+
   // 如果找到多关卡文件，返回第一个作为代表（包含文件夹信息）
   if (multiLevelFiles.length > 0) {
     return multiLevelFiles[0];
   }
-  
+
   // 如果没有找到多关卡文件，尝试找单个关卡文件
   const exactMatch = levelFiles.value.find(file => {
     return file.playerCode === playerCode &&
            file.year === currentYear &&
            file.roundKey === currentRound;
   });
-  
+
   return exactMatch || null;
 }
 
@@ -2306,14 +2306,14 @@ function downloadLevelFile(playerCode: string): void {
     alert('未找到对应关卡文件');
     return;
   }
-  
+
   const baseUrl = 'https://levels.smwp.marioforever.net/MW杯关卡/';
-  
+
   // 如果是多关卡文件夹
   if (levelFile.isMultiLevel && levelFile.multiLevelFolder) {
     const folderName = levelFile.multiLevelFolder.folderName;
     const folderPath = levelFile.multiLevelFolder.folderPath;
-    
+
     // 确认下载
     if (confirm(`这是多关卡文件夹: ${folderName || '未命名文件夹'}\n是否打开在线查看？`)) {
       // 对于多关卡，打开文件夹页面而不是直接下载
@@ -2326,7 +2326,7 @@ function downloadLevelFile(playerCode: string): void {
     // 确认下载
     if (confirm(`确认下载关卡文件: ${fileName}？`)) {
       const fileUrl = baseUrl + levelFile.path;
-      
+
       // 创建下载链接并点击
       const a = document.createElement('a');
       a.href = fileUrl;
@@ -2400,7 +2400,7 @@ onMounted(() => {
   font-size: 22px;
   border-bottom: 2px solid var(--primary-active);
   padding-bottom: var(--spacing-sm);
-} 
+}
 
 .detailed-scores h4,
 .player-totals h4 {
@@ -2708,12 +2708,12 @@ onMounted(() => {
 
 /* 完全重构撤销的评分行样式，以分离处理透明度 */
 /* 只有评分单元格和总分应用透明度和删除线 */
-.revoked-score .score-cell, 
+.revoked-score .score-cell,
 .revoked-score .judge-total {
   text-decoration: line-through;
 }
 
-.revoked-score .score-cell, 
+.revoked-score .score-cell,
 .revoked-score .judge-total,
 .revoked-score .judge-name {
   background-color: rgba(248, 215, 218, 0.5);
@@ -2813,24 +2813,24 @@ onMounted(() => {
     align-items: stretch;
     gap: 15px;
   }
-  
+
   .filter-controls, .sort-controls, .search-controls {
     justify-content: space-between;
   }
-    
+
   .search-controls input {
     width: 100%;
   }
-  
+
   .score-cell {
     text-align: center;
   }
-  
+
   .pagination-controls {
     flex-wrap: wrap;
     gap: 10px;
   }
-  
+
   .page-btn {
     font-size: 12px;
     padding: 6px 12px;

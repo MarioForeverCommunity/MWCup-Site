@@ -78,51 +78,51 @@ const openUrl = () => {
 <template>
   <div class="upload-system-container">
     <div class="year-selector">
-      <select 
-        v-model="activeYear" 
+      <select
+        v-model="activeYear"
         @change="onYearChange"
         class="form-control hover-scale"
         :class="{ 'archive': !showIframe }"
       >
         <optgroup label="比赛系统">
-          <option 
-            v-for="option in competitionOptions" 
-            :key="option.value" 
+          <option
+            v-for="option in competitionOptions"
+            :key="option.value"
             :value="option.value"
           >
             {{ option.label }}
           </option>
         </optgroup>
         <optgroup label="历届网盘">
-          <option 
-            v-for="option in archiveOptions" 
-            :key="option.value" 
+          <option
+            v-for="option in archiveOptions"
+            :key="option.value"
             :value="option.value"
           >
             {{ option.label }}
           </option>
         </optgroup>
       </select>
-      
-      <button 
+
+      <button
         class="btn-base btn-primary"
         @click="openUrl"
       >
         {{ buttonText }}
       </button>
     </div>
-    
+
     <div v-if="showConstructionNotice" class="construction-notice">
       <div class="notice-content">
         <div class="notice-icon">🚧</div>
         <div class="notice-text">工事中，请打开上传系统操作</div>
       </div>
     </div>
-    
+
     <div v-else-if="showIframe" class="iframe-container">
-      <iframe 
-        :src="currentUrl" 
-        frameborder="0" 
+      <iframe
+        :src="currentUrl"
+        frameborder="0"
         class="upload-iframe"
         title="Mario Worker Cup 上传系统"
         sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups allow-modals"
@@ -200,12 +200,12 @@ const openUrl = () => {
     flex-wrap: wrap;
     margin: var(--spacing-md) var(--spacing-md) 0 var(--spacing-md);
   }
-  
+
   .year-selector button {
     text-align: center;
     font-size: 14px;
   }
-  
+
   .upload-iframe {
     min-height: 600px;
   }

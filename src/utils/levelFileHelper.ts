@@ -34,13 +34,13 @@ export async function fetchLevelFilesFromLocal(): Promise<LevelFile[]> {
   if (levelFilesCache) {
     return levelFilesCache;
   }
-  
+
   try {
     const response = await fetch('/data/levels/index.json');
     if (!response.ok) {
       throw new Error(`Failed to fetch level index: ${response.status}`);
     }
-    
+
     const data: LevelFile[] = await response.json();
     levelFilesCache = data;
     return data;
@@ -59,21 +59,21 @@ export async function getLevelFileByPlayerCode(
 ): Promise<LevelFile | null> {
   const files = await fetchLevelFilesFromLocal();
   const normalizedCode = playerCode.toUpperCase();
-  
+
   // 首先尝试精确匹配选手码
-  const exactMatch = files.find(file => 
+  const exactMatch = files.find(file =>
     file.playerCode === normalizedCode
   );
-  
+
   if (exactMatch) {
     return exactMatch;
   }
-  
+
   // 如果没有精确匹配，尝试在文件名中查找（兼容不规范的命名）
-  const fuzzyMatch = files.find(file => 
+  const fuzzyMatch = files.find(file =>
     file.name.toUpperCase().includes(normalizedCode)
   );
-  
+
   return fuzzyMatch || null;
 }
 
@@ -85,10 +85,10 @@ export async function getLevelFilesByPlayerCode(
 ): Promise<LevelFile[]> {
   const files = await fetchLevelFilesFromLocal();
   const normalizedCode = playerCode.toUpperCase();
-  
+
   // 返回所有匹配的文件
-  return files.filter(file => 
-    file.playerCode === normalizedCode || 
+  return files.filter(file =>
+    file.playerCode === normalizedCode ||
     file.name.toUpperCase().includes(normalizedCode)
   );
 }
@@ -108,27 +108,27 @@ export async function getAllLevelFiles(): Promise<LevelFile[]> {
  * @param isExact 是否精确匹配
  */
 export function matchPlayerName(
-  playerName: string | null, 
-  keyword: string, 
-  users: UserData[], 
+  playerName: string | null,
+  keyword: string,
+  users: UserData[],
   isExact: boolean = false
 ): boolean {
   if (!playerName || !keyword) return false;
-  
+
   const lowerKeyword = keyword.toLowerCase();
   const lowerPlayerName = playerName.toLowerCase();
-  
+
   // 直接匹配选手名
   if (isExact) {
     if (lowerPlayerName === lowerKeyword) return true;
   } else {
     if (lowerPlayerName.includes(lowerKeyword)) return true;
   }
-  
+
   // 查找该选手在用户数据中的记录
   const playerRecord = users.find(user => {
     // 检查基本用户名
-    if (user.百度用户名 === playerName || 
+    if (user.百度用户名 === playerName ||
         user.社区用户名 === playerName) {
       return true;
     }
@@ -138,9 +138,9 @@ export function matchPlayerName(
     }
     return false;
   });
-  
+
   if (!playerRecord) return false;
-  
+
   // 检查该用户记录的所有相关用户名是否匹配关键词
   const namesToCheck = [
     playerRecord.百度用户名,
@@ -148,7 +148,7 @@ export function matchPlayerName(
     ...playerRecord.社区曾用名,
     ...playerRecord.别名
   ].filter(name => name && name.trim());
-  
+
   for (const name of namesToCheck) {
     const lowerName = name.toLowerCase();
     if (isExact) {
@@ -157,7 +157,7 @@ export function matchPlayerName(
       if (lowerName.includes(lowerKeyword)) return true;
     }
   }
-  
+
   // 查找关键词是否匹配其他用户记录，如果匹配，检查是否有相同社区UID
   const keywordMatchedUsers = users.filter(user => {
     const names = [
@@ -166,7 +166,7 @@ export function matchPlayerName(
       ...user.社区曾用名,
       ...user.别名
     ].filter(name => name && name.trim());
-    
+
     for (const name of names) {
       const lowerName = name.toLowerCase();
       if (isExact) {
@@ -177,16 +177,16 @@ export function matchPlayerName(
     }
     return false;
   });
-  
+
   // 检查是否有匹配的用户与当前选手有相同的社区UID
   for (const keywordUser of keywordMatchedUsers) {
-    if (playerRecord.社区UID && keywordUser.社区UID && 
+    if (playerRecord.社区UID && keywordUser.社区UID &&
         playerRecord.社区UID.trim() && keywordUser.社区UID.trim() &&
         playerRecord.社区UID === keywordUser.社区UID) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -200,33 +200,33 @@ export async function searchLevelFilesByKeyword(
   isExact: boolean = false
 ): Promise<LevelFile[]> {
   if (!keyword.trim()) return [];
-  
+
   const [files, users] = await Promise.all([
     fetchLevelFilesFromLocal(),
     loadUserData()
   ]);
-  
+
   const processedKeyword = isExact ? keyword.slice(1, -1) : keyword;
   const lowerKeyword = processedKeyword.toLowerCase();
-  
+
   return files.filter(file => {
     // 匹配文件名
     if (file.name && file.name.toLowerCase().includes(lowerKeyword)) {
       return true;
     }
-    
+
     // 匹配选手码
-    if (file.playerCode && (isExact ? 
-        file.playerCode.toLowerCase() === lowerKeyword : 
-        file.playerCode.toLowerCase().includes(lowerKeyword))) {
+    if (file.playerCode && (isExact ?
+      file.playerCode.toLowerCase() === lowerKeyword :
+      file.playerCode.toLowerCase().includes(lowerKeyword))) {
       return true;
     }
-    
+
     // 匹配选手名（包括别名）
     if (matchPlayerName(file.playerName, processedKeyword, users, isExact)) {
       return true;
     }
-    
+
     return false;
   });
 }
@@ -237,5 +237,3 @@ export async function searchLevelFilesByKeyword(
 export function clearLevelFilesCache(): void {
   levelFilesCache = null;
 }
-
-

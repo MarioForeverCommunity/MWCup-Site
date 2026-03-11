@@ -14,7 +14,7 @@
           </option>
         </select>
       </div>
-      
+
       <div class="form-group animate-scaleIn" v-if="selectedYear">
         <label for="round-select" class="form-label">轮次：</label>
         <select
@@ -29,7 +29,7 @@
           </option>
         </select>
       </div>
-      
+
       <div class="form-group animate-scaleIn" v-if="selectedYear && isWikiAvailable">
         <label for="round-select" class="form-label">Wiki：</label>
         <button @click="openWikiPage" class="btn-primary">
@@ -42,30 +42,30 @@
   <div v-if="selectedYear" class="content-area">
     <!-- 只选择了届次，显示完整赛程表 -->
     <div v-if="!selectedRound">
-      <ScheduleTable 
-        :year="selectedYear" 
+      <ScheduleTable
+        :year="selectedYear"
         :hide-controls="true"
       />
     </div>
-    
+
     <!-- 选择了具体轮次，显示该轮次的详细内容 -->
     <div v-else>
       <!-- 显示单轮次赛程表 -->
-      <ScheduleTable 
-        :year="selectedYear" 
+      <ScheduleTable
+        :year="selectedYear"
         :round="selectedRound"
         :hide-controls="true"
       />
 
       <!-- 显示试题内容 -->
-      <SubjectDisplay 
-        :year="selectedYear" 
+      <SubjectDisplay
+        :year="selectedYear"
         :round="selectedRound"
       />
 
       <!-- 显示评分表格 -->
-      <ScoreTable 
-        :year="selectedYear" 
+      <ScoreTable
+        :year="selectedYear"
         :round="selectedRound"
       />
     </div>
@@ -116,19 +116,19 @@ const getStageNameForWiki = (round: string): string => {
 // 打开Wiki页面
 const openWikiPage = () => {
   if (!selectedYear.value || !isWikiAvailable.value) return
-  
+
   const year = parseInt(selectedYear.value)
   const editionNumber = getEditionNumber(year)
-  
+
   let wikiUrl = `https://zh.wiki.marioforever.net/wiki/第${editionNumber}届Mario_Worker杯`
-  
+
   if (selectedRound.value) {
     const stageName = getStageNameForWiki(selectedRound.value)
     if (stageName) {
       wikiUrl += `/${stageName}`
     }
   }
-  
+
   window.open(wikiUrl, '_blank')
 }
 
@@ -146,7 +146,7 @@ const availableRounds = computed(() => {
   if (!selectedYear.value || !seasonData.value?.[selectedYear.value]?.rounds) {
     return []
   }
-    const rounds = seasonData.value[selectedYear.value].rounds
+  const rounds = seasonData.value[selectedYear.value].rounds
   const roundList: { code: string; name: string }[] = []
   for (const [roundKey, roundData] of Object.entries(rounds)) {
     // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
@@ -155,18 +155,18 @@ const availableRounds = computed(() => {
         const parsedKey = JSON.parse(roundKey);
         if (Array.isArray(parsedKey)) {
           for (const singleRound of parsedKey) {
-          roundList.push({
-            code: singleRound,
-            name: getRoundChineseName(singleRound, { ...roundData as any, year: selectedYear.value })
-          });
-        }
+            roundList.push({
+              code: singleRound,
+              name: getRoundChineseName(singleRound, { ...roundData as any, year: selectedYear.value })
+            });
+          }
           continue;
         }
       } catch {
         // JSON解析失败，按普通轮次处理
       }
     }
-    
+
     // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
     if (roundKey.includes(',')) {
       const singleRounds = roundKey.split(',').map(r => r.trim());
@@ -178,14 +178,14 @@ const availableRounds = computed(() => {
       }
       continue;
     }
-    
+
     // 处理普通的单轮次
     roundList.push({
       code: roundKey,
       name: getRoundChineseName(roundKey, { ...roundData as any, year: selectedYear.value })
     });
   }
-  
+
   // 按轮次类型排序
   return roundList.sort((a, b) => {
     const order = ['P1', 'P2', 'I1', 'I2', 'I3', 'I4', 'G1', 'G2', 'G3', 'G4', 'Q1', 'Q2', 'Q', 'R1', 'R2', 'R3', 'R', 'S1', 'S2', 'S', 'F']
@@ -202,7 +202,7 @@ async function loadSeasonData() {
   try {
     const yamlDoc = await fetchMarioWorkerYaml()
     seasonData.value = extractSeasonData(yamlDoc)
-    
+
     // 只有在没有从路由参数获取年份时才自动选择最新一届
     if (!selectedYear.value) {
       const years = Object.keys(seasonData.value).sort((a, b) => parseInt(b) - parseInt(a))
@@ -223,7 +223,7 @@ onMounted(async () => {
   if (route.params.round) {
     selectedRound.value = route.params.round as string
   }
-  
+
   // 然后加载数据
   await loadSeasonData()
 })
@@ -233,11 +233,11 @@ watch(() => route.params, (newParams) => {
   // 只有当路由参数实际变化时才更新，避免重复渲染
   const newYear = newParams.year as string || ''
   const newRound = newParams.round as string || ''
-  
+
   if (selectedYear.value !== newYear) {
     selectedYear.value = newYear
   }
-  
+
   if (selectedRound.value !== newRound) {
     selectedRound.value = newRound
   }
@@ -260,7 +260,7 @@ async function onRoundChange() {
   } else if (selectedYear.value) {
     targetPath = `/matches/${selectedYear.value}`
   }
-  
+
   if (route.path !== targetPath) {
     router.replace(targetPath)
   }

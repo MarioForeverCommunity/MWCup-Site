@@ -34,8 +34,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr 
-              v-for="(champion) in champions" 
+            <tr
+              v-for="(champion) in champions"
               :key="champion.year"
               class="champion-row"
             >
@@ -55,9 +55,9 @@
               <td class="fourth">{{ champion.fourth || '-' }}</td>
               <td class="link">
                 <a
-                  v-if="urlMap[champion.year]" 
-                  :href="urlMap[champion.year]" 
-                  target="_blank" 
+                  v-if="urlMap[champion.year]"
+                  :href="urlMap[champion.year]"
+                  target="_blank"
                   class="url-btn hover-scale"
                 >
                   前往
@@ -105,7 +105,7 @@ const error = ref<string | null>(null)
 // 检查选手是否在YAML的指定轮次中出现
 function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: string): boolean {
   let roundData = seasonData.rounds[roundKey]
-  
+
   if (!roundData) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
       if (key.startsWith('[') && key.endsWith(']')) {
@@ -131,9 +131,9 @@ function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: stri
       }
     }
   }
-  
+
   if (!roundData?.players) return false
-  
+
   if (Array.isArray(roundData.players)) {
     return roundData.players.includes(playerName)
   } else if (typeof roundData.players === 'object') {
@@ -150,7 +150,7 @@ function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: stri
       }
     }
   }
-  
+
   return false
 }
 
@@ -174,9 +174,9 @@ function extractDates(yearData: any, _year: string) {
     mainStart: '',
     mainEnd: ''
   }
-  
+
   if (!yearData.rounds) return dates
-  
+
   // 预赛P1日期
   const p1Round = yearData.rounds.P1
   if (p1Round?.schedule) {
@@ -193,7 +193,7 @@ function extractDates(yearData: any, _year: string) {
       dates.p1End = formatDate(p1Round.schedule.post_match_checkin.start)
     }
   }
-  
+
   // 资格赛P2日期
   const p2Round = yearData.rounds.P2
   if (p2Round?.schedule) {
@@ -210,12 +210,12 @@ function extractDates(yearData: any, _year: string) {
   }
   // 正赛开始：处理数组格式的G1/I1轮次
   let mainStartFound = false
-  
+
   // 查找G1或I1轮次（可能是数组格式）
   const rounds = yearData.rounds
   for (const roundKey of Object.keys(rounds)) {
     const round = rounds[roundKey]
-    
+
     // 检查是否是数组格式的轮次（如[G1, G2, G3, G4]或[I1, I2, I3]）
     if (Array.isArray(roundKey) || roundKey.includes('[') || (round && round.schedule)) {
       if (round.schedule?.topics) {
@@ -243,7 +243,7 @@ function extractDates(yearData: any, _year: string) {
       }
     }
   }
-  
+
   // 如果没有找到G1或I1，查找其他可能的正赛开始轮次
   if (!mainStartFound) {
     for (const roundKey of Object.keys(rounds)) {
@@ -261,24 +261,24 @@ function extractDates(yearData: any, _year: string) {
   if (finalRound?.schedule?.judging?.end) {
     dates.mainEnd = formatDate(finalRound.schedule.judging.end)
   }
-  
+
   return dates
 }
 
 async function loadChampions() {
   loading.value = true
   error.value = null
-  
+
   try {
     const yamlDoc = await fetchMarioWorkerYaml()
     const seasonData = extractSeasonData(yamlDoc)
     const championList: ChampionInfo[] = []
-    
+
     for (const [year, yearData] of Object.entries(seasonData)) {
       if (typeof yearData === 'object' && yearData !== null) {
         const data = yearData as any
         const dates = extractDates(data, year)
-        
+
         const championInfo: ChampionInfo = {
           year,
           host: data.host,
@@ -290,7 +290,7 @@ async function loadChampions() {
           mainStart: dates.mainStart,
           mainEnd: dates.mainEnd
         }
-          try {
+        try {
           // 尝试加载并使用决赛评分数据
           const scoreData = await loadRoundScoreData(year, 'F', yamlDoc)
           if (scoreData?.playerScores?.length > 0) {
@@ -305,26 +305,26 @@ async function loadChampions() {
             // 分配名次
             championInfo.first = sortedPlayers[0].playerName
             if (sortedPlayers.length > 1) championInfo.second = sortedPlayers[1].playerName
-            
+
             // 处理第三、第四名
             if (parseInt(year) <= 2019) {
               // 2019年及之前：决赛只有2人，第三、第四名来自半决赛被淘汰的选手
-              
+
               // 首先检查YAML中是否有未上传的决赛选手信息
               const finalRound = data.rounds?.F
               if (finalRound?.players) {
                 const allFinalists: string[] = []
-                
+
                 // 收集所有从YAML获取的决赛选手
                 if (finalRound.players.M) allFinalists.push(finalRound.players.M)
                 if (finalRound.players.W) allFinalists.push(finalRound.players.W)
                 if (finalRound.players.S) allFinalists.push(finalRound.players.S)
                 if (finalRound.players.P) allFinalists.push(finalRound.players.P)
-                
+
                 // 找出在YAML中存在但在评分数据中不存在的选手（未上传作品的选手）
                 const scoredFinalists = sortedPlayers.map(p => p.playerName)
                 const missingFinalists = allFinalists.filter(name => !scoredFinalists.includes(name))
-                
+
                 // 如果有缺失的决赛选手，补充到排名中
                 if (missingFinalists.length > 0) {
                   if (!championInfo.second && missingFinalists[0]) {
@@ -332,31 +332,31 @@ async function loadChampions() {
                   }
                 }
               }
-              
+
               // 然后从总积分排名获取第三、第四名
               try {
                 const totalPointsData = await loadTotalPointsData(year, yamlDoc)
-                
+
                 if (totalPointsData.players && totalPointsData.players.length > 0) {
                   // 获取所有决赛选手的名字（包括补充的未上传选手）
                   const finalistNames = [championInfo.first, championInfo.second].filter(Boolean) as string[]
-                  
+
                   // 找出晋级半决赛但未进入决赛的选手，按总积分降序排序
                   const eliminatedPlayers = totalPointsData.players
                     .filter(p => {
                       // 排除决赛选手
                       if (finalistNames.includes(p.playerName)) return false
-                      
+
                       // 基于YAML检查是否晋级半决赛
                       const seasonData = yamlDoc.season[year]
                       const reachedSemifinal = isPlayerInYamlRound(seasonData, 'S', p.playerName) ||
                                               isPlayerInYamlRound(seasonData, 'S1', p.playerName) ||
                                               isPlayerInYamlRound(seasonData, 'S2', p.playerName)
-                      
+
                       return reachedSemifinal
                     })
                     .sort((a, b) => Number(b.totalPoints) - Number(a.totalPoints))
-                  
+
                   if (eliminatedPlayers.length > 0) championInfo.third = eliminatedPlayers[0].playerName
                   if (eliminatedPlayers.length > 1) championInfo.fourth = eliminatedPlayers[1].playerName
                 }
@@ -367,7 +367,7 @@ async function loadChampions() {
               // 2020年之后：决赛理论上有4人，但可能有缺失的情况
               if (sortedPlayers.length > 2) championInfo.third = sortedPlayers[2].playerName
               if (sortedPlayers.length > 3) championInfo.fourth = sortedPlayers[3].playerName
-              
+
               // 如果决赛少于4人，尝试从YAML中获取缺失的选手信息
               if (sortedPlayers.length < 4) {
                 const finalRound = data.rounds?.F
@@ -379,21 +379,21 @@ async function loadChampions() {
                 }
               }
             }
-            
+
             championList.push(championInfo)
             continue
           }
           throw new Error('评分数据不完整')
         } catch (err) {
           console.warn(`${year} 年决赛评分数据加载失败:`, err)
-          
+
           // 使用 yaml 中的记录作为备选
           const finalRound = data.rounds?.F
           if (!finalRound?.players) {
             console.warn(`${year} 年决赛选手记录不存在，跳过`)
             continue
           }
-          
+
           // 确定冠亚军
           if (finalRound.players.S) {
             championInfo.first = finalRound.players.S
@@ -402,7 +402,7 @@ async function loadChampions() {
             championInfo.first = finalRound.players.M
             championInfo.second = finalRound.players.W
           }
-          
+
           if (parseInt(year) >= 2020) {
             // 2020年及之后的比赛额外记录季军和第四名
             if (!championInfo.second && finalRound.players.W) {
@@ -415,27 +415,27 @@ async function loadChampions() {
             // 2019年及之前，尝试从总积分排名获取第三、第四名
             try {
               const totalPointsData = await loadTotalPointsData(year, yamlDoc)
-              
+
               if (totalPointsData.players && totalPointsData.players.length > 0) {
                 // 获取所有决赛选手的名字
                 const finalistNames = [championInfo.first, championInfo.second].filter(Boolean) as string[]
-                
+
                 // 找出晋级半决赛但未进入决赛的选手，按总积分降序排序
                 const eliminatedPlayers = totalPointsData.players
                   .filter(p => {
                     // 排除决赛选手
                     if (finalistNames.includes(p.playerName)) return false
-                    
+
                     // 基于YAML检查是否晋级半决赛
                     const seasonData = yamlDoc.season[year]
                     const reachedSemifinal = isPlayerInYamlRound(seasonData, 'S', p.playerName) ||
                                             isPlayerInYamlRound(seasonData, 'S1', p.playerName) ||
                                             isPlayerInYamlRound(seasonData, 'S2', p.playerName)
-                    
+
                     return reachedSemifinal
                   })
                   .sort((a, b) => Number(b.totalPoints) - Number(a.totalPoints))
-                
+
                 if (eliminatedPlayers.length > 0) championInfo.third = eliminatedPlayers[0].playerName
                 if (eliminatedPlayers.length > 1) championInfo.fourth = eliminatedPlayers[1].playerName
               }
@@ -443,15 +443,15 @@ async function loadChampions() {
               console.warn(`${year} 年半决赛数据加载失败，无法确定第三、第四名:`, err)
             }
           }
-          
+
           championList.push(championInfo)
         }
       }
     }
-    
+
     championList.sort((a, b) => parseInt(a.year) - parseInt(b.year))
     champions.value = championList
-    
+
   } catch (err) {
     error.value = err instanceof Error ? err.message : '加载失败'
     console.error('加载冠军数据失败:', err)
