@@ -380,7 +380,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(player, _index) in filteredPlayerScoresWithRank" :key="player.playerCode">
+                <tr v-for="player in filteredPlayerScoresWithRank" :key="player.playerCode">
                   <!-- 成绩无效的选手，排名显示为横杠，但得分保持显示原始值 -->
                   <td class="rank">
                     <template v-if="player.records.length > 0 && player.records[0].isCanceled">-</template>
@@ -886,7 +886,7 @@ async function loadAllRounds(year: string, roundGroupKey: string, yaml: any) {
   for (const roundCode of roundCodes) {
     try {
       result[roundCode] = await loadRoundScoreData(year, roundCode, yaml)
-    } catch (e) {
+    } catch {
       result[roundCode] = null
     }
   }
@@ -977,7 +977,7 @@ async function calculateOverallRoundData() {
   // 查找当前轮次所属的轮次组
   let matchedRoundGroup: [string, any] | undefined;
   for (const [key, value] of Object.entries(season.rounds)) {
-    let roundCodes: string[] = [];
+    let roundCodes: string[];
     if (key.includes('[') && key.includes(']')) {
       roundCodes = key.replace(/\[|\]/g, '').split(',').map(r => r.trim());
     } else if (key.includes(',')) {
@@ -2349,7 +2349,7 @@ watch(
     let roundGroupKey = '';
     let isMultiRound = false;
     for (const [key] of Object.entries(season.rounds)) {
-      let roundCodes: string[] = [];
+      let roundCodes: string[];
       // 只有key以[开头且以]结尾，或key包含逗号且不是P1/P2等，才算多轮次
       if ((key.startsWith('[') && key.endsWith(']')) || (key.includes(',') && !['P1','P2','F','S','Q','R'].includes(key))) {
         roundCodes = key.replace(/\[|\]/g, '').split(',').map(r => r.trim());

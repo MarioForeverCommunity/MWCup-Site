@@ -620,8 +620,7 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
     const validRecords = playerRecords.filter(r => !r.isRevoked);
     if (validRecords.length === 0) continue;
 
-    let totalSum = new Decimal(0);
-    let averageScore = new Decimal(0);
+    let averageScore: Decimal;
     if (scoringScheme === 'D') {
       // 方案D特殊处理
       // 1. 评委评分员（J1/J2）每人一票按两票计入，大众评分员（JZx）一票计一票
@@ -650,41 +649,40 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
         }
       }
       // 去除一个最高分和一个最低分（评委的两票只去除一票）
+      let totalSum: Decimal;
       if (weightedScores.length >= 5) {
         // 先排序
         const sorted = [...weightedScores].sort((a, b) => a.score.comparedTo(b.score));
         // 找到最高分和最低分的下标
         const minIdx = 0;
         const maxIdx = sorted.length - 1;
-        // 记录被去除的评委票数
-        let removedJudge = 0;
-        let removedPublic = 0;
-        // 去除最低分
-        if (sorted[minIdx].judgeType === 'judge') {
-          removedJudge++;
-        } else {
-          removedPublic++;
-        }
-        // 去除最高分
-        if (sorted[maxIdx].judgeType === 'judge' && removedJudge < 2) {
-          removedJudge++;
-        } else {
-          removedPublic++;
-        }
         // 构建剩余分数
         const remain: Decimal[] = [];
         for (let i = 0; i < sorted.length; i++) {
           if (i === minIdx || i === maxIdx) continue;
           remain.push(sorted[i].score);
         }
-        // 取平均
-        averageScore = remain.length > 0 ? remain.reduce((a, b) => a.plus(b), new Decimal(0)).div(remain.length).toDecimalPlaces(1) : new Decimal(0);
+        // 计算总分和平均分
         totalSum = remain.reduce((a, b) => a.plus(b), new Decimal(0));
+        averageScore = remain.length > 0 ? totalSum.div(remain.length).toDecimalPlaces(1) : new Decimal(0);
       } else {
         // 票数不足，直接平均
-        averageScore = weightedScores.reduce((a, b) => a.plus(b.score), new Decimal(0)).div(weightedScores.length).toDecimalPlaces(1);
         totalSum = weightedScores.reduce((a, b) => a.plus(b.score), new Decimal(0));
+        averageScore = totalSum.div(weightedScores.length).toDecimalPlaces(1);
       }
+
+      // 对平均分进行非负处理
+      averageScore = ensureNonNegativeScore(averageScore);
+
+      playerScores.push({
+        playerCode,
+        playerName: validRecords[0]?.playerName || playerCode,
+        records: validRecords,
+        totalSum: totalSum.toDecimalPlaces(1),
+        averageScore,
+        validRecordsCount: validRecords.length
+      });
+      continue;
     } else if (scoringScheme === 'E') {
       // 方案E：计算所有评委总分的平均分
       const isCanceled = validRecords.some(r => r.isCanceled);
@@ -732,21 +730,22 @@ function calculatePlayerScores(records: ScoreRecord[]): PlayerScore[] {
       continue;
     } else {
       // 其他评分方案的正常计算
-      totalSum = validRecords.reduce((sum, record) => sum.plus(record.totalScore), new Decimal(0));
+      const totalSum = validRecords.reduce((sum, record) => sum.plus(record.totalScore), new Decimal(0));
       averageScore = totalSum.div(validRecords.length).toDecimalPlaces(1);
+
+      // 对平均分进行非负处理，但保留原始评分项中的负分
+      averageScore = ensureNonNegativeScore(averageScore);
+
+      playerScores.push({
+        playerCode,
+        playerName: validRecords[0].playerName,
+        records: validRecords,
+        totalSum: totalSum.toDecimalPlaces(1),
+        averageScore,
+        validRecordsCount: validRecords.length
+      });
+      continue;
     }
-
-    // 对平均分进行非负处理，但保留原始评分项中的负分
-    averageScore = ensureNonNegativeScore(averageScore);
-
-    playerScores.push({
-      playerCode,
-      playerName: validRecords[0].playerName,
-      records: validRecords,
-      totalSum: totalSum.toDecimalPlaces(1),
-      averageScore,
-      validRecordsCount: validRecords.length
-    });
   }
 
   return playerScores;
