@@ -211,7 +211,6 @@ function extractSpecificRound(filePath, roundType) {
   // 分析文件路径，重点关注路径目录部分而非文件名
   const parts = filePath.split(/[/\\]/);
   const fileDirs = parts.slice(0, -1); // 获取除文件名外的所有目录部分
-  const fileName = parts[parts.length - 1]; // 文件名部分
 
   // 先从目录路径中查找轮次信息（优先级更高）
   const dirPath = fileDirs.join('/').toLowerCase();
@@ -421,7 +420,7 @@ function extractPlayerCode(filename, year = null, roundType = null, mwcupData = 
   // 查找第一个横杠的位置
   if (dashIndex === -1) {
     // 没有横杠，尝试匹配决赛单字母格式：M, W, S, P
-    const singleMatch = filename.match(/^([MWSP])[\s\.]|^([MWSP])$/i);
+    const singleMatch = filename.match(/^([MWSP])[\s.]|^([MWSP])$/i);
     if (singleMatch) {
       return (singleMatch[1] || singleMatch[2]);
     }
@@ -575,7 +574,7 @@ function getSubject(year, roundType, playerCode) {
   // 查找对应的轮次
   let roundKey = null;
   const rounds = mwcupData.season[year].rounds;
-  for (const [key, data] of Object.entries(rounds)) {
+  for (const [key, _data] of Object.entries(rounds)) {
     if (key.startsWith('P1') && (roundType === '热身赛' || roundType === '预赛')) {
       roundKey = key;
       break;

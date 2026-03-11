@@ -376,10 +376,11 @@ const filteredRecords = computed(() => {
         if (a.bestRank === 0) return 1
         if (b.bestRank === 0) return -1
         return a.bestRank - b.bestRank
-      case 'championCount':
+      case 'championCount': {
         const aTotal = (a.championCount || 0) * 10000 + (a.runnerUpCount || 0) * 100 + (a.thirdPlaceCount || 0)
         const bTotal = (b.championCount || 0) * 10000 + (b.runnerUpCount || 0) * 100 + (b.thirdPlaceCount || 0)
         return bTotal - aTotal
+      }
       default:
         return 0
     }

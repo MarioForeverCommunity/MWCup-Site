@@ -567,7 +567,7 @@ async function calculatePlayerTotalScore(year: string, playerData: any, yamlData
  * 2019年总分计算：小组赛4关取最高3关，应用截止时间扣分规则
  */
 export async function calculate2019TotalScore(playerData: any, yamlData: any): Promise<Decimal> {
-  let totalScore = new Decimal(0);
+  let totalScore: Decimal;
   const playerCode = playerData.playerCodes[0];
   const groupRounds = ['G1', 'G2', 'G3', 'G4'];
 
@@ -633,7 +633,7 @@ export async function calculate2019TotalScore(playerData: any, yamlData: any): P
  * 有效关卡制总分计算（2020年之后的初赛）- 重构版本，不依赖validLevel.json
  */
 export async function calculateValidLevelTotalScore(year: string, playerData: any, yamlData: any, penaltyForMissing: boolean = true): Promise<Decimal> {
-  let preliminaryScore = new Decimal(0);
+  let preliminaryScore: Decimal;
   let otherRoundsScore = new Decimal(0);
   const prelimRoundIds = ['I1', 'I2', 'I3', 'I4'];
   const playerCode = playerData.playerCodes[0];
@@ -1257,7 +1257,6 @@ export async function getPreliminaryValidInfo(year: string, playerData: any, yam
             };
           }
           selected[1] = remaining1[0];
-        } else {
         }
       }
     }

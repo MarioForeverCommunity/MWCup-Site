@@ -166,7 +166,7 @@ const filteredData = computed(() => {
   // 排序
   filtered.sort((a, b) => {
     switch (sortBy.value) {
-      case 'year':
+      case 'year': {
         if (a.year !== b.year) return b.year - a.year // 新到旧
         // 同一年份内按轮次顺序排序
         const idxA = roundOrder.indexOf(a.round)
@@ -176,6 +176,7 @@ const filteredData = computed(() => {
         if (idxB !== -1) return 1
         // 都不在顺序表里，按字母顺序
         return a.round.localeCompare(b.round)
+      }
       case 'attendanceRate':
         return b.attendanceRate - a.attendanceRate
       case 'totalPlayers':
