@@ -348,17 +348,26 @@ function getRefinedRoundType(file: LevelFile): string {
       roundName = `初赛第${['一','二','三','四'][idx-1]||idx}题`;
     }
   }
+  else if (roundKey === 'R') {
+    roundName = '复赛';
+  }
   else if (roundKey.startsWith('R')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
       roundName = `复赛第${['一','二','三'][idx-1]||idx}题`;
     }
   }
+  else if (roundKey === 'Q') {
+    roundName = '四分之一决赛';
+  }
   else if (roundKey.startsWith('Q')) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
       roundName = `四分之一决赛第${['一','二'][idx-1]||idx}轮`;
     }
+  }
+  else if (roundKey === 'S') {
+    roundName = '半决赛';
   }
   else if (roundKey.startsWith('S')) {
     const idx = parseInt(roundKey.slice(1), 10);
