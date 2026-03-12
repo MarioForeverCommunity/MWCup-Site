@@ -107,6 +107,19 @@ const handleScroll = () => {
 const openCommunity = () => {
   window.open('https://www.marioforever.net/forum-50-1.html', '_blank')
 }
+
+const buildTime = BUILD_TIME
+const formatBuildTime = (isoString: string) => {
+  const date = new Date(isoString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 </script>
 
 <template>
@@ -169,15 +182,20 @@ const openCommunity = () => {
       </nav>
       <footer class="sidebar-footer">
         <div class="footer-content">
-          <span class="version-info">网站版本：v{{ packageJson.version }}</span>
-          <span class="divider"> | </span>
-          <a
-            href="https://github.com/MarioForeverCommunity/MWCup-Site"
-            target="_blank"
-            class="source-link"
-          >
-            本站源码
-          </a>
+          <div class="footer-row">
+            <span class="version-info">网站版本：v{{ packageJson.version }}</span>
+            <span class="divider"> | </span>
+            <a
+              href="https://github.com/MarioForeverCommunity/MWCup-Site"
+              target="_blank"
+              class="source-link"
+            >
+              本站源码
+            </a>
+          </div>
+          <div class="footer-row">
+            <span class="version-info">构建时间：{{ formatBuildTime(buildTime) }}</span>
+          </div>
         </div>
       </footer>
     </aside>
@@ -265,11 +283,17 @@ const openCommunity = () => {
 
 .footer-content {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3em;
+  text-align: center;
+}
+
+.footer-row {
+  display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-wrap: wrap;
   justify-content: center;
-  text-align: center;
 }
 
 .divider {

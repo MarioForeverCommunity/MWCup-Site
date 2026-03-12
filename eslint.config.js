@@ -23,7 +23,8 @@ export default [
     languageOptions: {
       globals: {
         ...globals.browser,
-        ...globals.es2022
+        ...globals.es2022,
+        BUILD_TIME: 'readonly'
       }
     }
   },
