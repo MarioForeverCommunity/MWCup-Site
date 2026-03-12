@@ -25,6 +25,7 @@ dist-ssr
 .vercel/*
 .trae/*
 AGENTS.md
+.editorconfig
 
 public/data/levels/*
 !public/data/levels/*.json
