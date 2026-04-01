@@ -56,7 +56,7 @@ From `.editorconfig` and `eslint.config.js`:
 Order: 1) external libs, 2) internal utils/types, 3) Vue components.
 
 ```typescript
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Decimal } from 'decimal.js'
 import { loadRoundScoreData, type ScoreRecord } from '../utils/scoreCalculator'
 import ScoreTable from './ScoreTable.vue'
@@ -64,15 +64,33 @@ import ScoreTable from './ScoreTable.vue'
 
 Use `import type` for type-only imports.
 
-### Naming
+### Vue Components
 
-| Kind | Convention | Example |
-|------|-----------|---------|
-| Components | PascalCase | `ScoreTable.vue` |
-| Functions | camelCase | `loadRoundScoreData` |
-| Constants | UPPER_SNAKE_CASE | `SCORING_SCHEMES` |
-| Variables | camelCase | `selectedYear` |
-| Types/Interfaces | PascalCase | `ScoreRecord` |
+```vue
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+
+const props = defineProps<{
+  year: string
+  round: string
+}>()
+
+const scoreData = ref<RoundScoreData | null>(null)
+
+const filteredData = computed(() => {
+  if (!scoreData.value) return []
+  return scoreData.value.filter(...)
+})
+
+onMounted(() => { /* init logic */ })
+</script>
+```
+
+Enforced Vue ESLint rules:
+- Max 3 attributes on single-line; 1 per line in multi-line
+- HTML indent: 2 spaces
+- Mustache interpolation: `{{ value }}` not `{{value}}`
+- `prop-name-casing` and `multi-word-component-names` are off
 
 ### TypeScript
 
@@ -89,23 +107,15 @@ interface ScoreRecord {
 }
 ```
 
-### Vue Components
+### Naming
 
-```vue
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-
-const props = defineProps<{ year: string; round: string }>()
-const scoreData = ref<ScoreRecord[] | null>(null)
-const filtered = computed(() => scoreData.value?.filter(...) ?? [])
-</script>
-```
-
-Enforced Vue ESLint rules:
-- Max 3 attributes on single-line; 1 per line in multi-line
-- HTML indent: 2 spaces
-- Mustache interpolation: `{{ value }}` not `{{value}}`
-- `prop-name-casing` and `multi-word-component-names` are off
+| Kind | Convention | Example |
+|------|-----------|---------|
+| Components | PascalCase | `ScoreTable.vue` |
+| Functions | camelCase | `loadRoundScoreData` |
+| Constants | UPPER_SNAKE_CASE | `SCORING_SCHEMES` |
+| Variables | camelCase | `selectedYear` |
+| Types/Interfaces | PascalCase | `ScoreRecord` |
 
 ### Comparisons
 
@@ -146,15 +156,23 @@ const avg = new Decimal(score).div(count).toDecimalPlaces(1)
 Static assets live in `public/data/`. Fetch with `Promise.all` for parallel loads:
 
 ```typescript
-const [levels, config] = await Promise.all([
+const [levels, maxScore, config] = await Promise.all([
   fetch('/data/levels/index.json').then(r => r.json()),
+  fetch('/data/maxScore.json').then(r => r.json()),
   fetch('/data/mwcup.yaml').then(r => r.text()),
 ])
 ```
 
+## Type Definitions
+
+- Complex types go in `src/types/`
+- Use `.d.ts` for extending third-party library types
+- Export types with `export interface` or `export type`
+
 ## CSS Conventions
 
 - Theme colors via CSS variables: `--primary-color`, `--text-primary`
+- Modular: theme.css, components.css, layout.css, animations.css
 - Responsive: `@media (max-width: 768px)` breakpoint
 - Animation classes: `animate-fadeInUp`, `hover-scale`
 
@@ -170,4 +188,30 @@ const year = route.params.year as string
 
 ## Scoring Schemes
 
-Supports schemes A/B/C/D/E/S defined in YAML. Check `scoringScheme` before applying score logic — each has different categories.
+Supports schemes A/B/C/D/E/S defined in YAML:
+- A: ['欣赏性', '娱乐性', '挑战性', '创新性', '加分项', '扣分项']
+- C/E: degree-based scoring
+- D: judge/public mixed scoring
+- S: total score system
+
+Check `scoringScheme` before applying score logic — each has different categories.
+
+## Data Sources
+
+- `public/data/docs/*.md` - Event documentation
+- `public/data/levels/index.json` - Level index
+- `public/data/scores/*.csv` - Round scores
+- `public/data/subjects/*.md` - Competition problems
+- `public/data/votes/*.csv` - Public votes
+- `public/data/maxScore.json` - Max score per round
+- `public/data/mwcup.yaml` - Competition config
+- `public/data/specialLevels.json` - Special level mapping
+- `public/data/levelSubjects.json` - Level-to-subject mapping (2026+)
+- `public/data/users.csv` - User list
+
+## Notes
+
+- **Language**: Use Chinese for comments and error messages
+- **Browser**: Target modern browsers
+- **Responsive**: Support mobile (768px breakpoint)
+- **Performance**: Use pagination or lazy loading for large datasets
