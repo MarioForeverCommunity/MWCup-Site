@@ -23,8 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel/*
-.trae/*
-AGENTS.md
 .editorconfig
 
 public/data/levels/*
