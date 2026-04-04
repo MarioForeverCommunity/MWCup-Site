@@ -1,4 +1,4 @@
-/* 
+/*
  * layout.css - 布局相关样式
  * 包含侧边栏、主布局、内容区域等布局样式
  */
@@ -20,11 +20,11 @@
   width: 100%;
   height: 100%;
   background-image: repeating-linear-gradient(
-    135deg, 
+    135deg,
     rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, var(--bg-line-trans)) 0, 
-    rgba(255, 255, 255, var(--bg-line-trans)) 1.5%, 
-    rgba(255, 255, 255, 0) 1.5%, 
+    rgba(255, 255, 255, var(--bg-line-trans)) 0,
+    rgba(255, 255, 255, var(--bg-line-trans)) 1.5%,
+    rgba(255, 255, 255, 0) 1.5%,
     rgba(255, 255, 255, 0) 2%,
     rgba(255, 255, 255, var(--bg-line-trans)) 2%
   );
@@ -172,21 +172,14 @@
 
 /* === 内容区域通用样式 === */
 
-.section-header h3 {
-  text-align: center;
-  margin: 0 0 var(--spacing-lg) 0;
-  color: var(--text-secondary);
-  font-size: 22px;
-  border-bottom: 2px solid var(--primary-active);
-  padding-bottom: var(--spacing-sm);
-}
+/* 已迁移至 components.css 的 .section-title 类 */
 
 /* === 响应式设计 === */
 @media (max-width: 1024px) {
   .sidebar {
     width: 250px;
   }
-  
+
   .main-content {
     margin-left: 250px;
   }
@@ -242,7 +235,7 @@
     margin: 5px;
     padding: 15px 10px;
   }
-  
+
   .nav-btn {
     min-width: 100px;
     padding: 10px 12px;

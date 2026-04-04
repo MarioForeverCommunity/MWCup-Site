@@ -1,10 +1,8 @@
 <template>
   <div v-if="showSubject" class="content-panel animate-fadeInUp">
-    <div class="subject-header">
-      <h3 class="subject-title">
-        比赛试题
-        <FoldButton :is-folded="!isExpanded" @toggle="toggleExpand" />
-      </h3>
+    <div class="section-title">
+      <h3>比赛试题</h3>
+      <FoldButton :is-folded="!isExpanded" @toggle="toggleExpand" />
     </div>
 
     <div class="panel-collapse" :class="{'is-expanded': isExpanded}">

@@ -107,7 +107,9 @@
     </div>
 
     <div class="help-section animate-fadeInUp">
-      <h3>说明</h3>
+      <div class="section-title">
+        <h3>说明</h3>
+      </div>
       <div class="help-content">
         <ul>
           <li>Mario Worker杯2012~2019年在百度Marioworker吧举办，2020年之后在Mario Forever社区举办</li>

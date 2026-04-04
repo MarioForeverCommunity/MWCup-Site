@@ -11,10 +11,9 @@
     </div>
   </div>
   <div v-else-if="scoreData" class="content-panel animate-fadeInUp">
-    <div class="score-header">
-      <h3>评分数据
-        <FoldButton :is-folded="scoreContentHidden" @toggle="toggleScoreContent" />
-      </h3>
+    <div class="section-title">
+      <h3>评分数据</h3>
+      <FoldButton :is-folded="scoreContentHidden" @toggle="toggleScoreContent" />
     </div>
     <div class="panel-collapse" :class="{'is-expanded': !scoreContentHidden}">
       <!-- 控制面板 -->
@@ -40,7 +39,9 @@
       </div>
       <!-- 赛况总表 -->
       <div v-if="filteredOverallRoundData" class="overall-status">
-        <h4>赛况总表 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportOverallToExcel">导出表格</button></h4>
+        <div class="section-title">
+          <h4>赛况总表 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportOverallToExcel">导出表格</button></h4>
+        </div>
         <div class="table-wrapper">
           <table ref="overallTableRef" class="table-base overall-table">
             <thead>
@@ -115,7 +116,9 @@
 
       <!-- 详细评分表 -->
       <div class="detailed-scores">
-        <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportDetailedToExcel">导出表格</button></h4>
+        <div class="section-title">
+          <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportDetailedToExcel">导出表格</button></h4>
+        </div>
         <p class="scheme-info">
           评分标准:
           <template v-if="getSchemeLink(scoreData.scoringScheme)">
@@ -286,7 +289,9 @@
 
         <!-- 大众评分表 (仅评分方案E)，截止前不显示 -->
         <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
-          <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
+          <div class="section-title">
+            <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
+          </div>
           <p class="scheme-info">
             评分标准:
             <a
@@ -352,7 +357,9 @@
 
         <!-- 总分排名表 -->
         <div v-if="shouldShowTotalRanking" class="player-totals">
-          <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格</button></h4>
+          <div class="section-title">
+            <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格</button></h4>
+          </div>
           <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 大众评分×25%</p>
           <div class="table-wrapper">
             <table ref="totalTableRef" class="table-base total-table">
@@ -2387,29 +2394,26 @@ onMounted(() => {
 
 <style scoped>
 /* 组件特定样式 - 使用新的CSS类系统 */
-
 /* 组件特定样式只保留新的CSS类系统无法覆盖的部分 */
-.detailed-scores, .player-totals {
-  margin-bottom: var(--spacing-xl);
-}
 
 .score-header h3 {
   text-align: center;
   margin: 0;
   color: var(--text-secondary);
   font-size: 22px;
-  border-bottom: 2px solid var(--primary-active);
-  padding-bottom: var(--spacing-sm);
 }
 
 .detailed-scores h4,
 .player-totals h4 {
   text-align: center;
-  margin: var(--spacing-lg) 0;
+  margin: 0;
   color: var(--text-secondary);
   font-size: 18px;
-  border-bottom: 2px solid var(--primary-active);
-  padding-bottom: var(--spacing-sm);
+}
+
+.detailed-scores .table-wrapper,
+.player-totals .table-wrapper {
+  margin-bottom: var(--spacing-lg);
 }
 
 .scheme-info {
@@ -2419,17 +2423,15 @@ onMounted(() => {
 }
 
 /* 赛况总表样式 */
-.overall-status {
-  margin-bottom: var(--spacing-xl);
+.overall-status .table-wrapper {
+  margin-bottom: var(--spacing-lg);
 }
 
 .overall-status h4 {
   text-align: center;
-  margin: var(--spacing-lg) 0;
+  margin: 0;
   color: var(--text-secondary);
   font-size: 18px;
-  border-bottom: 2px solid var(--primary-active);
-  padding-bottom: var(--spacing-sm);
 }
 
 .exclamation-mark {
@@ -2680,17 +2682,15 @@ onMounted(() => {
   text-align: center;
 }
 
-.public-scores {
-  margin-bottom: var(--spacing-xl);
+.public-scores .table-wrapper {
+  margin-bottom: var(--spacing-lg);
 }
 
 .public-scores h4 {
   text-align: center;
-  margin: var(--spacing-lg) 0;
+  margin: 0;
   color: var(--text-secondary);
   font-size: 18px;
-  border-bottom: 2px solid var(--primary-active);
-  padding-bottom: var(--spacing-sm);
 }
 
 .final-score {

@@ -24,7 +24,6 @@ const onClick = () => {
 <style scoped>
 /* === 折叠/展开按钮通用样式 === */
 .fold-btn {
-  float: right;
   padding: 4px 8px;
   color: white;
   border-radius: var(--radius-medium);
@@ -35,7 +34,6 @@ const onClick = () => {
   backdrop-filter: var(--blur-light);
   background: none;
   outline: none;
-  margin-left: var(--spacing-sm);
 }
 
 .fold-btn.btn-primary {

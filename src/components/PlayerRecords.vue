@@ -60,7 +60,7 @@
       </div>
 
       <!-- 选手战绩表格 -->
-      <div class="section-header">
+      <div class="section-title">
         <h3>选手详细战绩</h3>
       </div>
       <p class="scoring-note">注：统计数据不包含 2012 年数据。</p>
@@ -143,7 +143,7 @@
               <tr v-if="expandedPlayer === record.userId" :key="`${record.userId}-details`" class="details-row animate-fadeInUp">
                 <td colspan="10">
                   <div class="yearly-details">
-                    <div class="details-header">
+                    <div class="section-title">
                       <h4>{{ getPlayerName(record.userId) }} 的年度详细战绩（正赛）</h4>
                     </div>
                     <div class="yearly-data">
@@ -615,14 +615,6 @@ onMounted(() => {
 
 .details-row td {
   padding: 0;
-}
-
-.details-header h4 {
-  margin: 0 0 var(--spacing-lg) 0;
-  color: var(--text-secondary);
-  font-size: 18px;
-  border-bottom: 2px solid var(--primary-active);
-  padding-bottom: var(--spacing-sm);
 }
 
 /* 年度详情样式 */

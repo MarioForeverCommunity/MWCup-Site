@@ -40,7 +40,7 @@
     错误: {{ error }}
   </div>
   <div v-if="searchResults && searchResults.length > 0" class="content-panel animate-fadeInUp">
-    <div class="section-header">
+    <div class="section-title">
       <h3>关卡文件 ({{ searchResults.length }} 个)</h3>
     </div>
     <div class="table-wrapper">

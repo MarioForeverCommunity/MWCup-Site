@@ -62,7 +62,7 @@
       </div>
 
       <!-- 数据表格 -->
-      <div class="section-header">
+      <div class="section-title">
         <h3>详细上传率（出勤率）统计</h3>
       </div>
       <div class="table-wrapper">
@@ -444,10 +444,6 @@ onMounted(() => {
 
   .summary-cards {
     grid-template-columns: 1fr;
-  }
-
-  .stat-card .stat-value {
-    font-size: 1.5rem;
   }
 
   .rate-bar {

@@ -34,7 +34,7 @@
 
     <div v-else class="content-panel animate-fadeInUp">
       <!-- 评委数据表格 -->
-      <div class="section-header">
+      <div class="section-title">
         <h3>评委详细数据</h3>
       </div>
       <p class="scoring-note">注：统计数据不包含 2012 年数据。</p>
@@ -91,7 +91,7 @@
               <tr v-if="expandedJudge === record.judgeName" :key="`${record.judgeName}-details`" class="details-row animate-fadeInUp">
                 <td colspan="5">
                   <div class="yearly-details">
-                    <div class="details-header">
+                    <div class="section-title">
                       <h4>{{ record.judgeName }} 的年度详细数据</h4>
                     </div>
                     <div class="yearly-data">
@@ -315,14 +315,6 @@ onMounted(() => {
 
 .details-row td {
   padding: 0;
-}
-
-.details-header h4 {
-  margin: 0 0 var(--spacing-lg) 0;
-  color: var(--text-secondary);
-  font-size: 18px;
-  border-bottom: 2px solid var(--primary-active);
-  padding-bottom: var(--spacing-sm);
 }
 
 /* 年度详情样式 */

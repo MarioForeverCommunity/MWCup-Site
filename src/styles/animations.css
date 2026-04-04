@@ -1,4 +1,4 @@
-/* 
+/*
  * animations.css - 动画效果样式
  * 包含页面过渡、悬停效果、加载动画等
  */
@@ -197,7 +197,7 @@
     transform: translateY(-5px);
   }
 }
-  
+
 @keyframes bounceIn {
   0% { transform: scale(0); opacity: 0; }
   50% { transform: scale(1.1); opacity: 1; }
@@ -331,7 +331,7 @@
 
 /* ===== 悬停动画效果 ===== */
 .hover-scale:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
   transition: transform 0.2s ease;
 }
 
@@ -424,11 +424,11 @@
   .animate-slideInRight {
     animation-duration: 0.3s;
   }
-  
+
   .animate-float {
     animation-duration: 3s;
   }
-  
+
   .animate-pulse {
     animation-duration: 2s;
   }

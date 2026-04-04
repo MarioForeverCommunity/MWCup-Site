@@ -174,11 +174,9 @@ function filterMultipleLinks(links: string[], round?: string): string[] {
 
 <template>
   <div v-if="scheduleWithRowspans" class="content-panel animate-fadeInUp">
-    <div class="schedule-header">
-      <h3 class="schedule-title">
-        赛程安排
-        <FoldButton :is-folded="scheduleContentHidden" @toggle="toggleScheduleContent" />
-      </h3>
+    <div class="section-title">
+      <h3>赛程安排</h3>
+      <FoldButton :is-folded="scheduleContentHidden" @toggle="toggleScheduleContent" />
     </div>
     <div class="panel-collapse" :class="{'is-expanded': !scheduleContentHidden}">
       <div class="table-container">

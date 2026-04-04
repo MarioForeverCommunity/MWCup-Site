@@ -10,64 +10,64 @@
 
   <div v-else class="content-panel">
     <!-- 冠军列表 -->
-    <div class="section-header animate-fadeInUp">
+    <div class="section-title animate-fadeInUp">
       <h3>历届MW杯举办情况</h3>
-      <div class="table-wrapper animate-fadeInUp">
-        <table class="table-base champions-table">
-          <thead>
-            <tr>
-              <th>届次</th>
-              <th>主办人</th>
-              <th>总评委1</th>
-              <th>总评委2</th>
-              <th>预赛开始</th>
-              <th>预赛结束</th>
-              <th>资格赛开始</th>
-              <th>资格赛结束</th>
-              <th>正赛开始</th>
-              <th>正赛结束</th>
-              <th>冠军</th>
-              <th>亚军</th>
-              <th>季军(2020~)/四强</th>
-              <th>四强</th>
-              <th>上传地址</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(champion) in champions"
-              :key="champion.year"
-              class="champion-row"
-            >
-              <td class="year">{{ champion.year }}年第{{ getEditionNumber(champion.year) }}届</td>
-              <td class="host">{{ champion.host || '-' }}</td>
-              <td class="judges">{{ champion.chiefJudges?.[0] || '-' }}</td>
-              <td class="judges">{{ champion.chiefJudges?.[1] || '-' }}</td>
-              <td class="date">{{ champion.p1Start || '-' }}</td>
-              <td class="date">{{ champion.p1End || '-' }}</td>
-              <td class="date">{{ champion.p2Start || '-' }}</td>
-              <td class="date">{{ champion.p2End || '-' }}</td>
-              <td class="date">{{ champion.mainStart || '-' }}</td>
-              <td class="date">{{ champion.mainEnd || '-' }}</td>
-              <td class="champion">{{ champion.first || '-' }}</td>
-              <td class="second">{{ champion.second || '-' }}</td>
-              <td class="third">{{ champion.third || '-' }}</td>
-              <td class="fourth">{{ champion.fourth || '-' }}</td>
-              <td class="link">
-                <a
-                  v-if="urlMap[champion.year]"
-                  :href="urlMap[champion.year]"
-                  target="_blank"
-                  class="url-btn hover-scale"
-                >
-                  前往
-                </a>
-                <span v-else>-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    </div>
+    <div class="table-wrapper animate-fadeInUp">
+      <table class="table-base champions-table">
+        <thead>
+          <tr>
+            <th>届次</th>
+            <th>主办人</th>
+            <th>总评委1</th>
+            <th>总评委2</th>
+            <th>预赛开始</th>
+            <th>预赛结束</th>
+            <th>资格赛开始</th>
+            <th>资格赛结束</th>
+            <th>正赛开始</th>
+            <th>正赛结束</th>
+            <th>冠军</th>
+            <th>亚军</th>
+            <th>季军(2020~)/四强</th>
+            <th>四强</th>
+            <th>上传地址</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(champion) in champions"
+            :key="champion.year"
+            class="champion-row"
+          >
+            <td class="year">{{ champion.year }}年第{{ getEditionNumber(champion.year) }}届</td>
+            <td class="host">{{ champion.host || '-' }}</td>
+            <td class="judges">{{ champion.chiefJudges?.[0] || '-' }}</td>
+            <td class="judges">{{ champion.chiefJudges?.[1] || '-' }}</td>
+            <td class="date">{{ champion.p1Start || '-' }}</td>
+            <td class="date">{{ champion.p1End || '-' }}</td>
+            <td class="date">{{ champion.p2Start || '-' }}</td>
+            <td class="date">{{ champion.p2End || '-' }}</td>
+            <td class="date">{{ champion.mainStart || '-' }}</td>
+            <td class="date">{{ champion.mainEnd || '-' }}</td>
+            <td class="champion">{{ champion.first || '-' }}</td>
+            <td class="second">{{ champion.second || '-' }}</td>
+            <td class="third">{{ champion.third || '-' }}</td>
+            <td class="fourth">{{ champion.fourth || '-' }}</td>
+            <td class="link">
+              <a
+                v-if="urlMap[champion.year]"
+                :href="urlMap[champion.year]"
+                target="_blank"
+                class="url-btn hover-scale"
+              >
+                前往
+              </a>
+              <span v-else>-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
