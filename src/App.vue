@@ -260,7 +260,7 @@ const formatBuildTime = (isoString: string) => {
 }
 
 .nav-btn:hover .nav-icon {
-  transform: scale(1.2) rotate(5deg);
+  transform: scale(1.2);
 }
 
 .nav-text {
@@ -451,11 +451,10 @@ const formatBuildTime = (isoString: string) => {
   }
 
   .sidebar-nav {
-    margin-top: 20px;
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: 0 10px;
+    padding: 20px 10px;
     box-sizing: border-box;
   }
 
