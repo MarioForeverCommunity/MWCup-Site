@@ -544,8 +544,9 @@ const formatBuildTime = (isoString: string) => {
   }
 
   .sidebar-open-btn:hover {
-    transform: scale(1.1);
-    background-color: var(--accent-color);
+    background: var(--primary-active);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   }
 }
 
