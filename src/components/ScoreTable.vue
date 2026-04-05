@@ -2835,6 +2835,10 @@ onMounted(() => {
     font-size: 12px;
     padding: 6px 12px;
   }
+
+  .export-btn {
+    display: none !important;
+  }
 }
 
 .no-submission-cell {
