@@ -371,13 +371,17 @@ watch(() => [props.year, props.round], () => {
   max-height: 0;
   overflow: hidden;
   opacity: 0;
+  pointer-events: none;
+  will-change: max-height, opacity;
   transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .panel-collapse.is-expanded {
   max-height: 22000px; /* 设置足够大的值以容纳内容 */
+  overflow: visible;
   opacity: 1;
+  pointer-events: auto;
   transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }

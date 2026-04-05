@@ -2897,6 +2897,7 @@ onMounted(() => {
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
+  margin-top: calc(-1 * var(--spacing-lg));
   will-change: max-height, opacity;
   transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2904,8 +2905,10 @@ onMounted(() => {
 
 .panel-collapse.is-expanded {
   max-height: 4000px;
+  overflow: visible;
   opacity: 1;
   pointer-events: auto;
+  margin-top: 0;
   transition: max-height 1s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
