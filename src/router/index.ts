@@ -45,11 +45,11 @@ const routes = [
   },
   {
     path: '/stats',
-    name: 'Stats',
     component: StatsAnalysis,
     children: [
       {
         path: '',
+        name: 'Stats',
         redirect: { name: 'StatsRanking', params: { type: 'single' } }
       },
       {
