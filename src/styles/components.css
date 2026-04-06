@@ -12,11 +12,6 @@
   padding-bottom: var(--spacing-sm);
   margin-bottom: var(--spacing-lg);
   border-bottom: 2px solid var(--primary-active);
-  /* 修复 Android Chromium 移动端滚动导致标题消失的渲染 bug */
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
 }
 
 .section-title h3,
@@ -26,19 +21,6 @@
   font-size: 22px;
   font-weight: 600;
   text-align: center;
-  /* 确保在移动端滚动时不会消失 */
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
-/* 基础标题修复，防止在某些 Chromium 浏览器中滚动时消失 */
-h3, h4 {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
 }
 
 .section-title h4 {
@@ -282,16 +264,6 @@ button:hover:not(:disabled) {
   backdrop-filter: var(--blur-light);
 }
 
-/* === 通用说明文字样式 === */
-.scheme-info,
-.scoring-note {
-  /* 修复 Android Chromium 移动端滚动导致文字消失的渲染 bug */
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
 /* === 标签样式 === */
 .tag-base {
   display: inline-block;
@@ -483,11 +455,6 @@ button:hover:not(:disabled) {
     max-width: 100vw;
     overflow-x: auto !important;
     position: relative;
-    /* 修复 Chromium 移动端滚动导致层级错乱或渲染 bug，禁用 backdrop-filter 可大幅减轻 GPU 压力 */
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    /* 确保滚动平滑且不触发额外的合成层干扰兄弟元素 */
-    contain: paint;
   }
 
   .table-base {
