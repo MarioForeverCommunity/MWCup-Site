@@ -18,6 +18,7 @@ const getActiveTab = () => {
   if (path.startsWith('/levels')) return 'levels'
   if (path.startsWith('/stats')) return 'stats'
   if (path.startsWith('/docs')) return 'docs'
+  if (path.startsWith('/poker')) return 'poker'
   return 'matches'
 }
 
@@ -44,6 +45,9 @@ const setActiveTab = (tab: string) => {
     case 'docs':
       router.push('/docs')
       break
+    case 'poker':
+      router.push('/poker')
+      break
     default:
       router.push('/matches')
   }
@@ -61,12 +65,17 @@ watch(() => route.path, (newPath) => {
   else if (newPath.startsWith('/levels')) activeTab.value = 'levels'
   else if (newPath.startsWith('/stats')) activeTab.value = 'stats'
   else if (newPath.startsWith('/docs')) activeTab.value = 'docs'
+  else if (newPath.startsWith('/poker')) activeTab.value = 'poker'
   else activeTab.value = 'matches'
 }, { immediate: true })
 
 // 检测当前视图是否为移动设备
 const checkMobileView = () => {
   const newIsMobileView = window.innerWidth < 768
+  // 如果从桌面视图切换到移动视图，关闭侧边栏（除非在根路径）
+  if (!isMobileView.value && newIsMobileView) {
+    isSidebarOpen.value = route.path === '/'
+  }
   // 如果从移动视图切换到桌面视图，确保侧边栏打开
   if (isMobileView.value && !newIsMobileView) {
     isSidebarOpen.value = true
@@ -171,6 +180,14 @@ const formatBuildTime = (isoString: string) => {
         >
           <span class="nav-icon">📄</span>
           <span class="nav-text">规章标准</span>
+        </button>
+        <button
+          @click="setActiveTab('poker')"
+          :class="{ active: activeTab === 'poker' }"
+          class="nav-btn hover-scale"
+        >
+          <span class="nav-icon">🃏</span>
+          <span class="nav-text">扑克牌</span>
         </button>
         <button
           @click="openCommunity"

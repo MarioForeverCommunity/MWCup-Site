@@ -4,6 +4,7 @@ import UploadSystem from '../components/UploadSystem.vue'
 import LevelFileSearch from '../components/LevelFileSearch.vue'
 import StatsAnalysis from '../components/StatsAnalysis.vue'
 import DocumentDisplay from '../components/DocumentDisplay.vue'
+import PokerTable from '../components/PokerTable.vue'
 
 const routes = [
   {
@@ -90,6 +91,11 @@ const routes = [
     name: 'DocsSub',
     component: DocumentDisplay,
     props: true
+  },
+  {
+    path: '/poker',
+    name: 'Poker',
+    component: PokerTable
   }
 ]
 
