@@ -41,42 +41,44 @@
     </div>
 
     <Teleport to="body">
-      <div v-if="selectedCard" class="card-detail-modal" @click.self="closeCardDetail">
-        <button class="close-btn" @click="closeCardDetail">&times;</button>
-        <div class="poker-card-real" :class="{ 'poker-red': isRedCard(selectedCard.cardCode) }">
-          <div class="poker-corner poker-corner-tl">
-            <span class="corner-rank">{{ getPokerRank(selectedCard.cardCode) }}</span>
-            <img :src="getPokerSymbolPath(selectedCard.cardCode)" class="corner-symbol-img" alt="" />
-          </div>
-          <div class="poker-center">
-            <h2 class="poker-title" :class="{ 'poker-title-small': getTitleLength(selectedCard) > 28 }">{{ getLevelFileName(selectedCard) || selectedCard.levelNickname || '—' }}</h2>
-            <div class="poker-image-wrapper">
-              <img
-                :src="getCardImagePath(selectedCard.cardCode)"
-                :alt="getLevelFileName(selectedCard) || ''"
-                class="poker-image"
-              />
+      <Transition name="modal-fade">
+        <div v-if="selectedCard" class="card-detail-modal" @click.self="closeCardDetail">
+          <button class="close-btn" @click="closeCardDetail">&times;</button>
+          <div class="poker-card-real" :class="{ 'poker-red': isRedCard(selectedCard.cardCode) }">
+            <div class="poker-corner poker-corner-tl">
+              <span class="corner-rank">{{ getPokerRank(selectedCard.cardCode) }}</span>
+              <img :src="getPokerSymbolPath(selectedCard.cardCode)" class="corner-symbol-img" alt="" />
             </div>
-            <div class="poker-comments">
-              <div v-if="selectedCard.comment1" class="comment-item">
-                <p class="comment-body" v-html="formatComment(selectedCard.comment1)"></p>
-                <p class="comment-author">——{{ selectedCard.commentAuthor1 }}</p>
+            <div class="poker-center">
+              <h2 class="poker-title" :class="{ 'poker-title-small': getTitleLength(selectedCard) > 28 }">{{ getLevelFileName(selectedCard) || selectedCard.levelNickname || '—' }}</h2>
+              <div class="poker-image-wrapper">
+                <img
+                  :src="getCardImagePath(selectedCard.cardCode)"
+                  :alt="getLevelFileName(selectedCard) || ''"
+                  class="poker-image"
+                />
               </div>
-              <div v-if="selectedCard.comment2" class="comment-item">
-                <p class="comment-body" v-html="formatComment(selectedCard.comment2)"></p>
-                <p class="comment-author">——{{ selectedCard.commentAuthor2 }}</p>
+              <div class="poker-comments">
+                <div v-if="selectedCard.comment1" class="comment-item">
+                  <p class="comment-body" v-html="formatComment(selectedCard.comment1)"></p>
+                  <p class="comment-author">——{{ selectedCard.commentAuthor1 }}</p>
+                </div>
+                <div v-if="selectedCard.comment2" class="comment-item">
+                  <p class="comment-body" v-html="formatComment(selectedCard.comment2)"></p>
+                  <p class="comment-author">——{{ selectedCard.commentAuthor2 }}</p>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="poker-footer">
-            {{ selectedCard.playerCode }} {{ getPlayerName(selectedCard) }} {{ getYearWithEdition(selectedCard.year) }}{{ getRoundDisplayName(selectedCard.round) }}
-          </div>
-          <div class="poker-corner poker-corner-br">
-            <span class="corner-rank">{{ getPokerRank(selectedCard.cardCode) }}</span>
-            <img :src="getPokerSymbolPath(selectedCard.cardCode)" class="corner-symbol-img" alt="" />
+            <div class="poker-footer">
+              {{ selectedCard.playerCode }} {{ getPlayerName(selectedCard) }} {{ getYearWithEdition(selectedCard.year) }}{{ getRoundDisplayName(selectedCard.round) }}
+            </div>
+            <div class="poker-corner poker-corner-br">
+              <span class="corner-rank">{{ getPokerRank(selectedCard.cardCode) }}</span>
+              <img :src="getPokerSymbolPath(selectedCard.cardCode)" class="corner-symbol-img" alt="" />
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
   </div>
 </template>
@@ -413,8 +415,8 @@ onMounted(() => {
 }
 
 .poker-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
   border-color: var(--primary-hover);
 }
 
@@ -482,7 +484,7 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1002;
+  z-index: 1000;
   padding: 20px;
 }
 
@@ -503,7 +505,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s;
+  transition: var(--transition-fast);
 }
 
 .card-detail-modal .close-btn:hover {
@@ -677,5 +679,26 @@ onMounted(() => {
   .corner-rank {
     font-size: 32px;
   }
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-fade-enter-active .poker-card-real,
+.modal-fade-leave-active .poker-card-real {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .poker-card-real,
+.modal-fade-leave-to .poker-card-real {
+  transform: scale(0.95);
+  opacity: 0;
 }
 </style>
