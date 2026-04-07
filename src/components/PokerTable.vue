@@ -122,7 +122,7 @@ const sortedCards = computed(() => {
 })
 
 function getCardImagePath(cardCode: string): string {
-  return `/images/poker2020/${cardCode}.png`
+  return `/images/poker2020/${cardCode}.webp`
 }
 
 function handleImageError(event: Event): void {
