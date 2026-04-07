@@ -30,8 +30,8 @@ export function getCardDisplayInfo(cardCode: string): CardDisplayInfo {
     H: { suit: 'H', name: '♥', color: '#e31b23' },
     C: { suit: 'C', name: '♣', color: '#000' },
     D: { suit: 'D', name: '♦', color: '#e31b23' },
-    R: { suit: 'R', name: '大王', color: '#e31b23' },
-    B: { suit: 'B', name: '小王', color: '#000' }
+    R: { suit: 'R', name: 'JOKER', color: '#e31b23' },
+    B: { suit: 'B', name: 'JOKER', color: '#000' }
   }
 
   const rankNames: Record<string, string> = {
@@ -45,7 +45,7 @@ export function getCardDisplayInfo(cardCode: string): CardDisplayInfo {
     return {
       suit: 'R',
       rank: 0,
-      displayName: '大王',
+      displayName: 'JOKER',
       imageName: 'R'
     }
   }
@@ -54,7 +54,7 @@ export function getCardDisplayInfo(cardCode: string): CardDisplayInfo {
     return {
       suit: 'B',
       rank: 0,
-      displayName: '小王',
+      displayName: 'JOKER',
       imageName: 'B'
     }
   }

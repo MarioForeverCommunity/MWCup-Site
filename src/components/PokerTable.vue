@@ -14,6 +14,11 @@
         <h3>MW杯官方扑克牌 2020版</h3>
       </div>
 
+      <div class="poker-intro">
+        <p>Mario Worker杯扑克牌是MW杯推出的官方周边和纪念品，于2020年推出首版，收录了2013至2019年间的54个优秀关卡。2020版扑克牌共制造了若干套普通版扑克牌，以及14套冠、亚军纪念版扑克牌，后者作为2013至2019年MW杯冠、亚军选手的奖品发放。</p>
+        <p>目前，2026版扑克牌正在筹备中，计划收录2020至2025年MW杯的优秀参赛关卡。</p>
+      </div>
+
       <div class="poker-grid">
         <div
           v-for="card in sortedCards"
@@ -31,7 +36,7 @@
           </div>
           <div class="card-info">
             <div class="card-name" :class="{ 'card-red': isRedCard(card.cardCode) }">
-              {{ getCardDisplayInfo(card.cardCode).displayName }}
+              {{ getCardDisplayInfo(card.cardCode).displayName }} {{ getCardMeaning(card.cardCode) }}
             </div>
             <div class="card-level-name">{{ getLevelDisplayName(card) }}</div>
             <div class="card-source">{{ getPlayerName(card) }} · {{ getYearWithEdition(card.year) }}{{ getRoundDisplayName(card.round) }}</div>
@@ -184,6 +189,27 @@ function getPokerRank(cardCode: string): string {
     '13': 'K'
   }
   return rankNames[rankStr] || rankStr
+}
+
+function getCardMeaning(cardCode: string): string {
+  if (cardCode === 'R' || cardCode === 'B') return '日月同辉'
+  const rankStr = cardCode.substring(1)
+  const meaningMap: Record<string, string> = {
+    '1': '大道至简',
+    '2': '巧夺天工',
+    '3': '沧海桑田',
+    '4': '节气周转',
+    '5': '独有千秋',
+    '6': '峰回路转',
+    '7': '吐故纳新',
+    '8': '险象环生',
+    '9': '另辟蹊径',
+    '10': '终焉一战',
+    '11': '电光石火',
+    '12': '雾里看花',
+    '13': '万剑归宗'
+  }
+  return meaningMap[rankStr] || ''
 }
 
 function normalizePlayerCode(code: string): string {
@@ -402,6 +428,14 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--spacing-lg);
   padding: var(--spacing-md);
+}
+
+.poker-intro {
+  color: var(--text-secondary);
+}
+
+.poker-intro p {
+  margin: 0 0 var(--spacing-sm) 0;
 }
 
 .poker-card {
