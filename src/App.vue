@@ -187,7 +187,7 @@ const formatBuildTime = (isoString: string) => {
           class="nav-btn hover-scale"
         >
           <span class="nav-icon">🃏</span>
-          <span class="nav-text">扑克牌</span>
+          <span class="nav-text">扑克周边</span>
         </button>
         <button
           @click="openCommunity"
