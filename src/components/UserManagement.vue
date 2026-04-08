@@ -107,9 +107,7 @@
     </div>
 
     <div class="help-section animate-fadeInUp">
-      <div class="section-title">
-        <h3>说明</h3>
-      </div>
+      <h3>说明</h3>
       <div class="help-content">
         <ul>
           <li>Mario Worker杯2012~2019年在百度Marioworker吧举办，2020年之后在Mario Forever社区举办</li>
@@ -118,7 +116,7 @@
           <li>序号作为用户在本站的标识符，用于战绩统计等功能</li>
           <li>社区UID是Mario Forever社区平台的唯一用户标识</li>
         </ul>
-        <p><strong>平台状态：</strong></p>
+        <h4>平台状态</h4>
         <ul>
           <li><span class="status-badge both">双平台</span> - 同时拥有百度和社区账号</li>
           <li><span class="status-badge baidu-only">仅百度</span> - 只有百度账号</li>
@@ -402,18 +400,15 @@ onMounted(() => {
 }
 
 .help-section h3 {
-  margin: 0 0 var(--spacing-md) 0;
+  margin: 0 0 var(--spacing-sm) 0;
   color: var(--text-primary);
-  font-size: 1.125rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
 }
 
-.help-section h3::before {
-  content: "💡";
-  font-size: 1rem;
+.help-section h4 {
+  margin: var(--spacing-sm) 0;
+  color: var(--text-primary);
 }
 
 .help-content {
@@ -426,12 +421,12 @@ onMounted(() => {
 }
 
 .help-content ul {
-  margin: var(--spacing-sm) 0 var(--spacing-md) 0;
-  padding-left: var(--spacing-lg);
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 .help-content li {
-  margin: var(--spacing-xs) 0;
   color: var(--text-secondary);
 }
 

@@ -430,7 +430,7 @@ export default defineComponent({
 }
 
 .notes-section h3 {
-  margin: 0 0 var(--spacing-md) 0;
+  margin: 0 0 var(--spacing-sm) 0;
   color: var(--text-primary);
   font-size: 1.2rem;
   font-weight: 600;
@@ -443,16 +443,8 @@ export default defineComponent({
   line-height: 1.6;
 }
 
-.notes-content li {
-  margin-bottom: var(--spacing-sm);
-}
-
 .notes-content li strong {
   color: var(--text-primary);
-}
-
-.notes-content ul ul {
-  margin-top: var(--spacing-xs);
 }
 
 .ranking-table {
