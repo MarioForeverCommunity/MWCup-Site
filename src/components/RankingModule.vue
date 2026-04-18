@@ -378,7 +378,7 @@ function downloadLevelFileMulti(item: MultiLevelRankingItem): void {
     alert('未找到对应关卡文件');
     return;
   }
-  const baseUrl = 'https://levels.smwp.marioforever.net/Mario Worker杯关卡/';
+  const baseUrl = 'https://levels.smwp.marioforever.net/Mario Worker 杯关卡/';
   if (levelFile.isMultiLevel && levelFile.multiLevelFolder) {
     const folderName = levelFile.multiLevelFolder.folderName;
     const folderPath = levelFile.multiLevelFolder.folderPath;
@@ -425,7 +425,7 @@ function downloadLevelFileSingle(item: LevelRankingItem): void {
     alert('未找到对应关卡文件');
     return;
   }
-  const baseUrl = 'https://levels.smwp.marioforever.net/Mario Worker杯关卡/';
+  const baseUrl = 'https://levels.smwp.marioforever.net/Mario Worker 杯关卡/';
   if (levelFile.isMultiLevel && levelFile.multiLevelFolder) {
     const folderName = levelFile.multiLevelFolder.folderName;
     const folderPath = levelFile.multiLevelFolder.folderPath;

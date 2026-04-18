@@ -2314,7 +2314,7 @@ function downloadLevelFile(playerCode: string): void {
     return;
   }
 
-  const baseUrl = 'https://levels.smwp.marioforever.net/Mario Worker杯关卡/';
+  const baseUrl = 'https://levels.smwp.marioforever.net/Mario Worker 杯关卡/';
 
   // 如果是多关卡文件夹
   if (levelFile.isMultiLevel && levelFile.multiLevelFolder) {
