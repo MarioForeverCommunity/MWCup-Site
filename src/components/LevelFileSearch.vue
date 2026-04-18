@@ -102,7 +102,7 @@ import { getGroupDisplayName } from '../utils/levelMatcher'
 import { getEditionNumber } from '../utils/editionHelper'
 
 // 关卡下载基础URL
-const LEVELS_BASE_URL = 'https://levels.smwp.marioforever.net/MW杯关卡/'
+const LEVELS_BASE_URL = 'https://levels.smwp.marioforever.net/Mario Worker杯关卡/'
 
 // 选择器模式的数据
 const selectedYear = ref('')
