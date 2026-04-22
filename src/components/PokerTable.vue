@@ -75,7 +75,7 @@
               </div>
             </div>
             <div class="poker-footer">
-              {{ selectedCard.playerCode }} {{ getPlayerName(selectedCard) }} {{ getYearWithEdition(selectedCard.year) }}{{ getRoundDisplayName(selectedCard.round) }}
+              {{ selectedCard.playerCode }} {{ getPlayerName(selectedCard) }} {{ getYearWithEdition(selectedCard.year) }}{{ getRoundDisplayName(selectedCard.round) }}{{ !getLevelFileName(selectedCard) ? '*' : '' }}
             </div>
             <div class="poker-corner poker-corner-br">
               <span class="corner-rank">{{ getPokerRank(selectedCard.cardCode) }}</span>
