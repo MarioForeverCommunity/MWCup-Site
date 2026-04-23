@@ -19,6 +19,10 @@
         <p>目前，2026版扑克牌正在筹备中，计划收录2020至2025年MW杯的优秀参赛关卡。</p>
       </div>
 
+      <div class="draw-button-wrapper">
+        <button class="btn-primary" @click="randomDraw">随机抽牌</button>
+      </div>
+
       <div class="poker-grid">
         <div
           v-for="card in sortedCards"
@@ -50,6 +54,7 @@
         <div v-if="selectedCard" class="card-detail-modal" @click.self="closeCardDetail">
           <button class="close-btn" @click="closeCardDetail">&times;</button>
           <div class="poker-card-real" :class="{ 'poker-red': isRedCard(selectedCard.cardCode) }">
+            <button v-if="isRandomDraw" class="btn-secondary poker-redraw-btn" @click="randomDraw">再次抽取</button>
             <div class="poker-corner poker-corner-tl">
               <span class="corner-rank">{{ getPokerRank(selectedCard.cardCode) }}</span>
               <img :src="getPokerSymbolPath(selectedCard.cardCode)" class="corner-symbol-img" alt="" />
@@ -121,6 +126,7 @@ const allCards = ref<PokerCard[]>([])
 const levelIndex = ref<LevelIndexItem[]>([])
 const yamlPlayerMap = ref<YamlPlayerMap>({})
 const selectedCard = ref<PokerCard | null>(null)
+const isRandomDraw = ref(false)
 
 const sortedCards = computed(() => {
   return [...allCards.value].sort((a, b) => getCardSortOrder(a.cardCode) - getCardSortOrder(b.cardCode))
@@ -310,12 +316,22 @@ function getTitleLength(card: PokerCard): number {
 
 function openCardDetail(card: PokerCard): void {
   selectedCard.value = card
+  isRandomDraw.value = false
   document.body.style.overflow = 'hidden'
 }
 
 function closeCardDetail(): void {
   selectedCard.value = null
+  isRandomDraw.value = false
   document.body.style.overflow = ''
+}
+
+function randomDraw(): void {
+  if (allCards.value.length === 0) return
+  const randomIndex = Math.floor(Math.random() * allCards.value.length)
+  selectedCard.value = allCards.value[randomIndex]
+  isRandomDraw.value = true
+  document.body.style.overflow = 'hidden'
 }
 
 function buildYamlPlayerMap(yamlData: any): YamlPlayerMap {
@@ -438,6 +454,11 @@ onMounted(() => {
   margin: 0 0 var(--spacing-sm) 0;
 }
 
+.draw-button-wrapper {
+  padding: var(--spacing-sm);
+  text-align: center;
+}
+
 .poker-card {
   background: var(--bg-card);
   border-radius: var(--radius-large);
@@ -445,11 +466,11 @@ onMounted(() => {
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border-light);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: var(--transition-normal);
 }
 
 .poker-card:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-medium);
   border-color: var(--primary-hover);
 }
@@ -523,7 +544,7 @@ onMounted(() => {
 }
 
 .card-detail-modal .close-btn {
-  position: fixed;
+  position: absolute;
   top: 16px;
   right: 16px;
   width: 40px;
@@ -563,6 +584,16 @@ onMounted(() => {
 
 .poker-card-real.poker-red .corner-rank {
   color: #c41e3a;
+}
+
+.poker-redraw-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: var(--primary-color);
 }
 
 .poker-corner {
@@ -712,6 +743,13 @@ onMounted(() => {
 
   .corner-rank {
     font-size: 32px;
+  }
+
+  .poker-redraw-btn {
+    top: 10px;
+    right: 10px;
+    padding: 4px 8px;
+    font-size: 12px;
   }
 }
 
