@@ -126,6 +126,7 @@
                   :key="index"
                   class="dot"
                   :class="{ active: index === activeIndex }"
+                  @click="scrollToCard(index)"
                 ></span>
               </div>
               <button class="btn-primary multi-redraw-btn desktop-only" @click="multiRandomDraw">全部重抽</button>
@@ -138,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import Papa from 'papaparse'
 import type { PokerCard } from '../types/poker'
 import { getCardDisplayInfo, getCardSortOrder } from '../types/poker'
@@ -175,6 +176,7 @@ const drawCount = ref(5)
 const excludeJokers = ref(false)
 const activeIndex = ref(0)
 const scrollContainer = ref<HTMLElement | null>(null)
+const isUpdatingCards = ref(false)
 const isMultipleDraw = computed(() => selectedCards.value.length > 1)
 
 const sortedCards = computed(() => {
@@ -364,10 +366,18 @@ function getTitleLength(card: PokerCard): number {
 }
 
 function openCardDetail(card: PokerCard): void {
+  isUpdatingCards.value = true
   selectedCards.value = [card]
   activeIndex.value = 0
   isRandomDraw.value = false
   document.body.style.overflow = 'hidden'
+
+  nextTick(() => {
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollLeft = 0
+    }
+    isUpdatingCards.value = false
+  })
 }
 
 function closeCardDetail(): void {
@@ -380,6 +390,7 @@ function closeCardDetail(): void {
 function randomDraw(): void {
   if (allCards.value.length === 0) return
 
+  isUpdatingCards.value = true
   let pool = allCards.value
   if (excludeJokers.value) {
     pool = pool.filter(card => card.cardCode !== 'R' && card.cardCode !== 'B')
@@ -390,11 +401,19 @@ function randomDraw(): void {
   activeIndex.value = 0
   isRandomDraw.value = true
   document.body.style.overflow = 'hidden'
+
+  nextTick(() => {
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollLeft = 0
+    }
+    isUpdatingCards.value = false
+  })
 }
 
 function multiRandomDraw(): void {
   if (allCards.value.length === 0) return
 
+  isUpdatingCards.value = true
   let pool = [...allCards.value]
   if (excludeJokers.value) {
     pool = pool.filter(card => card.cardCode !== 'R' && card.cardCode !== 'B')
@@ -407,13 +426,20 @@ function multiRandomDraw(): void {
   isRandomDraw.value = true
   document.body.style.overflow = 'hidden'
 
-  // 重置滚动位置
-  if (scrollContainer.value) {
-    scrollContainer.value.scrollLeft = 0
-  }
+  // 在 DOM 更新后重置滚动位置
+  nextTick(() => {
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollLeft = 0
+    }
+    // 延迟一小段时间恢复滚动监听，确保 snap 已经稳定
+    setTimeout(() => {
+      isUpdatingCards.value = false
+    }, 50)
+  })
 }
 
 function handleScroll(event: Event): void {
+  if (isUpdatingCards.value) return
   const container = event.target as HTMLElement
   if (!container) return
 
@@ -444,6 +470,19 @@ function handleScroll(event: Event): void {
   })
 
   activeIndex.value = closestIndex
+}
+
+function scrollToCard(index: number): void {
+  if (!scrollContainer.value) return
+
+  const items = scrollContainer.value.querySelectorAll('.multi-card-item')
+  if (!items[index]) return
+
+  items[index].scrollIntoView({
+    behavior: 'smooth',
+    block: 'nearest',
+    inline: 'center'
+  })
 }
 
 function buildYamlPlayerMap(yamlData: any): YamlPlayerMap {
