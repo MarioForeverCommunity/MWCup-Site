@@ -20,7 +20,23 @@
       </div>
 
       <div class="draw-button-wrapper">
-        <button class="btn-primary" @click="randomDraw">随机抽牌</button>
+        <div class="draw-controls">
+          <button class="btn-primary draw-btn" @click="randomDraw">抽一张牌</button>
+          <div class="multi-draw-group">
+            <input
+              v-model.number="drawCount"
+              type="number"
+              min="2"
+              max="10"
+              class="draw-input"
+            />
+            <label class="joker-toggle">
+              <input v-model="excludeJokers" type="checkbox" />
+              <span>不抽大小王</span>
+            </label>
+            <button class="btn-primary draw-btn" @click="multiRandomDraw">抽多张牌</button>
+          </div>
+        </div>
       </div>
 
       <div class="poker-grid">
@@ -51,40 +67,68 @@
 
     <Teleport to="body">
       <Transition name="modal-fade">
-        <div v-if="selectedCard" class="card-detail-modal" @click.self="closeCardDetail">
+        <div v-if="selectedCards.length > 0" class="card-detail-modal" @click.self="closeCardDetail">
           <button class="close-btn" @click="closeCardDetail">&times;</button>
-          <div class="poker-card-real" :class="{ 'poker-red': isRedCard(selectedCard.cardCode) }">
-            <button v-if="isRandomDraw" class="btn-secondary poker-redraw-btn" @click="randomDraw">再次抽取</button>
-            <div class="poker-corner poker-corner-tl">
-              <span class="corner-rank">{{ getPokerRank(selectedCard.cardCode) }}</span>
-              <img :src="getPokerSymbolPath(selectedCard.cardCode)" class="corner-symbol-img" alt="" />
-            </div>
-            <div class="poker-center">
-              <h2 class="poker-title" :class="{ 'poker-title-small': getTitleLength(selectedCard) > 28 }">{{ getLevelFileName(selectedCard) || selectedCard.levelNickname || '—' }}</h2>
-              <div class="poker-image-wrapper">
-                <img
-                  :src="getCardImagePath(selectedCard.cardCode)"
-                  :alt="getLevelFileName(selectedCard) || ''"
-                  class="poker-image"
-                />
-              </div>
-              <div class="poker-comments">
-                <div v-if="selectedCard.comment1" class="comment-item">
-                  <p class="comment-body" v-html="formatComment(selectedCard.comment1)"></p>
-                  <p class="comment-author">——{{ selectedCard.commentAuthor1 }}</p>
+
+          <div class="modal-body-container" @click.self="closeCardDetail">
+            <div
+              ref="scrollContainer"
+              class="modal-content-scroll"
+              :class="{ 'multi-card-layout': isMultipleDraw }"
+              @click.self="closeCardDetail"
+              @scroll="handleScroll"
+            >
+              <div
+                v-for="card in selectedCards"
+                :key="card.cardCode"
+                class="poker-card-real"
+                :class="{ 'poker-red': isRedCard(card.cardCode), 'multi-card-item': isMultipleDraw }"
+              >
+                <button v-if="isRandomDraw && !isMultipleDraw" class="btn-secondary poker-redraw-btn" @click="randomDraw">再次抽取</button>
+                <div class="poker-corner poker-corner-tl">
+                  <span class="corner-rank">{{ getPokerRank(card.cardCode) }}</span>
+                  <img :src="getPokerSymbolPath(card.cardCode)" class="corner-symbol-img" alt="" />
                 </div>
-                <div v-if="selectedCard.comment2" class="comment-item">
-                  <p class="comment-body" v-html="formatComment(selectedCard.comment2)"></p>
-                  <p class="comment-author">——{{ selectedCard.commentAuthor2 }}</p>
+                <div class="poker-center">
+                  <h2 class="poker-title" :class="{ 'poker-title-small': getTitleLength(card) > 28 }">{{ getLevelFileName(card) || card.levelNickname || '—' }}</h2>
+                  <div class="poker-image-wrapper">
+                    <img
+                      :src="getCardImagePath(card.cardCode)"
+                      :alt="getLevelFileName(card) || ''"
+                      class="poker-image"
+                    />
+                  </div>
+                  <div class="poker-comments">
+                    <div v-if="card.comment1" class="comment-item">
+                      <p class="comment-body" v-html="formatComment(card.comment1)"></p>
+                      <p class="comment-author">——{{ card.commentAuthor1 }}</p>
+                    </div>
+                    <div v-if="card.comment2" class="comment-item">
+                      <p class="comment-body" v-html="formatComment(card.comment2)"></p>
+                      <p class="comment-author">——{{ card.commentAuthor2 }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="poker-footer">
+                  {{ card.playerCode }} {{ getPlayerName(card) }} {{ getYearWithEdition(card.year) }}{{ getRoundDisplayName(card.round) }}{{ !getLevelFileName(card) ? '*' : '' }}
+                </div>
+                <div class="poker-corner poker-corner-br">
+                  <span class="corner-rank">{{ getPokerRank(card.cardCode) }}</span>
+                  <img :src="getPokerSymbolPath(card.cardCode)" class="corner-symbol-img" alt="" />
                 </div>
               </div>
             </div>
-            <div class="poker-footer">
-              {{ selectedCard.playerCode }} {{ getPlayerName(selectedCard) }} {{ getYearWithEdition(selectedCard.year) }}{{ getRoundDisplayName(selectedCard.round) }}{{ !getLevelFileName(selectedCard) ? '*' : '' }}
-            </div>
-            <div class="poker-corner poker-corner-br">
-              <span class="corner-rank">{{ getPokerRank(selectedCard.cardCode) }}</span>
-              <img :src="getPokerSymbolPath(selectedCard.cardCode)" class="corner-symbol-img" alt="" />
+
+            <div v-if="isMultipleDraw" class="modal-actions">
+              <div class="pagination-dots mobile-only">
+                <span
+                  v-for="(_, index) in selectedCards"
+                  :key="index"
+                  class="dot"
+                  :class="{ active: index === activeIndex }"
+                ></span>
+              </div>
+              <button class="btn-primary multi-redraw-btn desktop-only" @click="multiRandomDraw">全部重抽</button>
             </div>
           </div>
         </div>
@@ -125,8 +169,13 @@ const error = ref<string | null>(null)
 const allCards = ref<PokerCard[]>([])
 const levelIndex = ref<LevelIndexItem[]>([])
 const yamlPlayerMap = ref<YamlPlayerMap>({})
-const selectedCard = ref<PokerCard | null>(null)
+const selectedCards = ref<PokerCard[]>([])
 const isRandomDraw = ref(false)
+const drawCount = ref(5)
+const excludeJokers = ref(false)
+const activeIndex = ref(0)
+const scrollContainer = ref<HTMLElement | null>(null)
+const isMultipleDraw = computed(() => selectedCards.value.length > 1)
 
 const sortedCards = computed(() => {
   return [...allCards.value].sort((a, b) => getCardSortOrder(a.cardCode) - getCardSortOrder(b.cardCode))
@@ -315,23 +364,86 @@ function getTitleLength(card: PokerCard): number {
 }
 
 function openCardDetail(card: PokerCard): void {
-  selectedCard.value = card
+  selectedCards.value = [card]
+  activeIndex.value = 0
   isRandomDraw.value = false
   document.body.style.overflow = 'hidden'
 }
 
 function closeCardDetail(): void {
-  selectedCard.value = null
+  selectedCards.value = []
+  activeIndex.value = 0
   isRandomDraw.value = false
   document.body.style.overflow = ''
 }
 
 function randomDraw(): void {
   if (allCards.value.length === 0) return
-  const randomIndex = Math.floor(Math.random() * allCards.value.length)
-  selectedCard.value = allCards.value[randomIndex]
+
+  let pool = allCards.value
+  if (excludeJokers.value) {
+    pool = pool.filter(card => card.cardCode !== 'R' && card.cardCode !== 'B')
+  }
+
+  const randomIndex = Math.floor(Math.random() * pool.length)
+  selectedCards.value = [pool[randomIndex]]
+  activeIndex.value = 0
   isRandomDraw.value = true
   document.body.style.overflow = 'hidden'
+}
+
+function multiRandomDraw(): void {
+  if (allCards.value.length === 0) return
+
+  let pool = [...allCards.value]
+  if (excludeJokers.value) {
+    pool = pool.filter(card => card.cardCode !== 'R' && card.cardCode !== 'B')
+  }
+
+  const count = Math.min(Math.max(drawCount.value || 2, 2), Math.min(10, pool.length))
+  const shuffled = pool.sort(() => 0.5 - Math.random())
+  selectedCards.value = shuffled.slice(0, count)
+  activeIndex.value = 0
+  isRandomDraw.value = true
+  document.body.style.overflow = 'hidden'
+
+  // 重置滚动位置
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollLeft = 0
+  }
+}
+
+function handleScroll(event: Event): void {
+  const container = event.target as HTMLElement
+  if (!container) return
+
+  const scrollWidth = container.scrollWidth - container.clientWidth
+  if (scrollWidth <= 0) {
+    activeIndex.value = 0
+    return
+  }
+
+  // 计算当前滚动到的索引
+  const items = container.querySelectorAll('.multi-card-item')
+  if (items.length === 0) return
+
+  let closestIndex = 0
+  let minDistance = Infinity
+
+  const containerRect = container.getBoundingClientRect()
+  const containerCenter = containerRect.left + containerRect.width / 2
+
+  items.forEach((item, index) => {
+    const itemRect = item.getBoundingClientRect()
+    const itemCenter = itemRect.left + itemRect.width / 2
+    const distance = Math.abs(containerCenter - itemCenter)
+    if (distance < minDistance) {
+      minDistance = distance
+      closestIndex = index
+    }
+  })
+
+  activeIndex.value = closestIndex
 }
 
 function buildYamlPlayerMap(yamlData: any): YamlPlayerMap {
@@ -456,7 +568,54 @@ onMounted(() => {
 
 .draw-button-wrapper {
   padding: var(--spacing-sm);
+  display: flex;
+  justify-content: center;
+}
+
+.draw-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.multi-draw-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg-panel);
+  padding: 4px;
+  border-radius: var(--radius-medium);
+  border: 1px solid var(--border-light);
+}
+
+.draw-btn {
+  font-size: 16px;
+}
+
+.draw-input {
+  width: 40px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-small);
   text-align: center;
+  font-size: 14px;
+}
+
+.joker-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0 4px;
+  user-select: none;
+}
+
+.joker-toggle input {
+  cursor: pointer;
+  accent-color: var(--primary-color);
 }
 
 .poker-card {
@@ -525,6 +684,10 @@ onMounted(() => {
     gap: var(--spacing-md);
     padding: var(--spacing-sm);
   }
+
+  .draw-btn {
+    font-size: 14px;
+  }
 }
 </style>
 
@@ -541,6 +704,83 @@ onMounted(() => {
   align-items: center;
   z-index: 1000;
   padding: 20px;
+  overflow-y: auto; /* 允许整个模态框垂直滚动 */
+}
+
+.modal-body-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 20px;
+  margin: auto; /* 在垂直滚动时也能保持居中 */
+  padding: 40px 0;
+}
+
+.modal-content-scroll {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* 顶部对齐，防止高度过高时顶部被裁剪 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.modal-content-scroll.multi-card-layout {
+  justify-content: safe center;
+  scroll-snap-type: x mandatory;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.multi-card-item {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  transform: scale(0.95);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.multi-redraw-btn {
+  font-size: 16px;
+}
+
+.pagination-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: var(--transition-fast);
+}
+
+.dot.active {
+  background: var(--primary-color);
+  transform: scale(1.3);
+  box-shadow: 0 0 8px var(--primary-color);
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 532px) {
+  .mobile-only {
+    display: flex;
+  }
+
+  .desktop-only {
+    display: none;
+  }
 }
 
 .card-detail-modal .close-btn {
@@ -572,6 +812,8 @@ onMounted(() => {
 .poker-card-real {
   position: relative;
   width: 512px;
+  max-width: 90vw;
+  height: auto;
   aspect-ratio: 1 / 1.54;
   background: #fff;
   border-radius: 16px;
@@ -580,6 +822,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   color: #222;
+  flex-shrink: 0;
 }
 
 .poker-card-real.poker-red .corner-rank {
@@ -750,6 +993,32 @@ onMounted(() => {
     right: 10px;
     padding: 4px 8px;
     font-size: 12px;
+  }
+
+  .modal-content-scroll {
+    gap: 10px;
+    padding: 10px 0;
+  }
+
+  .modal-content-scroll.multi-card-layout {
+    padding-left: 10px;
+    padding-right: 10px;
+    justify-content: flex-start;
+  }
+
+  .modal-body-container {
+    gap: 15px;
+    padding: 20px 0;
+  }
+
+  .multi-card-item {
+    transform: scale(1);
+    width: calc(100vw - 20px); /* 减去 modal 的 10px * 2 左右内边距 */
+    max-width: 512px;
+  }
+
+  .multi-redraw-btn {
+    font-size: 14px;
   }
 }
 
