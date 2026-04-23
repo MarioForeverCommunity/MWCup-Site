@@ -21,7 +21,7 @@
 
       <div class="draw-button-wrapper">
         <div class="draw-controls">
-          <button class="btn-primary draw-btn" @click="randomDraw">抽一张牌</button>
+          <button class="btn-primary btn-base" @click="randomDraw">抽一张牌</button>
           <div class="multi-draw-group">
             <input
               v-model.number="drawCount"
@@ -34,7 +34,7 @@
               <input v-model="excludeJokers" type="checkbox" />
               <span>不抽大小王</span>
             </label>
-            <button class="btn-primary draw-btn" @click="multiRandomDraw">抽多张牌</button>
+            <button class="btn-primary btn-base" @click="multiRandomDraw">抽多张牌</button>
           </div>
         </div>
       </div>
@@ -84,7 +84,7 @@
                 class="poker-card-real"
                 :class="{ 'poker-red': isRedCard(card.cardCode), 'multi-card-item': isMultipleDraw }"
               >
-                <button v-if="isRandomDraw && !isMultipleDraw" class="btn-secondary poker-redraw-btn" @click="randomDraw">再次抽取</button>
+                <button v-if="isRandomDraw && !isMultipleDraw" class="btn-secondary poker-redraw-btn btn-base" @click="randomDraw">再次抽取</button>
                 <div class="poker-corner poker-corner-tl">
                   <span class="corner-rank">{{ getPokerRank(card.cardCode) }}</span>
                   <img :src="getPokerSymbolPath(card.cardCode)" class="corner-symbol-img" alt="" />
@@ -129,7 +129,7 @@
                   @click="scrollToCard(index)"
                 ></span>
               </div>
-              <button class="btn-primary multi-redraw-btn desktop-only" @click="multiRandomDraw">全部重抽</button>
+              <button class="btn-primary btn-base desktop-only" @click="multiRandomDraw">全部重抽</button>
             </div>
           </div>
         </div>
@@ -628,10 +628,6 @@ onMounted(() => {
   border: 1px solid var(--border-light);
 }
 
-.draw-btn {
-  font-size: 16px;
-}
-
 .draw-input {
   width: 40px;
   padding: 6px 8px;
@@ -723,10 +719,6 @@ onMounted(() => {
     gap: var(--spacing-md);
     padding: var(--spacing-sm);
   }
-
-  .draw-btn {
-    font-size: 14px;
-  }
 }
 </style>
 
@@ -783,10 +775,6 @@ onMounted(() => {
 .modal-actions {
   display: flex;
   justify-content: center;
-}
-
-.multi-redraw-btn {
-  font-size: 16px;
 }
 
 .pagination-dots {
@@ -1054,10 +1042,6 @@ onMounted(() => {
     transform: scale(1);
     width: calc(100vw - 20px); /* 减去 modal 的 10px * 2 左右内边距 */
     max-width: 512px;
-  }
-
-  .multi-redraw-btn {
-    font-size: 14px;
   }
 }
 
