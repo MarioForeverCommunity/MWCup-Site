@@ -38,11 +38,19 @@ export default defineConfig({
         chunkFileNames: 'js/[name]-[hash].js',
         entryFileNames: 'js/[name]-[hash].js',
         assetFileNames: '[ext]/[name]-[hash].[ext]',
-        manualChunks: {
-          'vue-vendor': ['vue', 'vue-router'],
-          'xlsx-vendor': ['xlsx', 'xlsx-js-style'],
-          'data-vendor': ['decimal.js', 'papaparse', 'js-yaml'],
-          'ui-vendor': ['marked']
+        manualChunks(id) {
+          if (id.includes('node_modules/vue/') || id.includes('node_modules/@vue/') || id.includes('node_modules/vue-router/')) {
+            return 'vue-vendor'
+          }
+          if (id.includes('node_modules/xlsx') || id.includes('node_modules/xlsx-js-style')) {
+            return 'xlsx-vendor'
+          }
+          if (id.includes('node_modules/decimal.js') || id.includes('node_modules/papaparse') || id.includes('node_modules/js-yaml')) {
+            return 'data-vendor'
+          }
+          if (id.includes('node_modules/marked')) {
+            return 'ui-vendor'
+          }
         }
       }
     },
