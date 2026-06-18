@@ -1,59 +1,59 @@
 # AGENTS.md
 
-Conventions for AI coding assistants working in this repo.
+在此代码库中工作的 AI 编码助手的约定。
 
-## Tech Stack
+## 技术栈
 
-- **Framework**: Vue 3 (Composition API, `<script setup lang="ts">`)
-- **Language**: TypeScript (strict mode)
-- **Build**: Vite
-- **Package Manager**: bun — do NOT use npm/yarn/pnpm
-- **Styling**: CSS with CSS Variables, modular files
-- **Data**: js-yaml, papaparse, xlsx, decimal.js
+- **框架**: Vue 3 (Composition API, `<script setup lang="ts">`)
+- **语言**: TypeScript (严格模式)
+- **构建**: Vite 8 (支持 gzip/brotli 压缩, terser 压缩, ES2022 目标)
+- **包管理器**: bun — 不要使用 npm/yarn/pnpm
+- **样式**: CSS (CSS 变量 + 模块化文件)
+- **数据处理**: js-yaml, papaparse, xlsx, xlsx-js-style, decimal.js, marked
+- **HTTP 客户端**: axios
 
-## Commands
+## 命令
 
 ```bash
-bun run dev        # Dev server (HMR)
-bun run build      # Type check (vue-tsc -b) then vite build
-bun run preview    # Preview production build
-bun run lint       # ESLint with --fix
-bun run deploy     # Run deploy.sh
+bun run dev        # 开发服务器 (HMR, host 0.0.0.0)
+bun run build      # 类型检查 (vue-tsc -b) 然后 vite build
+bun run preview    # 预览生产构建
+bun run lint       # ESLint 带 --fix
+bun run deploy     # 部署到生产服务器
 ```
 
-No test framework is configured. If tests are needed, add vitest first.
+**验证顺序**: `lint` → `build` (包含类型检查)
 
-## Project Structure
+## 项目结构
 
 ```
 src/
-├── components/    # Vue SFCs (PascalCase: ScoreTable.vue)
-├── router/        # Vue Router config
-├── styles/        # CSS modules (theme, components, layout, animations)
-├── types/         # TypeScript interfaces/types
-├── utils/         # Helper functions
-└── App.vue        # Root component
-public/data/       # Static data (CSV, JSON, YAML, Markdown)
+├── components/    # Vue 单文件组件 (PascalCase: ScoreTable.vue)
+├── router/        # Vue Router 配置
+├── styles/        # CSS 模块 (theme, components, layout, animations)
+├── types/         # TypeScript 接口/类型
+├── utils/         # 辅助函数
+└── App.vue        # 根组件
+public/data/       # 静态数据 (CSV, JSON, YAML, Markdown)
+scripts/           # 构建脚本 (例如 generateLevelIndex.js)
 ```
 
-## Code Style
+## 代码风格
 
-### Formatting
+### 格式化 (来自 .editorconfig + eslint.config.js)
 
-From `.editorconfig` and `eslint.config.js`:
+- **缩进**: 所有文件 2 个空格
+- **字符集**: UTF-8, 文件末尾插入换行
+- **对象花括号**: 内部始终有空格 `{ a }` 而不是 `{a}`
+- **花括号**: 多行语句必须使用
+- **最大空行**: 1 行, 没有尾随空行
+- **尾随空格**: 禁止
+- **分号/引号/逗号**: 无强制要求
+- **换行符样式**: 无强制要求 (Windows 风格也可以)
 
-- **Indent**: 2 spaces for all files
-- **Charset**: UTF-8, insert final newline
-- **Object braces**: always a space inside `{ a }` not `{a}`
-- **Curly braces**: required for multi-line statements
-- **Max empty lines**: 1, no trailing blank line
-- **Trailing spaces**: forbidden
-- **Semicolons / quotes / commas**: no enforcement
-- **Linebreak style**: no enforcement (Windows-style OK)
+### 导入顺序
 
-### Imports
-
-Order: 1) external libs, 2) internal utils/types, 3) Vue components.
+1) 外部库, 2) 内部工具/类型, 3) Vue 组件。
 
 ```typescript
 import { ref, computed, watch } from 'vue'
@@ -62,9 +62,25 @@ import { loadRoundScoreData, type ScoreRecord } from '../utils/scoreCalculator'
 import ScoreTable from './ScoreTable.vue'
 ```
 
-Use `import type` for type-only imports.
+使用 `import type` 进行仅类型导入。
 
-### Vue Components
+### 命名约定
+
+| 类型 | 约定 | 示例 |
+|------|------|------|
+| 组件 | PascalCase | `ScoreTable.vue` |
+| 函数 | camelCase | `loadRoundScoreData` |
+| 常量 | UPPER_SNAKE_CASE | `SCORING_SCHEMES` |
+| 变量 | camelCase | `selectedYear` |
+| 类型/接口 | PascalCase | `ScoreRecord` |
+
+### TypeScript
+
+- `strict: true`; 允许使用 `any`
+- 未使用变量: 以 `_` 前缀忽略警告
+- 可选属性使用 `?`
+
+### Vue 组件
 
 ```vue
 <script setup lang="ts">
@@ -82,52 +98,27 @@ const filteredData = computed(() => {
   return scoreData.value.filter(...)
 })
 
-onMounted(() => { /* init logic */ })
+onMounted(() => { /* 初始化逻辑 */ })
 </script>
 ```
 
-Enforced Vue ESLint rules:
-- Max 3 attributes on single-line; 1 per line in multi-line
-- HTML indent: 2 spaces
-- Mustache interpolation: `{{ value }}` not `{{value}}`
-- `prop-name-casing` and `multi-word-component-names` are off
+强制的 Vue ESLint 规则:
+- 单行最多 3 个属性; 多行每行 1 个属性
+- HTML 缩进: 2 个空格
+- Mustache 插值: `{{ value }}` 而不是 `{{value}}`
+- `prop-name-casing` 和 `multi-word-component-names` 已关闭
 
-### TypeScript
+### 比较
 
-- `strict: true`; `any` is allowed
-- Unused vars: prefix with `_` to suppress warnings
-- Optional props use `?`
+使用 `===`/`!==`。例外: 允许 `== null`/`== undefined` (智能模式)。
 
-```typescript
-interface ScoreRecord {
-  playerCode: string
-  playerName: string
-  totalScore: Decimal
-  isRevoked?: boolean
-}
-```
+### 变量
 
-### Naming
+始终使用 `const`, 从不使用 `var`。仅在需要修改时使用 `let`。
 
-| Kind | Convention | Example |
-|------|-----------|---------|
-| Components | PascalCase | `ScoreTable.vue` |
-| Functions | camelCase | `loadRoundScoreData` |
-| Constants | UPPER_SNAKE_CASE | `SCORING_SCHEMES` |
-| Variables | camelCase | `selectedYear` |
-| Types/Interfaces | PascalCase | `ScoreRecord` |
+### 错误处理
 
-### Comparisons
-
-Use `===`/`!==`. Exception: `== null`/`== undefined` is allowed (smart mode).
-
-### Variables
-
-Always `const`, never `var`. Use `let` only when mutation is needed.
-
-### Error Handling
-
-Wrap async operations in try-catch. Use Chinese error messages. Maintain an `error` ref in components for UI display.
+用 try-catch 包装异步操作。使用中文错误消息。在组件中维护 `error` ref 用于 UI 显示。
 
 ```typescript
 try {
@@ -139,11 +130,11 @@ try {
 }
 ```
 
-Empty catch blocks are allowed.
+允许空的 catch 块。
 
-## Numeric Precision
+## 数值精度
 
-Use `decimal.js` for all score calculations:
+所有分数计算使用 `decimal.js`:
 
 ```typescript
 import { Decimal } from 'decimal.js'
@@ -151,9 +142,9 @@ Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP })
 const avg = new Decimal(score).div(count).toDecimalPlaces(1)
 ```
 
-## Data Loading
+## 数据加载
 
-Static assets live in `public/data/`. Fetch with `Promise.all` for parallel loads:
+静态资源位于 `public/data/`。使用 `Promise.all` 并行加载:
 
 ```typescript
 const [levels, maxScore, config] = await Promise.all([
@@ -163,22 +154,22 @@ const [levels, maxScore, config] = await Promise.all([
 ])
 ```
 
-## Type Definitions
+## 类型定义
 
-- Complex types go in `src/types/`
-- Use `.d.ts` for extending third-party library types
-- Export types with `export interface` or `export type`
+- 复杂类型放在 `src/types/`
+- 使用 `.d.ts` 扩展第三方库类型
+- 使用 `export interface` 或 `export type` 导出类型
 
-## CSS Conventions
+## CSS 约定
 
-- Theme colors via CSS variables: `--primary-color`, `--text-primary`
-- Modular: theme.css, components.css, layout.css, animations.css
-- Responsive: `@media (max-width: 768px)` breakpoint
-- Animation classes: `animate-fadeInUp`, `hover-scale`
+- 主题颜色使用 CSS 变量: `--primary-color`, `--text-primary`
+- 模块化: theme.css, components.css, layout.css, animations.css
+- 响应式: `@media (max-width: 768px)` 断点
+- 动画类: `animate-fadeInUp`, `hover-scale`
 
-## Routing
+## 路由
 
-Config in `src/router/index.ts`. Use Vue Router composables:
+配置在 `src/router/index.ts`。使用 Vue Router 组合式 API:
 
 ```typescript
 import { useRoute, useRouter } from 'vue-router'
@@ -186,32 +177,37 @@ const route = useRoute()
 const year = route.params.year as string
 ```
 
-## Scoring Schemes
+## 评分方案
 
-Supports schemes A/B/C/D/E/S defined in YAML:
+支持 YAML 中定义的 A/B/C/D/E/S 方案:
 - A: ['欣赏性', '娱乐性', '挑战性', '创新性', '加分项', '扣分项']
-- C/E: degree-based scoring
-- D: judge/public mixed scoring
-- S: total score system
+- B: ['欣赏性', '设计水平', '创新性', '挑战性', '娱乐性', '加分项', '扣分项']
+- C: 大项下辖子项
+- D: 评委/大众混合评分
+- E: 在 C 的基础上引入大众评分，按“评委评分×75% + 大众评分×25%”计算
+- S: 2015 半决赛总分制
 
-Check `scoringScheme` before applying score logic — each has different categories.
+在应用评分逻辑前检查 `scoringScheme` — 每个方案有不同的类别。
 
-## Data Sources
+## 数据源
 
-- `public/data/docs/*.md` - Event documentation
-- `public/data/levels/index.json` - Level index
-- `public/data/scores/*.csv` - Round scores
-- `public/data/subjects/*.md` - Competition problems
-- `public/data/votes/*.csv` - Public votes
-- `public/data/maxScore.json` - Max score per round
-- `public/data/mwcup.yaml` - Competition config
-- `public/data/specialLevels.json` - Special level mapping
-- `public/data/levelSubjects.json` - Level-to-subject mapping (2026+)
-- `public/data/users.csv` - User list
+- `public/data/docs/*.md` - 赛事文档
+- `public/data/levels/index.json` - 关卡索引
+- `public/data/scores/*.csv` - 各轮次评分数据
+- `public/data/subjects/*.md` - 比赛试题
+- `public/data/votes/*.csv` - 各轮次大众评分数据
+- `public/data/maxScore.json` - 各轮次满分配置
+- `public/data/mwcup.yaml` - 比赛配置
+- `public/data/specialLevels.json` - 特殊关卡映射
+- `public/data/levelSubjects.json` - 关卡对应题目映射 (2026年及以后)
+- `public/data/poker2020.csv` - 2020年扑克牌数据
+- `public/data/users.csv` - 用户列表
 
-## Notes
+## 注意事项
 
-- **Language**: Use Chinese for comments and error messages
-- **Browser**: Target modern browsers
-- **Responsive**: Support mobile (768px breakpoint)
-- **Performance**: Use pagination or lazy loading for large datasets
+- **语言**: 注释和错误消息使用中文
+- **浏览器**: 目标现代浏览器
+- **响应式**: 支持移动端 (768px 断点)
+- **性能**: 大数据集使用分页或懒加载
+- **构建**: 生产构建使用 terser 并剥离 console/debugger
+- **部署**: 通过 rsync 部署到 `/data/wwwroot/mwcup.marioforever.net/`
