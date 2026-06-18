@@ -10,7 +10,6 @@
 - **包管理器**: bun — 不要使用 npm/yarn/pnpm
 - **样式**: CSS (CSS 变量 + 模块化文件)
 - **数据处理**: js-yaml, papaparse, xlsx, xlsx-js-style, decimal.js, marked
-- **HTTP 客户端**: axios
 
 ## 命令
 
