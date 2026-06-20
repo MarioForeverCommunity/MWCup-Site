@@ -13,11 +13,23 @@ import type {
   OriginalScoreRankingItem,
   RankingFilters
 } from '../types/ranking';
+import type { MWCupYamlDoc, MaxScoreData, LevelIndexItem } from '../types/mwcup';
 
 // 缓存加载的数据
-let levelsData: any[] | null = null;
-let maxScoreData: any | null = null;
-let yamlData: any | null = null;
+let levelsData: LevelIndexItem[] | null = null;
+let maxScoreData: MaxScoreData | null = null;
+let yamlData: MWCupYamlDoc | null = null;
+
+// 多关卡项数据结构
+interface MultiLevelItem {
+  levelName: string;
+  playerCode: string;
+  year: number;
+  roundKey: string;
+  roundType: string;
+  playerName: string;
+  isDirectFile: boolean;
+}
 
 /**
  * 加载基础数据
@@ -35,11 +47,11 @@ async function loadBaseData() {
       throw new Error('Failed to load base data');
     }
 
-    levelsData = await levelsResponse.json();
-    maxScoreData = await maxScoreResponse.json();
+    levelsData = await levelsResponse.json() as LevelIndexItem[];
+    maxScoreData = await maxScoreResponse.json() as MaxScoreData;
 
     const yamlText = await yamlResponse.text();
-    yamlData = YAML.load(yamlText);
+    yamlData = YAML.load(yamlText) as MWCupYamlDoc;
   }
 
   return { levelsData: levelsData!, maxScoreData: maxScoreData!, yamlData: yamlData! };
@@ -77,7 +89,7 @@ function getRoundName(roundKey: string, _roundType: string, year?: number): stri
   // _roundType 参数不使用但保留以维持函数签名兼容性
 
   // 构造必要的 roundData 对象
-  const roundData: any = {
+  const roundData: { year: string; is_warmup?: boolean } = {
     year: year?.toString() || ''
   };
 
@@ -141,13 +153,13 @@ function getScoringScheme(year: number, roundKey: string): string {
 export async function calculateSingleLevelRanking(filters?: RankingFilters): Promise<LevelRankingItem[]> {
   const { levelsData, yamlData } = await loadBaseData();
 
-  // 过滤非MultiLevel的关卡
-  const singleLevels = levelsData.filter((level: any) => !level.isMultiLevel);
+  // 过滤非MultiLevel的关卡，且排除2012年
+  const singleLevels = levelsData.filter((level: LevelIndexItem) => !level.isMultiLevel && level.year !== 2012);
 
   const rankingItems: LevelRankingItem[] = [];
 
   // 按年份和轮次分组加载评分数据
-  const roundGroups = new Map<string, any[]>();
+  const roundGroups = new Map<string, LevelIndexItem[]>();
   for (const level of singleLevels) {
     const key = `${level.year}-${level.roundKey}`;
     if (!roundGroups.has(key)) {
@@ -213,9 +225,10 @@ export async function calculateSingleLevelRanking(filters?: RankingFilters): Pro
 export async function calculateMultiLevelRanking(filters?: RankingFilters): Promise<MultiLevelRankingItem[]> {
   const { levelsData, yamlData } = await loadBaseData();
 
-  // 获取所有MultiLevel关卡的文件夹信息或直接的多关题文件
-  const multiLevelItems = new Map<string, any>();
+  // 获取所有MultiLevel关卡的文件夹信息或直接的多关题文件，排除2012年
+  const multiLevelItems = new Map<string, MultiLevelItem>();
   for (const level of levelsData) {
+    if (level.year === 2012) continue // 忽略2012年数据
     if (level.isMultiLevel) {
       // 带有文件夹的多关卡题
       if (level.multiLevelFolder) {
@@ -253,7 +266,7 @@ export async function calculateMultiLevelRanking(filters?: RankingFilters): Prom
   const rankingItems: MultiLevelRankingItem[] = [];
 
   // 按年份和轮次分组
-  const roundGroups = new Map<string, any[]>();
+  const roundGroups = new Map<string, MultiLevelItem[]>();
   for (const item of multiLevelItems.values()) {
     const key = `${item.year}-${item.roundKey}`;
     if (!roundGroups.has(key)) {
@@ -319,14 +332,14 @@ export async function calculateMultiLevelRanking(filters?: RankingFilters): Prom
 export async function calculateOriginalScoreRanking(filters?: RankingFilters): Promise<OriginalScoreRankingItem[]> {
   const { levelsData, yamlData } = await loadBaseData();
 
-  // 过滤非MultiLevel的关卡
-  const singleLevels = levelsData.filter((level: any) => !level.isMultiLevel);
+  // 过滤非MultiLevel的关卡，且排除2012年
+  const singleLevels = levelsData.filter((level: LevelIndexItem) => !level.isMultiLevel && level.year !== 2012);
 
   const originalItems: OriginalScoreRankingItem[] = [];
   const finalItems: LevelRankingItem[] = [];
 
   // 按年份和轮次分组加载评分数据
-  const roundGroups = new Map<string, any[]>();
+  const roundGroups = new Map<string, LevelIndexItem[]>();
   for (const level of singleLevels) {
     const key = `${level.year}-${level.roundKey}`;
     if (!roundGroups.has(key)) {
@@ -475,7 +488,7 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
             originalScoreRate, // 排名用未换算分
             scoreChange: Math.abs(scoreChange),
             changeType: scoreChange > 0 ? 'down' : scoreChange < 0 ? 'up' : 'same'
-          } as any);
+          } as OriginalScoreRankingItem);
 
           finalItems.push(baseItem);
         }
@@ -654,7 +667,7 @@ export async function getAvailableYears(): Promise<number[]> {
   const years = new Set<number>();
 
   for (const level of levelsData) {
-    years.add(level.year);
+    if (level.year !== 2012) years.add(level.year);
   }
 
   return Array.from(years).sort((a, b) => b - a);

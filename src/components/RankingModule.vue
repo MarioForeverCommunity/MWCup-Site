@@ -232,6 +232,7 @@ import type {
   OriginalScoreRankingItem,
   RankingFilters
 } from '../types/ranking'
+import type { MWCupYamlDoc } from '../types/mwcup'
 import { Decimal } from 'decimal.js'
 import {
   calculateSingleLevelRanking,
@@ -240,21 +241,42 @@ import {
   getAvailableYears
 } from '../utils/rankingCalculator'
 import { matchPlayerName } from '../utils/levelFileHelper'
-import { loadUserData } from '../utils/userDataProcessor'
+import { loadUserData, type UserData } from '../utils/userDataProcessor'
 import { fetchLevelFilesFromLocal, type LevelFile } from '../utils/levelFileHelper'
 import { shouldShowScoreData, fetchMarioWorkerYaml } from '../utils/scheduleHelper'
 
 // SheetJS 工具：按需加载，优先使用 xlsx-js-style（可写样式），失败回退到 xlsx
-type XLSXWorkSheet = { [key: string]: any; '!ref'?: string }
-let _XLSX: any | null = null
-async function getXLSX() {
+
+type XLSXWorkSheet = { [key: string]: unknown; '!ref'?: string }
+
+interface XLSXWorkbook {
+  SheetNames: string[]
+  Sheets: Record<string, XLSXWorkSheet>
+  [key: string]: unknown
+}
+
+interface XLSXLibrary {
+  utils: {
+    book_new(): XLSXWorkbook
+    book_append_sheet(wb: XLSXWorkbook, ws: XLSXWorkSheet, name: string): void
+    json_to_sheet<T>(data: T[], opts?: Record<string, unknown>): XLSXWorkSheet
+    aoa_to_sheet<T>(data: T[][], opts?: Record<string, unknown>): XLSXWorkSheet
+    sheet_to_json<T>(ws: XLSXWorkSheet, opts?: Record<string, unknown>): T[]
+    encode_cell(cell: { r: number; c: number }): string
+    table_to_book(table: HTMLElement, opts?: Record<string, unknown>): XLSXWorkbook
+  }
+  writeFile(wb: XLSXWorkbook, filename: string): void
+}
+
+let _XLSX: XLSXLibrary | null = null
+async function getXLSX(): Promise<XLSXLibrary> {
   if (_XLSX) return _XLSX
   try {
-    const mod: any = await import('xlsx-js-style')
-    _XLSX = mod?.default ?? mod
+    const mod = await import('xlsx-js-style') as Record<string, unknown>
+    _XLSX = (mod?.default ?? mod) as XLSXLibrary
   } catch (_) {
-    const mod: any = await import('xlsx')
-    _XLSX = mod?.default ?? mod
+    const mod = await import('xlsx') as Record<string, unknown>
+    _XLSX = (mod?.default ?? mod) as XLSXLibrary
   }
   return _XLSX
 }
@@ -265,10 +287,12 @@ function centerAlignAllCells(ws: XLSXWorkSheet) {
   if (!ref) return
   for (const addr of Object.keys(ws)) {
     if (addr.startsWith('!')) continue
-    const cell: any = ws[addr]
+
+    const cell = ws[addr] as Record<string, unknown> | undefined
     if (!cell || typeof cell !== 'object') continue
-    cell.s = cell.s || {}
-    cell.s.alignment = { horizontal: 'center', vertical: 'center' }
+    const style = (cell.s || {}) as Record<string, unknown>
+    style.alignment = { horizontal: 'center', vertical: 'center' }
+    cell.s = style
   }
 }
 
@@ -289,9 +313,9 @@ const singleLevelRanking = ref<LevelRankingItem[]>([])
 const multiLevelRanking = ref<MultiLevelRankingItem[]>([])
 const originalScoreRanking = ref<OriginalScoreRankingItem[]>([])
 const availableYears = ref<number[]>([])
-const userDataCache = ref<any[]>([])
+const userDataCache = ref<UserData[]>([])
 const levelFiles = ref<LevelFile[]>([])
-const yamlData = ref<any>(null)
+const yamlData = ref<MWCupYamlDoc | null>(null)
 
 // ===== 导出到 Excel：表格引用与导出方法 =====
 const singleTableRef = ref<HTMLTableElement | null>(null)
@@ -489,18 +513,19 @@ const tabs = computed(() => [
 ])
 
 // 并列排名算法，支持动态字段赋值
-function assignRankingWithTies<T extends Record<string, any>>(items: T[], rankField: string = 'rank', scoreField: string = 'scoreRate') {
+function assignRankingWithTies<T>(items: T[], rankField: string = 'rank', scoreField: string = 'scoreRate') {
   let lastScore = null
   let lastRank = 0
   let skip = 0
   for (let i = 0; i < items.length; i++) {
-    const currScore = Number(items[i][scoreField])
+    const item = items[i] as unknown as Record<string, unknown>
+    const currScore = Number(item[scoreField])
     if (lastScore !== null && Math.abs(currScore - lastScore) < 1e-6) {
-      (items[i] as any)[rankField] = lastRank
+      item[rankField] = lastRank
       skip++
     } else {
-      (items[i] as any)[rankField] = lastRank + 1 + skip
-      lastRank = (items[i] as any)[rankField]
+      item[rankField] = lastRank + 1 + skip
+      lastRank = item[rankField] as number
       skip = 0
     }
     lastScore = currScore
@@ -652,7 +677,7 @@ function applySingleLevelFilters(items: LevelRankingItem[], filters: RankingFilt
 
   // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
   if (yamlData.value) {
-    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
+    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value!, item.year.toString(), item.roundKey))
   }
 
   if (filters.searchPlayer) {
@@ -714,7 +739,7 @@ function applyMultiLevelFilters(items: MultiLevelRankingItem[], filters: Ranking
 
   // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
   if (yamlData.value) {
-    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
+    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value!, item.year.toString(), item.roundKey))
   }
 
   if (filters.searchPlayer) {
@@ -776,7 +801,7 @@ function applyOriginalScoreFilters(items: OriginalScoreRankingItem[], filters: R
 
   // 过滤评分未截止的关卡（仅对2026年及之后的赛事生效）
   if (yamlData.value) {
-    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value, item.year.toString(), item.roundKey))
+    filtered = filtered.filter(item => shouldShowScoreData(yamlData.value!, item.year.toString(), item.roundKey))
   }
 
   if (filters.searchPlayer) {

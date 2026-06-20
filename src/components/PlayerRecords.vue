@@ -183,6 +183,7 @@ import { analyzePlayerRecords } from '../utils/dataAnalyzer'
 import { loadUserData, type PlayerRecord, type UserData } from '../utils/userDataProcessor'
 import { matchPlayerName } from '../utils/levelFileHelper'
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader'
+import type { MWCupYamlDoc } from '../types/mwcup'
 import { formatResultDisplay } from '../utils/resultFormatter'
 import { loadTotalPointsData, calculateRankingWithTies } from '../utils/totalPointsCalculator'
 
@@ -196,7 +197,7 @@ interface YearlyPlayerData {
 
 const records = ref<PlayerRecord[]>([])
 const users = ref<UserData[]>([])
-const yamlData = ref<any>(null)
+const yamlData = ref<MWCupYamlDoc | null>(null)
 const loading = ref(false)
 const error = ref('')
 const searchQuery = ref('')

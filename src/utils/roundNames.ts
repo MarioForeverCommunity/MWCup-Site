@@ -2,10 +2,12 @@
  * 轮次名称映射工具
  */
 
+import type { RoundNameData } from '../types/mwcup'
+
 /**
  * 获取轮次中文显示名称
  */
-export function getRoundChineseName(roundCode: string, roundData?: any): string {
+export function getRoundChineseName(roundCode: string, roundData?: RoundNameData): string {
   // 检查轮次数据是否有 deadlines（表示这是题目模式而不是轮次模式）
   // const hasDeadlines = roundData?.schedule?.deadlines || roundData?.deadlines
 

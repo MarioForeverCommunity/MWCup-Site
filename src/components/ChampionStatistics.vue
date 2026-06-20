@@ -81,6 +81,8 @@ import { uploadUrlMap as urlMap } from '../utils/urlMap'
 import { loadRoundScoreData } from '../utils/scoreCalculator'
 import { loadTotalPointsData } from '../utils/totalPointsCalculator'
 import { Decimal } from 'decimal.js'
+import type { SeasonYearData, RoundSchedule, PlayerData } from '../types/mwcup'
+import { isGroupedPlayerMap, isFlatPlayerMap } from '../types/mwcup'
 
 interface ChampionInfo {
   year: string
@@ -102,8 +104,27 @@ const champions = ref<ChampionInfo[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
+// 从 PlayerData 中提取决赛选手名称
+function getFinalistNames(players: PlayerData | undefined): Record<string, string> {
+  if (!players) return {}
+  if (isGroupedPlayerMap(players)) {
+    const result: Record<string, string> = {}
+    for (const [group, map] of Object.entries(players)) {
+      for (const [, name] of Object.entries(map)) {
+        result[group] = name
+      }
+    }
+    return result
+  }
+  if (isFlatPlayerMap(players)) {
+    // FlatPlayerMap: { M: "playerName", W: "playerName", ... }
+    return { ...players }
+  }
+  return {}
+}
+
 // 检查选手是否在YAML的指定轮次中出现
-function isPlayerInYamlRound(seasonData: any, roundKey: string, playerName: string): boolean {
+function isPlayerInYamlRound(seasonData: SeasonYearData, roundKey: string, playerName: string): boolean {
   let roundData = seasonData.rounds[roundKey]
 
   if (!roundData) {
@@ -165,7 +186,7 @@ function formatDate(isoDate: string): string {
 }
 
 // 提取比赛各阶段日期
-function extractDates(yearData: any, _year: string) {
+function extractDates(yearData: SeasonYearData, _year: string) {
   const dates = {
     p1Start: '',
     p1End: '',
@@ -179,33 +200,35 @@ function extractDates(yearData: any, _year: string) {
 
   // 预赛P1日期
   const p1Round = yearData.rounds.P1
-  if (p1Round?.schedule) {
+  const p1Schedule = p1Round?.schedule as RoundSchedule | undefined
+  if (p1Schedule) {
     // P1开始：match开始时间
-    if (p1Round.schedule.match?.start) {
-      dates.p1Start = formatDate(p1Round.schedule.match.start)
+    if (p1Schedule.match?.start) {
+      dates.p1Start = formatDate(p1Schedule.match.start)
     }
     // P1结束：judging结束时间（如果没有judging.end，则使用judging.start）
-    if (p1Round.schedule.judging?.end) {
-      dates.p1End = formatDate(p1Round.schedule.judging.end)
-    } else if (p1Round.schedule.judging?.start) {
-      dates.p1End = formatDate(p1Round.schedule.judging.start)
-    } else if (p1Round.schedule.post_match_checkin?.start) {
-      dates.p1End = formatDate(p1Round.schedule.post_match_checkin.start)
+    if (p1Schedule.judging?.end) {
+      dates.p1End = formatDate(p1Schedule.judging.end)
+    } else if (p1Schedule.judging?.start) {
+      dates.p1End = formatDate(p1Schedule.judging.start)
+    } else if (typeof p1Schedule.post_match_checkin !== 'string' && p1Schedule.post_match_checkin?.start) {
+      dates.p1End = formatDate(p1Schedule.post_match_checkin.start)
     }
   }
 
   // 资格赛P2日期
   const p2Round = yearData.rounds.P2
-  if (p2Round?.schedule) {
+  const p2Schedule = p2Round?.schedule as RoundSchedule | undefined
+  if (p2Schedule) {
     // P2开始：match开始时间
-    if (p2Round.schedule.match?.start) {
-      dates.p2Start = formatDate(p2Round.schedule.match.start)
+    if (p2Schedule.match?.start) {
+      dates.p2Start = formatDate(p2Schedule.match.start)
     }
     // P2结束：judging结束时间（如果没有judging.end，则使用judging.start）
-    if (p2Round.schedule.judging?.end) {
-      dates.p2End = formatDate(p2Round.schedule.judging.end)
-    } else if (p2Round.schedule.judging?.start) {
-      dates.p2End = formatDate(p2Round.schedule.judging.start)
+    if (p2Schedule.judging?.end) {
+      dates.p2End = formatDate(p2Schedule.judging.end)
+    } else if (p2Schedule.judging?.start) {
+      dates.p2End = formatDate(p2Schedule.judging.start)
     }
   }
   // 正赛开始：处理数组格式的G1/I1轮次
@@ -217,26 +240,29 @@ function extractDates(yearData: any, _year: string) {
     const round = rounds[roundKey]
 
     // 检查是否是数组格式的轮次（如[G1, G2, G3, G4]或[I1, I2, I3]）
-    if (Array.isArray(roundKey) || roundKey.includes('[') || (round && round.schedule)) {
-      if (round.schedule?.topics) {
-        if (round.schedule.topics.G1?.time) {
-          dates.mainStart = formatDate(round.schedule.topics.G1.time)
+    const roundSchedule = round?.schedule as RoundSchedule | undefined
+    if (Array.isArray(roundKey) || roundKey.includes('[') || roundSchedule) {
+      if (roundSchedule?.topics) {
+        if (roundSchedule.topics.G1?.time) {
+          dates.mainStart = formatDate(roundSchedule.topics.G1.time)
           mainStartFound = true
           break
-        } else if (round.schedule.topics.I1?.time) {
-          dates.mainStart = formatDate(round.schedule.topics.I1.time)
+        } else if (roundSchedule.topics.I1?.time) {
+          dates.mainStart = formatDate(roundSchedule.topics.I1.time)
           mainStartFound = true
           break
         }
       }
       // 其他年份：使用match.start
-      else if (round.schedule) {
-        if (round.schedule.G1?.match?.start) {
-          dates.mainStart = formatDate(round.schedule.G1.match.start)
+      else if (roundSchedule) {
+        const g1 = roundSchedule.G1 as RoundSchedule | undefined
+        const i1 = roundSchedule.I1 as RoundSchedule | undefined
+        if (g1?.match?.start) {
+          dates.mainStart = formatDate(g1.match.start)
           mainStartFound = true
           break
-        } else if (round.schedule.I1?.match?.start) {
-          dates.mainStart = formatDate(round.schedule.I1.match.start)
+        } else if (i1?.match?.start) {
+          dates.mainStart = formatDate(i1.match.start)
           mainStartFound = true
           break
         }
@@ -249,8 +275,9 @@ function extractDates(yearData: any, _year: string) {
     for (const roundKey of Object.keys(rounds)) {
       const round = rounds[roundKey]
       if (roundKey.startsWith('G') || roundKey.startsWith('I')) {
-        if (round?.schedule?.match?.start) {
-          dates.mainStart = formatDate(round.schedule.match.start)
+        const sched = round?.schedule as RoundSchedule | undefined
+        if (sched?.match?.start) {
+          dates.mainStart = formatDate(sched.match.start)
           break
         }
       }
@@ -258,8 +285,9 @@ function extractDates(yearData: any, _year: string) {
   }
   // 正赛结束：决赛F的judging结束时间
   const finalRound = yearData.rounds.F
-  if (finalRound?.schedule?.judging?.end) {
-    dates.mainEnd = formatDate(finalRound.schedule.judging.end)
+  const finalSchedule = finalRound?.schedule as RoundSchedule | undefined
+  if (finalSchedule?.judging?.end) {
+    dates.mainEnd = formatDate(finalSchedule.judging.end)
   }
 
   return dates
@@ -275,14 +303,15 @@ async function loadChampions() {
     const championList: ChampionInfo[] = []
 
     for (const [year, yearData] of Object.entries(seasonData)) {
+      if (year === '2012') continue // 忽略2012年数据
       if (typeof yearData === 'object' && yearData !== null) {
-        const data = yearData as any
+        const data = yearData as SeasonYearData
         const dates = extractDates(data, year)
 
         const championInfo: ChampionInfo = {
           year,
-          host: data.host,
-          chiefJudges: Array.isArray(data.chief_judge) ? data.chief_judge : data.chief_judge ? [data.chief_judge] : undefined,
+          host: data.host as string | undefined,
+          chiefJudges: Array.isArray(data.chief_judge) ? data.chief_judge as string[] : data.chief_judge ? [data.chief_judge as string] : undefined,
           p1Start: dates.p1Start,
           p1End: dates.p1End,
           p2Start: dates.p2Start,
@@ -316,10 +345,11 @@ async function loadChampions() {
                 const allFinalists: string[] = []
 
                 // 收集所有从YAML获取的决赛选手
-                if (finalRound.players.M) allFinalists.push(finalRound.players.M)
-                if (finalRound.players.W) allFinalists.push(finalRound.players.W)
-                if (finalRound.players.S) allFinalists.push(finalRound.players.S)
-                if (finalRound.players.P) allFinalists.push(finalRound.players.P)
+                const finalists = getFinalistNames(finalRound.players)
+                if (finalists.S) allFinalists.push(finalists.S)
+                if (finalists.M) allFinalists.push(finalists.M)
+                if (finalists.W) allFinalists.push(finalists.W)
+                if (finalists.P) allFinalists.push(finalists.P)
 
                 // 找出在YAML中存在但在评分数据中不存在的选手（未上传作品的选手）
                 const scoredFinalists = sortedPlayers.map(p => p.playerName)
@@ -373,8 +403,9 @@ async function loadChampions() {
                 const finalRound = data.rounds?.F
                 if (finalRound?.players) {
                   // 检查YAML中是否有第四名选手信息但在评分数据中缺失
-                  if (finalRound.players.P && !championInfo.fourth) {
-                    championInfo.fourth = finalRound.players.P
+                  const finalists = getFinalistNames(finalRound.players)
+                  if (finalists.P && !championInfo.fourth) {
+                    championInfo.fourth = finalists.P
                   }
                 }
               }
@@ -395,21 +426,22 @@ async function loadChampions() {
           }
 
           // 确定冠亚军
-          if (finalRound.players.S) {
-            championInfo.first = finalRound.players.S
-            championInfo.second = finalRound.players.M || finalRound.players.W
-          } else if (finalRound.players.M) {
-            championInfo.first = finalRound.players.M
-            championInfo.second = finalRound.players.W
+          const finalists = getFinalistNames(finalRound.players)
+          if (finalists.S) {
+            championInfo.first = finalists.S
+            championInfo.second = finalists.M || finalists.W
+          } else if (finalists.M) {
+            championInfo.first = finalists.M
+            championInfo.second = finalists.W
           }
 
           if (parseInt(year) >= 2020) {
             // 2020年及之后的比赛额外记录季军和第四名
-            if (!championInfo.second && finalRound.players.W) {
-              championInfo.third = finalRound.players.W
+            if (!championInfo.second && finalists.W) {
+              championInfo.third = finalists.W
             }
-            if (finalRound.players.P) {
-              championInfo.fourth = finalRound.players.P
+            if (finalists.P) {
+              championInfo.fourth = finalists.P
             }
           } else {
             // 2019年及之前，尝试从总积分排名获取第三、第四名

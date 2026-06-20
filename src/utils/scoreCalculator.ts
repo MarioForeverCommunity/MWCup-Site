@@ -4,6 +4,8 @@
 
 import { Decimal } from 'decimal.js';
 import { getRoundChineseName } from './roundNames';
+import type { MWCupYamlDoc, PlayerJudgeMap, MaxScoreData, RoundMaxScore } from '../types/mwcup';
+import { findRoundConfig, isPlayerArray, isFlatPlayerMap, isGroupedPlayerMap, isFlatJudgeMap, isGroupedJudgeMap } from '../types/mwcup';
 
 // 设置Decimal的精度和舍入模式
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
@@ -36,6 +38,8 @@ export interface PlayerScore {
   averageScore: Decimal;  // 修改为Decimal类型
   validRecordsCount: number;
   displayRank?: number; // 并列排名显示用，可选
+  rank?: number; // 排名（决赛等场景使用）
+  ranking?: number; // 排名（别名）
   publicScore?: Decimal; // 大众评分
   finalScore?: Decimal;  // 最终得分（评委分×75% + 大众分×25%）
   judgeAverage?: Decimal; // 评委平均分（仅方案E使用）
@@ -104,7 +108,7 @@ export function isNotYetRated(record: ScoreRecord): boolean {
  */
 export function parseCsvToScoreRecords(
   csvText: string,
-  yamlData: any,
+  yamlData: MWCupYamlDoc,
   year: string,
   round: string
 ): RoundScoreData {
@@ -469,64 +473,39 @@ export function parseJudgeCode(judgeCode: string) {
 /**
  * 构建选手和评委名称映射
  */
-export function buildPlayerJudgeMap(yamlData: any, year: string, round: string) {
+export function buildPlayerJudgeMap(yamlData: MWCupYamlDoc, year: string, round: string): PlayerJudgeMap {
   const seasonData = yamlData.season[year];
-  let roundData = seasonData?.rounds?.[round];
-
-  // 如果直接找不到，检查是否在多轮次键中
-  if (!roundData && seasonData?.rounds) {
-    for (const [key, data] of Object.entries(seasonData.rounds)) {
-      // 检查方括号格式的多轮次键，如 [G1, G2, G3]
-      if (key.startsWith('[') && key.endsWith(']')) {
-        const rounds = key.slice(1, -1).split(',').map(r => r.trim());
-        if (rounds.includes(round)) {
-          roundData = data;
-          break;
-        }
-      } else if (key.includes(',') && key.split(',').map(r => r.trim()).includes(round)) {
-        // 处理逗号分隔的轮次键（如果存在）
-        roundData = data;
-        break;
-      }
-    }
-  }
+  const roundData = findRoundConfig(seasonData, round);
 
   if (!roundData) {
-    return { players: {}, judges: {} };
+    return { players: {}, judges: {}, playerGroups: {} };
   }
 
-  const players: { [key: string]: string } = {};
-  const playerGroups: { [key: string]: string } = {}; // 新增：记录选手分组
-  const judges: { [key: string]: string } = {};
+  const players: Record<string, string> = {};
+  const playerGroups: Record<string, string> = {};
+  const judges: Record<string, string> = {};
 
   // 收集选手映射
   if (roundData.players) {
-    if (Array.isArray(roundData.players)) {
-      // 数组结构：players: [用户名1, 用户名2, ...]
+    if (isPlayerArray(roundData.players)) {
       roundData.players.forEach((name: string, index: number) => {
         if (typeof name === 'string') {
           players[(index + 1).toString()] = name;
         }
       });
-    } else if (typeof roundData.players === 'object') {
-      // 检查是否为扁平结构或分组结构
-      const firstValue = Object.values(roundData.players)[0];
-      if (typeof firstValue === 'string') {
-        // 扁平结构：players: { '1': 用户名, '2': 用户名, ... }
-        for (const [code, name] of Object.entries(roundData.players)) {
-          if (typeof name === 'string') {
-            players[code] = name;
-          }
+    } else if (isFlatPlayerMap(roundData.players)) {
+      for (const [code, name] of Object.entries(roundData.players)) {
+        if (typeof name === 'string') {
+          players[code] = name;
         }
-      } else {
-        // 分组结构：players: { A: { A1: 用户名, ... }, ... }
-        for (const [groupKey, group] of Object.entries(roundData.players) as [string, any][]) {
-          if (typeof group === 'object' && group !== null) {
-            for (const [code, name] of Object.entries(group)) {
-              if (typeof name === 'string') {
-                players[code] = name;
-                playerGroups[code] = groupKey; // 记录选手分组
-              }
+      }
+    } else if (isGroupedPlayerMap(roundData.players)) {
+      for (const [groupKey, group] of Object.entries(roundData.players)) {
+        if (typeof group === 'object' && group !== null) {
+          for (const [code, name] of Object.entries(group)) {
+            if (typeof name === 'string') {
+              players[code] = name;
+              playerGroups[code] = groupKey;
             }
           }
         }
@@ -536,24 +515,18 @@ export function buildPlayerJudgeMap(yamlData: any, year: string, round: string) 
 
   // 收集评委映射
   if (roundData.judges) {
-    if (typeof roundData.judges === 'object' && !Array.isArray(roundData.judges)) {
-      // 检查是否为扁平结构或分组结构
-      const firstValue = Object.values(roundData.judges)[0];
-      if (typeof firstValue === 'string') {
-        // 扁平结构：judges: { J1: 用户名, J2: 用户名, ... }
-        for (const [code, name] of Object.entries(roundData.judges)) {
-          if (typeof name === 'string') {
-            judges[code] = name;
-          }
+    if (isFlatJudgeMap(roundData.judges)) {
+      for (const [code, name] of Object.entries(roundData.judges)) {
+        if (typeof name === 'string') {
+          judges[code] = name;
         }
-      } else {
-        // 分组结构：judges: { A: { J1: 用户名, J2: 用户名 }, ... }
-        for (const [groupKey, group] of Object.entries(roundData.judges) as [string, any][]) {
-          if (typeof group === 'object' && group !== null) {
-            for (const [code, name] of Object.entries(group)) {
-              if (typeof name === 'string') {
-                judges[`${groupKey}-${code}`] = name; // 记录分组-评委码
-              }
+      }
+    } else if (isGroupedJudgeMap(roundData.judges)) {
+      for (const [groupKey, group] of Object.entries(roundData.judges)) {
+        if (typeof group === 'object' && group !== null) {
+          for (const [code, name] of Object.entries(group)) {
+            if (typeof name === 'string') {
+              judges[`${groupKey}-${code}`] = name;
             }
           }
         }
@@ -567,14 +540,14 @@ export function buildPlayerJudgeMap(yamlData: any, year: string, round: string) 
 /**
  * 获取选手名
  */
-function getPlayerName(playerCode: string, playerMap: any): string {
+function getPlayerName(playerCode: string, playerMap: PlayerJudgeMap): string {
   return playerMap.players[playerCode] || playerCode;
 }
 
 /**
  * 获取评委名
  */
-function getJudgeName(judgeCode: string, playerMap: any, playerCode?: string): string {
+function getJudgeName(judgeCode: string, playerMap: PlayerJudgeMap, playerCode?: string): string {
   // 优先分组查找
   if (playerCode && playerMap.playerGroups) {
     const group = playerMap.playerGroups[playerCode];
@@ -783,7 +756,7 @@ function determineDisplayColumns(headers: string[], records: ScoreRecord[]): str
 /**
  * 加载并解析轮次评分数据
  */
-export async function loadRoundScoreData(year: string, round: string, yamlData: any): Promise<RoundScoreData> {
+export async function loadRoundScoreData(year: string, round: string, yamlData: MWCupYamlDoc): Promise<RoundScoreData> {
   // 验证输入参数
   if (!year || !round) {
     throw new Error('年份和轮次参数不能为空');
@@ -798,27 +771,10 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
     throw new Error(`找不到${year}年的比赛数据`);
   }
   // 查找轮次数据，支持多轮次键
-  let roundData = seasonData.rounds?.[round];
-  // 如果直接找不到，检查是否在多轮次键中
-  if (!roundData && seasonData.rounds) {
-    for (const [key, data] of Object.entries(seasonData.rounds)) {
-      // 检查方括号格式的多轮次键，如 [G1, G2, G3]
-      if (key.startsWith('[') && key.endsWith(']')) {
-        const rounds = key.slice(1, -1).split(',').map(r => r.trim());
-        if (rounds.includes(round)) {
-          roundData = data;
-          break;
-        }
-      } else if (key.includes(',') && key.split(',').map(r => r.trim()).includes(round)) {
-        // 处理逗号分隔的轮次键（如果存在）
-        roundData = data;
-        break;
-      }
-    }
-  }
+  const roundData = findRoundConfig(seasonData, round);
 
   if (!roundData) {
-    throw new Error(`找不到${year}年${getRoundChineseName(round, { ...roundData, year: String(year) })}的比赛数据`);
+    throw new Error(`找不到${year}年${getRoundChineseName(round, { year: String(year) })}的比赛数据`);
   }
   // 加载用户映射
   // const userMapping = await loadUserMapping();
@@ -907,7 +863,7 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
 /**
  * 加载大众评分数据 (仅用于scoring_scheme E)
  */
-export async function loadPublicVotingData(year: string, round: string, yamlData: any): Promise<PlayerPublicScore[]> {
+export async function loadPublicVotingData(year: string, round: string, yamlData: MWCupYamlDoc): Promise<PlayerPublicScore[]> {
   try {
     const response = await fetch(`/data/votes/${year}${round}.csv`);
     if (!response.ok) {
@@ -965,7 +921,7 @@ async function loadUserMappings(): Promise<{[key: string]: string}> {
 /**
  * 解析大众评分CSV数据
  */
-async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string, round: string): Promise<PlayerPublicScore[]> {
+async function parsePublicVotingCsv(csvText: string, yamlData: MWCupYamlDoc, year: string, round: string): Promise<PlayerPublicScore[]> {
   const lines = csvText.trim().split('\n');
   if (lines.length === 0) return [];
 
@@ -987,12 +943,12 @@ async function parsePublicVotingCsv(csvText: string, yamlData: any, year: string
   }
 
   // 加载maxScore.json获取附加分设置
-  let maxScores: any = {};
+  let maxScores: RoundMaxScore = { base_score: 100, bonus_score: 5 };
   try {
     const response = await fetch('/data/maxScore.json');
     if (response.ok) {
-      const data = await response.json();
-      maxScores = data?.maxScore?.[year]?.[round] || {};
+      const data: MaxScoreData = await response.json();
+      maxScores = data?.maxScore?.[year]?.[round] || { base_score: 100, bonus_score: 5 };
     }
   } catch (error) {
     console.warn('加载maxScore.json失败:', error);
@@ -1107,9 +1063,9 @@ export function calculateFinalPublicScore(scores: Decimal[]): Decimal {
 /**
  * 处理特殊的总分制评分（如2015年半决赛）
  */
-export function handleDirectScores(yamlData: any, year: string, round: string): RoundScoreData | null {
+export function handleDirectScores(yamlData: MWCupYamlDoc, year: string, round: string): RoundScoreData | null {
   const seasonData = yamlData.season[year];
-  const roundData = seasonData?.rounds?.[round];
+  const roundData = findRoundConfig(seasonData, round);
   if (roundData?.scoring_scheme === 'S' && roundData?.scores) {
     const playerMap = buildPlayerJudgeMap(yamlData, year, round);
     const records: ScoreRecord[] = [];

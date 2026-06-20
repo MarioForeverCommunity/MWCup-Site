@@ -1,6 +1,8 @@
 // 关卡文件与比赛数据匹配系统
 import { getAllLevelFiles, type LevelFile } from './levelFileHelper'
 import { fetchMarioWorkerYaml, extractSeasonData } from './yamlLoader'
+import type { SeasonYearData } from '../types/mwcup'
+import { isPlayerArray, isFlatPlayerMap, isGroupedPlayerMap } from '../types/mwcup'
 
 // 比赛轮次信息
 export interface RoundInfo {
@@ -25,12 +27,12 @@ export interface LevelMatch {
   confidence: 'exact' | 'partial' | 'fuzzy' // 匹配置信度
 }
 
-let mwcupDataCache: any = null
+let mwcupDataCache: Record<string, SeasonYearData> | null = null
 
 /**
  * 获取缓存的 MW 杯数据
  */
-async function getMWCupData(): Promise<any> {
+async function getMWCupData(): Promise<Record<string, SeasonYearData>> {
   if (!mwcupDataCache) {
     const doc = await fetchMarioWorkerYaml()
     mwcupDataCache = extractSeasonData(doc)
@@ -49,21 +51,18 @@ export async function extractAllPlayers(): Promise<PlayerInfo[]> {
     const year = parseInt(yearStr)
     if (!yearData || typeof yearData !== 'object' || !('rounds' in yearData)) continue
 
-    const typedYearData = yearData as { rounds?: any }
-    if (!typedYearData.rounds) continue
+    if (!yearData.rounds) continue
 
-    for (const [roundKey, roundData] of Object.entries(typedYearData.rounds)) {
+    for (const [roundKey, roundData] of Object.entries(yearData.rounds)) {
       if (!roundData || typeof roundData !== 'object' || !('players' in roundData)) continue
 
-      const typedRoundData = roundData as { players?: any }
-      if (!typedRoundData.players) continue
+      if (!roundData.players) continue
 
       const roundName = getRoundDisplayName(roundKey)
 
       // 处理不同的选手数据结构
-      if (Array.isArray(typedRoundData.players)) {
-        // P2 轮次格式：数组
-        typedRoundData.players.forEach((playerName: string, index: number) => {
+      if (isPlayerArray(roundData.players)) {
+        roundData.players.forEach((playerName: string, index: number) => {
           if (typeof playerName === 'string') {
             players.push({
               code: (index + 1).toString(),
@@ -72,20 +71,18 @@ export async function extractAllPlayers(): Promise<PlayerInfo[]> {
             })
           }
         })
-      } else if (typeof typedRoundData.players === 'object' && typedRoundData.players) {
-        // 其他轮次格式：对象
-        for (const [groupKey, groupData] of Object.entries(typedRoundData.players)) {
+      } else if (isFlatPlayerMap(roundData.players)) {
+        for (const [code, name] of Object.entries(roundData.players)) {
+          players.push({
+            code,
+            name,
+            roundInfo: { year, roundKey, roundName }
+          })
+        }
+      } else if (isGroupedPlayerMap(roundData.players)) {
+        for (const [groupKey, groupData] of Object.entries(roundData.players)) {
           const groupName = getGroupDisplayName(groupKey)
-
-          if (typeof groupData === 'string') {
-            // 简单的 code: name 格式
-            players.push({
-              code: groupKey,
-              name: groupData,
-              roundInfo: { year, roundKey, roundName, groupKey, groupName }
-            })
-          } else if (typeof groupData === 'object' && groupData) {
-            // 嵌套的分组格式
+          if (typeof groupData === 'object' && groupData !== null) {
             for (const [playerCode, playerName] of Object.entries(groupData)) {
               if (typeof playerName === 'string') {
                 players.push({

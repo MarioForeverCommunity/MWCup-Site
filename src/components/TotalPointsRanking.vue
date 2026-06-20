@@ -108,8 +108,10 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { Decimal } from 'decimal.js';
 import { loadTotalPointsData, type TotalPointsData, type PlayerTotalPoints } from '../utils/totalPointsCalculator';
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader';
+import type { MWCupYamlDoc } from '../types/mwcup';
 import { getRoundChineseName } from '../utils/roundNames';
 import { getEditionOptions } from '../utils/editionHelper';
 import { formatResultDisplay as formatResult } from '../utils/resultFormatter';
@@ -139,7 +141,7 @@ export default defineComponent({
     });
     const isLoading = ref(false);
     const availableYears = ref<string[]>([]);
-    const yamlData = ref<any>(null);    // 获取可用年度列表
+    const yamlData = ref<MWCupYamlDoc | null>(null);    // 获取可用年度列表
     const getAvailableYears = () => {
       const currentYear = new Date().getFullYear();
       const years: string[] = [];
@@ -243,8 +245,8 @@ export default defineComponent({
       if (!roundData?.players) return 0;
 
       // 计算选手数量（每个组的选手总和）
-      Object.values(roundData.players).forEach((group: any) => {
-        if (typeof group === 'object') {
+      Object.values(roundData.players).forEach((group: unknown) => {
+        if (typeof group === 'object' && group !== null) {
           playerCount += Object.keys(group).length;
         }
       });
@@ -261,24 +263,28 @@ export default defineComponent({
     };
 
     // 并列排名算法，支持总积分、参与轮次数并列
-    function assignRankingWithTiesForTotal(players: any[], scoreField: string = 'totalPoints', secondaryField: string = 'validRoundsCount', rankField: string = 'displayRank') {
+    function assignRankingWithTiesForTotal(players: PlayerWithRank[], scoreField: string = 'totalPoints', secondaryField: string = 'validRoundsCount', rankField: string = 'displayRank') {
       let lastScore: string | null = null
       let lastSecondary: number | null = null
       let lastRank = 0
       let skip = 0
       for (let i = 0; i < players.length; i++) {
+        const p = players[i] as unknown as Record<string, unknown>
+        const rawScore = p[scoreField]
         // 统一格式化分数字符串，避免小数精度误差
-        const currScore = players[i][scoreField]?.toFixed ? players[i][scoreField].toFixed(3) : String(players[i][scoreField])
-        const currSecondary = players[i][secondaryField]
+        const currScore = rawScore instanceof Decimal
+          ? rawScore.toFixed(3)
+          : typeof rawScore === 'number' ? new Decimal(rawScore).toFixed(3) : String(rawScore)
+        const currSecondary = p[secondaryField] as number | null
         if (
           lastScore !== null && currScore === lastScore &&
           lastSecondary !== null && currSecondary === lastSecondary
         ) {
-          players[i][rankField] = lastRank
+          p[rankField] = lastRank
           skip++
         } else {
-          players[i][rankField] = lastRank + 1 + skip
-          lastRank = players[i][rankField]
+          p[rankField] = lastRank + 1 + skip
+          lastRank = p[rankField] as number
           skip = 0
         }
         lastScore = currScore
@@ -294,7 +300,7 @@ export default defineComponent({
         if (b.totalPoints !== a.totalPoints) return Number(b.totalPoints) - Number(a.totalPoints)
         return b.validRoundsCount - a.validRoundsCount
       })
-      assignRankingWithTiesForTotal(arr, 'totalPoints', 'validRoundsCount', 'displayRank')
+      assignRankingWithTiesForTotal(arr as PlayerWithRank[], 'totalPoints', 'validRoundsCount', 'displayRank')
       return arr as PlayerWithRank[]
     })
 

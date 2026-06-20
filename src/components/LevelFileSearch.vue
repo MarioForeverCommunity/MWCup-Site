@@ -100,6 +100,7 @@ import { fetchMarioWorkerYaml } from '../utils/yamlLoader'
 import { getRoundChineseName } from '../utils/roundNames'
 import { getGroupDisplayName } from '../utils/levelMatcher'
 import { getEditionNumber } from '../utils/editionHelper'
+import type { MWCupYamlDoc, RoundConfig } from '../types/mwcup'
 
 // 关卡下载基础URL
 const LEVELS_BASE_URL = 'https://levels.smwp.marioforever.net/Mario Worker 杯/'
@@ -121,7 +122,7 @@ const searchResults = ref<LevelFile[]>([])
 const searched = ref(false)
 
 // 缓存的 YAML 数据
-let yamlData: any = null
+let yamlData: MWCupYamlDoc | null = null
 
 onMounted(() => {
   loadYamlData()
@@ -157,7 +158,7 @@ function onYearChange() {
             for (const singleRound of parsedKey) {
               roundList.push({
                 key: singleRound,
-                name: getRoundChineseName(singleRound, { ...roundData as any, year: selectedYear.value })
+                name: getRoundChineseName(singleRound, { ...roundData as RoundConfig, year: selectedYear.value })
               });
             }
             continue;
@@ -204,7 +205,7 @@ function onYearChange() {
 function onRoundChange() {
   if (selectedYear.value && selectedRound.value && yamlData?.season?.[selectedYear.value]?.rounds) {
     const rounds = yamlData.season[selectedYear.value].rounds
-    let targetRoundData: any = null
+    let targetRoundData: RoundConfig | null = null
 
     // 查找包含当前选中轮次的轮次数据
     for (const [roundKey, roundData] of Object.entries(rounds)) {
@@ -462,7 +463,7 @@ function searchBySelectorAndKeyword() {
     if (selectedYear.value && selectedRound.value) {
       try {
         const { buildPlayerJudgeMap } = await import('../utils/scoreCalculator');
-        const playerMapResult = buildPlayerJudgeMap(yamlData, selectedYear.value, selectedRound.value);
+        const playerMapResult = buildPlayerJudgeMap(yamlData!, selectedYear.value, selectedRound.value);
         const playerCodeOrderMap = new Map(Object.keys(playerMapResult.players || {}).map((code, index) => [code, index]));
         results.sort((a, b) => {
           const orderA = playerCodeOrderMap.get(a.playerCode || '');
@@ -489,7 +490,7 @@ function searchBySelectorAndKeyword() {
         for (const [round, files] of roundGroups) {
           if (!round) continue;
           try {
-            const playerMapResult = buildPlayerJudgeMap(yamlData, selectedYear.value, round);
+            const playerMapResult = buildPlayerJudgeMap(yamlData!, selectedYear.value, round);
             const playerCodeOrderMap = new Map(Object.keys(playerMapResult.players || {}).map((code, index) => [code, index]));
             files.sort((a, b) => {
               const orderA = playerCodeOrderMap.get(a.playerCode || '');

@@ -84,7 +84,6 @@ export default [
   {
     name: 'app/typescript-rules',
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -116,13 +115,13 @@ export default [
       'object-curly-spacing': ['error', 'always'],
       'no-empty': ['error', { allowEmptyCatch: true }],
       'no-console': 'off',
-      'no-debugger': 'warn',
+      'no-debugger': 'error',
       'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 0 }],
       'no-trailing-spaces': 'error',
       'eol-last': ['error', 'always'],
       'prefer-const': 'error',
       'no-var': 'error',
-      'eqeqeq': ['error', 'smart'],
+      'eqeqeq': ['error', 'always'],
       'curly': ['error', 'multi-line']
     }
   },

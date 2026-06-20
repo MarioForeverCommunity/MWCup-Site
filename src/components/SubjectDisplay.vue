@@ -77,7 +77,7 @@ const getStageDisplayName = (round: string): string => {
 }
 
 // 格式化SMWP版本显示文案
-const formatSmwpVersionText = (version: any, stage: string): string => {
+const formatSmwpVersionText = (version: string | string[], stage: string): string => {
   if (!version) return ''
 
   if (Array.isArray(version)) {
@@ -145,7 +145,7 @@ async function loadSmwpVersion() {
       }
     }
     // 获取SMWP版本，优先使用轮次级别的，如果没有则使用年份级别的
-    const versionToUse = roundData?.smwp_version || yearData.smwp_version
+    const versionToUse = (roundData?.smwp_version || yearData.smwp_version) as string | string[] | undefined
 
     if (versionToUse) {
       let stageName = getStageDisplayName(props.round)

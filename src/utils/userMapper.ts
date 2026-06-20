@@ -25,12 +25,12 @@ export async function loadUserMapping(): Promise<UserMapping> {
     // 遍历所有年份和轮次，收集选手和评委的映射关系
     if (yamlData && yamlData.season) {
       for (const [, seasonData] of Object.entries(yamlData.season)) {
-        if (seasonData && (seasonData as any).rounds) {
-          for (const [, roundData] of Object.entries((seasonData as any).rounds)) {
+        if (seasonData && seasonData.rounds) {
+          for (const [, roundData] of Object.entries(seasonData.rounds)) {
             if (roundData && typeof roundData === 'object') {
               // 收集选手映射
-              if ((roundData as any).players) {
-                for (const group of Object.values((roundData as any).players)) {
+              if (roundData.players) {
+                for (const group of Object.values(roundData.players)) {
                   if (group && typeof group === 'object') {
                     for (const [code, name] of Object.entries(group)) {
                       if (typeof name === 'string') {
@@ -42,8 +42,8 @@ export async function loadUserMapping(): Promise<UserMapping> {
               }
 
               // 收集评委映射
-              if ((roundData as any).judges) {
-                for (const group of Object.values((roundData as any).judges)) {
+              if (roundData.judges) {
+                for (const group of Object.values(roundData.judges)) {
                   if (group && typeof group === 'object') {
                     for (const [code, name] of Object.entries(group)) {
                       if (typeof name === 'string') {

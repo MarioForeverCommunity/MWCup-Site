@@ -8,6 +8,7 @@ import { getRoundChineseName } from './roundNames';
 import { buildPlayerJudgeMap, loadRoundScoreData } from './scoreCalculator';
 import { loadTotalPointsData } from './totalPointsCalculator';
 import { Decimal } from 'decimal.js';
+import type { PlayerJudgeMap, LevelIndexItem } from '../types/mwcup';
 
 // 设置Decimal的精度和舍入模式
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
@@ -154,7 +155,7 @@ async function getAllRounds(): Promise<{ year: number; round: string }[]> {
         const year = parseInt(yearStr);
         if (!yearData || typeof yearData !== 'object' || !('rounds' in yearData)) continue;
 
-        const roundsData = (yearData as any).rounds;
+        const roundsData = yearData.rounds;
         if (!roundsData || typeof roundsData !== 'object') continue;
 
         let order = 0; // 用于维护YAML中定义的顺序
@@ -340,7 +341,7 @@ async function getPlayerCountFromYaml(year: number, round: string): Promise<numb
 /**
  * 从YAML数据中获取评委的用户名
  */
-function getJudgeNameFromYaml(judgeCode: string, playerMap: any, playerCode?: string): string | null {
+function getJudgeNameFromYaml(judgeCode: string, playerMap: PlayerJudgeMap, playerCode?: string): string | null {
   // 优先按分组查找（如果选手有分组信息）
   if (playerCode && playerMap.playerGroups) {
     const group = playerMap.playerGroups[playerCode];
@@ -470,7 +471,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           const levelData = await response.json();
 
           // 筛选2012年I2轮次的关卡
-          const i2Levels = levelData.filter((level: any) =>
+          const i2Levels = levelData.filter((level: LevelIndexItem) =>
             level.year === 2012 && level.roundKey === 'I2'
           );
 
@@ -775,9 +776,8 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
       // 排除2012年
       if (year === 2012) continue;
 
-      const roundsData = (yearData as any).rounds;
-      for (const [roundKey, roundDataRaw] of Object.entries(roundsData)) {
-        const roundData = roundDataRaw as any;
+      const roundsData = yearData.rounds;
+      for (const [roundKey, roundData] of Object.entries(roundsData)) {
         let roundList: string[] = [];
         if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
           try {
@@ -960,12 +960,12 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
         const levelData = await response.json();
 
         // 筛选2012年I2轮次的关卡
-        const i2Levels = levelData.filter((level: any) =>
+        const i2Levels = (levelData as LevelIndexItem[]).filter((level: LevelIndexItem) =>
           level.year === 2012 && level.roundKey === 'I2'
         );
 
         // 统计上传的选手（去重）
-        const uploadedPlayers = [...new Set(i2Levels.map((level: any) => level.playerCode))];
+        const uploadedPlayers = [...new Set(i2Levels.map((level: LevelIndexItem) => level.playerCode))];
         const validSubmissions = uploadedPlayers.length;
 
         // 从YAML获取该轮的总选手数

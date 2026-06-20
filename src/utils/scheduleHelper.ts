@@ -1,4 +1,5 @@
 import { extractSeasonData } from './yamlLoader';
+import type { MWCupYamlDoc, SeasonYearData, RoundConfig, ScheduleLinkData } from '../types/mwcup';
 
 // 重新导出fetchMarioWorkerYaml以保持向后兼容
 export { fetchMarioWorkerYaml } from './yamlLoader';
@@ -60,7 +61,7 @@ const contentOrder: Record<string, number> = {
   'promotion': 7,          // 晋级名单公布
 };
 
-function getStageZh(mainStage: string, season?: any) {
+function getStageZh(mainStage: string, season?: SeasonYearData) {
   // 处理带有批量轮次的抽签情况（如 Q1,Q2-draw）
   const drawMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-draw$/);
   if (drawMatch) {
@@ -86,8 +87,8 @@ function getStageZh(mainStage: string, season?: any) {
   // 处理热身赛标记
   if (mainStage === 'P1') {
     // 获取当前轮次的完整数据
-    const roundData = Object.entries(season.rounds).find(([key]) => key === 'P1')?.[1];
-    if (roundData && (roundData as any).is_warmup) {
+    const roundData = Object.entries(season?.rounds || {}).find(([key]) => key === 'P1')?.[1];
+    if (roundData && roundData.is_warmup) {
       return '热身赛';
     }
   }
@@ -103,7 +104,7 @@ function getStageZh(mainStage: string, season?: any) {
   return stageMap[mainStage] || mainStage;
 }
 
-function getContentZh(mainStage: string, contentKey: string, season?: any, scheduleObj?: any) {
+function getContentZh(mainStage: string, contentKey: string, season?: SeasonYearData, scheduleObj?: Record<string, unknown>) {
 
   // 处理deadline的情况
   const deadlineMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-deadline(\d+)$/);
@@ -221,18 +222,18 @@ function getContentWeight(content: string) {
 }
 
 // 获取 schedule 表结构
-export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): YearSchedule[] {
+export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = 'tieba'): YearSchedule[] {
   const result: YearSchedule[] = [];
   const seasonObj = extractSeasonData(doc);
   if (!seasonObj || typeof seasonObj !== 'object') return result;
   for (const year of Object.keys(seasonObj)) {
     const season = seasonObj[year];
     // 合并主 schedule 和所有 rounds 下的 schedule
-    const schedule: Record<string, any> = {};
+    const schedule: Record<string, unknown> = {};
     if (season && typeof season.rounds === 'object' && season.rounds !== null) {
       for (const [roundKey, roundVal] of Object.entries(season.rounds)) {
-        if (roundVal && typeof (roundVal as any).schedule === 'object' && (roundVal as any).schedule !== null) {
-          const scheduleObj = (roundVal as any).schedule;
+        if (roundVal && typeof roundVal.schedule === 'object' && roundVal.schedule !== null) {
+          const scheduleObj = roundVal.schedule;
 
           // 处理带有topics和deadlines的轮次（初赛、小组赛、复赛等）
           if (scheduleObj.topics || scheduleObj.deadlines || scheduleObj.draw || scheduleObj.match?.deadlines) {
@@ -241,10 +242,11 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
             if (scheduleObj.topics) {
               for (const [topicKey, topicValue] of Object.entries(scheduleObj.topics)) {
                 if (typeof topicValue === 'object' && topicValue !== null) {
+                  const tv = topicValue as ScheduleLinkData;
                   schedule[`${roundKey}-${topicKey}`] = {
-                    time: (topicValue as any).time,
-                    tieba_tid: (topicValue as any).tieba_tid,
-                    mf_tid: (topicValue as any).mf_tid
+                    time: tv.time,
+                    tieba_tid: tv.tieba_tid,
+                    mf_tid: tv.mf_tid
                   };
                 }
               }
@@ -318,7 +320,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
                   (judgingData.tieba_tid && typeof judgingData.tieba_tid === 'object')) {
                 // 如果有mf_tid就用mf_tid，否则用tieba_tid
                 const usesMfTid = judgingData.mf_tid && typeof judgingData.mf_tid === 'object';
-                const judgingTids = usesMfTid ? judgingData.mf_tid : (judgingData.tieba_tid || {});
+                const judgingTids = (usesMfTid ? judgingData.mf_tid : (judgingData.tieba_tid || {})) as Record<string, string>;
                 const linkType = usesMfTid ? 'mf' : 'tieba';
 
                 const links: string[] = [];
@@ -350,7 +352,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
               const key = `${roundKey}-${subStage}`;
               if (!schedule[key] || (
                 (typeof subValue === 'object' && subValue !== null) &&
-                ((subValue as any).start || (subValue as any).time)
+                ('start' in subValue || 'time' in subValue)
               )) {
                 schedule[key] = subValue;
               }
@@ -374,13 +376,13 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
             }
 
             // 处理普通内容
-            const timeKey = typeof subValue === 'object' && subValue !== null ?
-              `${(subValue as any).start}-${(subValue as any).end}` : '';
+            const sv = typeof subValue === 'object' && subValue !== null ? subValue as Record<string, unknown> : null;
+            const timeKey = sv ? `${sv.start}-${sv.end}` : '';
             for (const rk of roundKey.split(',')) {
               const newKey = `${rk}-${subStage}`;
               if (timeKey && Object.entries(schedule).some(([k, v]) =>
                 typeof v === 'object' && v !== null &&
-                `${(v as any).start}-${(v as any).end}` === timeKey &&
+                `${(v as Record<string, unknown>).start}-${(v as Record<string, unknown>).end}` === timeKey &&
                 k.endsWith(`-${subStage}`)
               )) {
                 continue;
@@ -409,7 +411,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
       const contentZh = contentKey === 'draw' ? '抽签' : getContentZh(mainStage, contentKey, season, schedule);
 
       if (typeof value === 'object' && value !== null) {
-        const v = value as Record<string, any>;
+        const v = value as ScheduleLinkData;
         if (v.links) {
           items.push({
             stage: stageZh,
@@ -425,8 +427,10 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
             if (!processedTimes.has(timeKey)) {
               processedTimes.add(timeKey);
               let link = '';
-              if (v.tieba_tid) link = getTidLink(v.tieba_tid, 'tieba');
-              if (v.mf_tid) link = getTidLink(v.mf_tid, 'mf');
+              const tiebaTid = typeof v.tieba_tid === 'string' ? v.tieba_tid : v.tieba_tid ? Object.values(v.tieba_tid)[0] : undefined;
+              const mfTid = typeof v.mf_tid === 'string' ? v.mf_tid : v.mf_tid ? Object.values(v.mf_tid)[0] : undefined;
+              if (tiebaTid) link = getTidLink(tiebaTid, 'tieba');
+              if (mfTid) link = getTidLink(mfTid, 'mf');
               items.push({
                 stage: stageZh,
                 content: contentZh,
@@ -444,8 +448,10 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
             if (!processedTimes.has(timeKey)) {
               processedTimes.add(timeKey);
               let link = '';
-              if (v.tieba_tid) link = getTidLink(v.tieba_tid, 'tieba');
-              if (v.mf_tid) link = getTidLink(v.mf_tid, 'mf');
+              const tiebaTid = typeof v.tieba_tid === 'string' ? v.tieba_tid : v.tieba_tid ? Object.values(v.tieba_tid)[0] : undefined;
+              const mfTid = typeof v.mf_tid === 'string' ? v.mf_tid : v.mf_tid ? Object.values(v.mf_tid)[0] : undefined;
+              if (tiebaTid) link = getTidLink(tiebaTid, 'tieba');
+              if (mfTid) link = getTidLink(mfTid, 'mf');
               items.push({
                 stage: stageZh,
                 content: contentZh,
@@ -504,7 +510,7 @@ export function getYearSchedules(doc: any, _tidType: 'tieba' | 'mf' = 'tieba'): 
  * @param roundKey 轮次代码（如 I1, G2, F 等）
  * @returns 评分截止时间字符串，如果没有则返回 null
  */
-export function getJudgingEndTime(yamlData: any, year: string, roundKey: string): string | null {
+export function getJudgingEndTime(yamlData: MWCupYamlDoc, year: string, roundKey: string): string | null {
   const seasonData = yamlData?.season?.[year];
   if (!seasonData) return null;
 
@@ -532,7 +538,7 @@ export function getJudgingEndTime(yamlData: any, year: string, roundKey: string)
  * @param roundKey 轮次代码
  * @returns 大众评分截止时间字符串，如果没有则返回 null
  */
-export function getVotingEndTime(yamlData: any, year: string, roundKey: string): string | null {
+export function getVotingEndTime(yamlData: MWCupYamlDoc, year: string, roundKey: string): string | null {
   const seasonData = yamlData?.season?.[year];
   if (!seasonData) return null;
 
@@ -552,7 +558,7 @@ export function getVotingEndTime(yamlData: any, year: string, roundKey: string):
 /**
  * 查找轮次数据（处理多轮次键的情况）
  */
-function findRoundData(seasonData: any, roundKey: string): any {
+function findRoundData(seasonData: SeasonYearData, roundKey: string): RoundConfig | null {
   if (seasonData.rounds?.[roundKey]) {
     return seasonData.rounds[roundKey];
   }
@@ -590,7 +596,7 @@ function findRoundData(seasonData: any, roundKey: string): any {
  * @param roundKey 轮次代码
  * @returns true 表示评分已截止，false 表示评分未截止
  */
-export function isJudgingEnded(yamlData: any, year: string, roundKey: string): boolean {
+export function isJudgingEnded(yamlData: MWCupYamlDoc, year: string, roundKey: string): boolean {
   const endTime = getJudgingEndTime(yamlData, year, roundKey);
   if (!endTime) return true;
 
@@ -607,7 +613,7 @@ export function isJudgingEnded(yamlData: any, year: string, roundKey: string): b
  * @param roundKey 轮次代码
  * @returns true 表示大众评分已截止，false 表示大众评分未截止
  */
-export function isVotingEnded(yamlData: any, year: string, roundKey: string): boolean {
+export function isVotingEnded(yamlData: MWCupYamlDoc, year: string, roundKey: string): boolean {
   const endTime = getVotingEndTime(yamlData, year, roundKey);
   if (!endTime) return true;
 
@@ -634,7 +640,7 @@ export function shouldApplyDeadlineFilter(year: string | number): boolean {
  * @param roundKey 轮次代码
  * @returns true 表示应该显示评分数据
  */
-export function shouldShowScoreData(yamlData: any, year: string, roundKey: string): boolean {
+export function shouldShowScoreData(yamlData: MWCupYamlDoc, year: string, roundKey: string): boolean {
   if (!shouldApplyDeadlineFilter(year)) {
     return true;
   }

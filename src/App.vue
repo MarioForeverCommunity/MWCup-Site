@@ -26,7 +26,7 @@ const activeTab = ref(getActiveTab())
 
 // 监听标签页变化并保存到 sessionStorage
 const setActiveTab = (tab: string) => {
-  activeTab.value = tab as any
+  activeTab.value = tab
 
   // 根据标签页进行路由跳转
   switch (tab) {

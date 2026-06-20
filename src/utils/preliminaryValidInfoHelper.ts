@@ -3,14 +3,16 @@ import {
   getDeadlines,
   getPlayerLevels,
   isLevelUploadedBeforeDeadline,
-  loadLevelIndexData
+  loadLevelIndexData,
+  type PlayerRoundData
 } from './totalPointsCalculator';
+import type { MWCupYamlDoc } from '../types/mwcup';
 
 /**
  * 增强版的初赛有效题目信息获取函数
  * 返回完整的轮次选择信息，包括超时状态
  */
-export async function getPreliminaryValidInfoEnhanced(year: string, playerData: any, yamlData: any): Promise<{
+export async function getPreliminaryValidInfoEnhanced(year: string, playerData: PlayerRoundData, yamlData: MWCupYamlDoc): Promise<{
   validRounds: string[];
   timeoutPenalty: number;
   roundSelections: { roundIndex: number; selectedTopic: string; isTimeout: boolean }[];

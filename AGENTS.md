@@ -75,9 +75,10 @@ import ScoreTable from './ScoreTable.vue'
 
 ### TypeScript
 
-- `strict: true`; 允许使用 `any`
+- `strict: true`; **禁止使用 `any`** (ESLint `@typescript-eslint/no-explicit-any` 规则已启用)
 - 未使用变量: 以 `_` 前缀忽略警告
 - 可选属性使用 `?`
+- 使用类型守卫区分联合类型（见下方"YAML 数据类型"章节）
 
 ### Vue 组件
 
@@ -106,6 +107,19 @@ onMounted(() => { /* 初始化逻辑 */ })
 - HTML 缩进: 2 个空格
 - Mustache 插值: `{{ value }}` 而不是 `{{value}}`
 - `prop-name-casing` 和 `multi-word-component-names` 已关闭
+
+多根节点组件（fragment）必须声明 `defineProps` 并设置 `inheritAttrs: false`，否则 Vue 会警告非 props 属性无法继承：
+
+```vue
+<script setup lang="ts">
+defineProps<{
+  year?: string
+  round?: string
+}>()
+
+defineOptions({ inheritAttrs: false })
+</script>
+```
 
 ### 比较
 
@@ -158,6 +172,47 @@ const [levels, maxScore, config] = await Promise.all([
 - 复杂类型放在 `src/types/`
 - 使用 `.d.ts` 扩展第三方库类型
 - 使用 `export interface` 或 `export type` 导出类型
+
+## YAML 数据类型
+
+YAML 数据结构动态性较强，`src/types/mwcup.ts` 定义了核心类型和类型守卫。处理 YAML 数据时必须使用类型守卫区分联合类型：
+
+### 选手数据 (`PlayerData`)
+
+`PlayerData` 是联合类型 `string[] | FlatPlayerMap | GroupedPlayerMap`：
+- `FlatPlayerMap`: `{ M: "选手名", W: "选手名" }` — 值为字符串
+- `GroupedPlayerMap`: `{ A: { A1: "选手名", ... }, B: { ... } }` — 值为嵌套对象
+
+必须使用类型守卫后再访问：
+
+```typescript
+import { isGroupedPlayerMap, isFlatPlayerMap, isPlayerArray } from '../types/mwcup'
+
+if (isGroupedPlayerMap(players)) {
+  // players 是 GroupedPlayerMap，遍历 Object.entries(players) 获取各组
+} else if (isFlatPlayerMap(players)) {
+  // players 是 FlatPlayerMap，直接 Object.entries(players) 获取选手
+} else if (isPlayerArray(players)) {
+  // players 是 string[]
+}
+```
+
+### 帖子链接 (`tieba_tid` / `mf_tid`)
+
+`ScheduleLinkData` 中 `tieba_tid` 和 `mf_tid` 类型为 `string | Record<string, string> | undefined`。YAML 中帖子 ID 是数字（如 `2539354082`），但在 `yamlLoader.ts` 加载时已通过 `normalizeTids()` 统一转为字符串，下游代码无需处理 `number` 类型：
+
+```typescript
+const tid = typeof v.tieba_tid === 'string'
+  ? v.tieba_tid
+  : v.tieba_tid ? Object.values(v.tieba_tid)[0] : undefined
+```
+
+## 2012 年数据排除
+
+2012 年（第一届）数据不完整，以下模块完全忽略 2012 年数据：
+- **关卡排名** (`rankingCalculator.ts`): `calculateSingleLevelRanking`、`calculateMultiLevelRanking`、`calculateOriginalScoreRanking` 均过滤 `year !== 2012`；`getAvailableYears` 不返回 2012
+- **举办情况** (`ChampionStatistics.vue`): 遍历赛季数据时跳过 `year === '2012'`
+- **积分排行** (`TotalPointsRanking.vue`): 年份列表从 2013 开始
 
 ## CSS 约定
 

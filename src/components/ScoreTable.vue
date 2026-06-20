@@ -104,8 +104,8 @@
                     </tr>
                   </template>
                   <!-- 添加小组间的分隔线 -->
-                  <tr v-if="Number(groupIndex) < overallRoundData.groupOrder.length - 1" class="group-separator">
-                    <td :colspan="overallRoundData.totalColumns" class="separator-cell"></td>
+                  <tr v-if="overallRoundData && Number(groupIndex) < overallRoundData.groupOrder.length - 1" class="group-separator">
+                    <td :colspan="overallRoundData?.totalColumns" class="separator-cell"></td>
                   </tr>
                 </template>
               </template>
@@ -483,16 +483,39 @@ function toChineseNumber(num: number): string {
 import { ref, watch, onMounted, computed } from 'vue'
 // SheetJS 工具：按需加载，避免在 setup 期间阻塞或报错
 type XLSXRange = { s: { r: number; c: number }; e: { r: number; c: number } }
-type XLSXWorkSheet = { [key: string]: any; '!ref'?: string; '!merges'?: XLSXRange[] }
-let _XLSX: any | null = null
-async function getXLSX() {
+
+type XLSXWorkSheet = { [key: string]: unknown; '!ref'?: string; '!merges'?: XLSXRange[] }
+
+// XLSX 库最小类型定义
+interface XLSXWorkbook {
+  SheetNames: string[]
+  Sheets: Record<string, XLSXWorkSheet>
+  [key: string]: unknown
+}
+
+interface XLSXLibrary {
+  utils: {
+    book_new(): XLSXWorkbook
+    book_append_sheet(wb: XLSXWorkbook, ws: XLSXWorkSheet, name: string): void
+    json_to_sheet<T>(data: T[], opts?: Record<string, unknown>): XLSXWorkSheet
+    aoa_to_sheet<T>(data: T[][], opts?: Record<string, unknown>): XLSXWorkSheet
+    sheet_to_json<T>(ws: XLSXWorkSheet, opts?: Record<string, unknown>): T[]
+    encode_cell(cell: { r: number; c: number }): string
+    decode_range(range: string): XLSXRange
+  }
+  writeFile(wb: XLSXWorkbook, filename: string): void
+  read(data: unknown, opts?: Record<string, unknown>): XLSXWorkbook
+}
+
+let _XLSX: XLSXLibrary | null = null
+async function getXLSX(): Promise<XLSXLibrary> {
   if (_XLSX) return _XLSX
   try {
-    const mod: any = await import('xlsx-js-style')
-    _XLSX = mod?.default ?? mod
+    const mod = await import('xlsx-js-style') as Record<string, unknown>
+    _XLSX = (mod?.default ?? mod) as XLSXLibrary
   } catch (_) {
-    const mod: any = await import('xlsx')
-    _XLSX = mod?.default ?? mod
+    const mod = await import('xlsx') as Record<string, unknown>
+    _XLSX = (mod?.default ?? mod) as XLSXLibrary
   }
   return _XLSX
 }
@@ -503,9 +526,11 @@ import {
   type ScoreRecord,
   buildPlayerJudgeMap,
   type PlayerScore,
+  type PublicVoteRecord,
   isNotYetRated,
 } from '../utils/scoreCalculator'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
+import type { MWCupYamlDoc, RoundConfig, MaxScoreData } from '../types/mwcup'
 
 import { loadUserMapping, getUserDisplayName, type UserMapping } from '../utils/userMapper'
 import { fetchLevelFilesFromLocal, type LevelFile, matchPlayerName } from '../utils/levelFileHelper'
@@ -515,7 +540,8 @@ import { getRoundChineseName } from '../utils/roundNames'
 import {
   calculate2019TotalScore,
   calculateValidLevelTotalScore,
-  get2019ValidLevelInfo
+  get2019ValidLevelInfo,
+  type PlayerRoundData
 } from '../utils/totalPointsCalculator';
 import { getPreliminaryValidInfoEnhanced } from '../utils/preliminaryValidInfoHelper';
 import { shouldShowScoreData, shouldApplyDeadlineFilter, getJudgingEndTime } from '../utils/scheduleHelper';
@@ -555,10 +581,12 @@ function centerAlignAllCells(ws: XLSXWorkSheet) {
   if (!ref) return
   for (const addr of Object.keys(ws)) {
     if (addr.startsWith('!')) continue
-    const cell: any = ws[addr]
+
+    const cell = ws[addr] as Record<string, unknown> | undefined
     if (!cell || typeof cell !== 'object') continue
-    cell.s = cell.s || {}
-    cell.s.alignment = { horizontal: 'center', vertical: 'center' }
+    const style = (cell.s || {}) as Record<string, unknown>
+    style.alignment = { horizontal: 'center', vertical: 'center' }
+    cell.s = style
   }
 }
 
@@ -596,7 +624,7 @@ async function exportOverallToExcel() {
         group,
         p.playerCode,
         p.playerName,
-        ...p.roundScores.map((s: any) => (s && typeof s.toNumber === 'function') ? +s.toNumber().toFixed(3) : +(Number(s) || 0).toFixed(3))
+        ...p.roundScores.map((s: Decimal | number) => (s && typeof s === 'object' && 'toNumber' in s) ? +s.toNumber().toFixed(3) : +(Number(s) || 0).toFixed(3))
       ]
       if (overall.isShowValidLevel) {
         for (const validInfo of (p.validRounds || [])) {
@@ -700,8 +728,8 @@ async function exportDetailedToExcel() {
         } else {
           // 分项分数
           for (const c of cols) {
-            const val = (rec.scores && rec.scores[c] != null) ? rec.scores[c] : '-'
-            const num = typeof val === 'number' ? val : (val && typeof val.toNumber === 'function') ? val.toNumber() : (val === '-' ? '-' : Number(val) || 0)
+            const val = (rec.scores && rec.scores[c] !== null) ? rec.scores[c] : '-'
+            const num = typeof val === 'number' ? val : (val instanceof Decimal) ? val.toNumber() : (val === '-' ? '-' : Number(val) || 0)
             row.push(typeof num === 'number' ? +new Decimal(num).toFixed(3) : num)
           }
           // 总分
@@ -763,7 +791,7 @@ async function exportPublicToExcel() {
   for (const playerPublicScore of scoreData.value.publicScores) {
     if (sp && !playerPublicScore.playerName.includes(sp) && !playerPublicScore.playerCode.includes(sp)) continue
 
-    const votes = (playerPublicScore.votes || []).filter((v: any) => {
+    const votes = (playerPublicScore.votes || []).filter((v: PublicVoteRecord) => {
       if (!sj) return true
       return (v.voterName || '').includes(sj)
     })
@@ -877,8 +905,8 @@ const scoreData = ref<RoundScoreData | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const userMapping = ref<UserMapping>({})
-const yamlData = ref<any>(null) // 存储原始YAML数据用于查找未上传选手
-const maxScoreData = ref<any>(null) // 存储maxScore.json数据
+const yamlData = ref<MWCupYamlDoc | null>(null) // 存储原始YAML数据用于查找未上传选手
+const maxScoreData = ref<MaxScoreData | null>(null) // 存储maxScore.json数据
 // 移除validLevelData，改用totalPointsCalculator中的逻辑
 
 // 新增：多轮次评分数据缓存
@@ -886,7 +914,7 @@ const multiRoundScores = ref<Record<string, RoundScoreData | null>>({})
 const multiRoundLoading = ref(false)
 
 // 加载所有子轮次评分数据
-async function loadAllRounds(year: string, roundGroupKey: string, yaml: any) {
+async function loadAllRounds(year: string, roundGroupKey: string, yaml: MWCupYamlDoc) {
   multiRoundLoading.value = true
   const roundCodes = roundGroupKey.replace(/\[|\]/g, '').split(',').map(r => r.trim())
   const result: Record<string, RoundScoreData | null> = {}
@@ -913,8 +941,34 @@ const levelFiles = ref<LevelFile[]>([]) // 存储关卡文件数据
 const userData = ref<UserData[]>([]) // 存储用户数据用于别名匹配
 
 // 赛况总表数据
-// 将overallRoundData改为异步计算
-const overallRoundData = ref<any>(null)
+interface RankedPlayer {
+  playerCode: string
+  playerName: string
+  group: string
+  roundScores: (number | Decimal)[]
+  totalRank: number
+  groupRank: number
+  isNoSubmission: boolean
+  validRounds?: { round: string; valid: boolean; label: string; exclamation: boolean }[]
+  timeoutPenalty?: number
+  totalScore?: Decimal
+  matchPoints?: number
+  headToHeadPoints?: Record<string, number>
+  [key: string]: unknown
+}
+
+interface OverallRoundData {
+  roundCodes: string[]
+  hasDeadlines: boolean
+  players: RankedPlayer[]
+  groups: string[]
+  groupedPlayers: Record<string, RankedPlayer[]>
+  groupOrder: string[]
+  isShowValidLevel: boolean
+  validLevelColumns: { roundIndex: number; label: string }[]
+  totalColumns: number
+}
+const overallRoundData = ref<OverallRoundData | null>(null)
 const overallDataLoading = ref(false)
 
 // 异步计算赛况总表数据
@@ -982,7 +1036,7 @@ async function calculateOverallRoundData() {
   }
 
   // 查找当前轮次所属的轮次组
-  let matchedRoundGroup: [string, any] | undefined;
+  let matchedRoundGroup: [string, RoundConfig] | undefined;
   for (const [key, value] of Object.entries(season.rounds)) {
     let roundCodes: string[];
     if (key.includes('[') && key.includes(']')) {
@@ -1019,7 +1073,7 @@ async function calculateOverallRoundData() {
   // 是否是deadline模式
   let hasDeadlines = false;
   if (rounds[1] && typeof rounds[1] === 'object') {
-    const roundObj = rounds[1] as any;
+    const roundObj = rounds[1] as RoundConfig;
     if (roundObj.schedule && typeof roundObj.schedule === 'object' && 'deadlines' in roundObj.schedule) {
       hasDeadlines = Boolean(roundObj.schedule.deadlines);
     } else if ('deadlines' in roundObj) {
@@ -1061,12 +1115,18 @@ async function calculateOverallRoundData() {
     });
 
     // 构造playerData格式供totalPointsCalculator使用
-    const playerDataForCalculator = {
+    const playerDataForCalculator: PlayerRoundData = {
       playerCodes: [playerCode],
-      roundScores: roundCodes.reduce((acc: Record<string, any>, roundCode: string, idx) => {
+      totalPoints: roundScores.reduce((sum: number, s) => sum + (s instanceof Decimal ? s.toNumber() : Number(s)), 0),
+      roundScores: roundCodes.reduce((acc: Record<string, PlayerScore>, roundCode: string, idx) => {
         const score = roundScores[idx];
         acc[roundCode] = {
-          averageScore: score instanceof Decimal ? score.toNumber() : Number(score)
+          playerCode,
+          playerName: playerName || playerCode,
+          records: [],
+          totalSum: score instanceof Decimal ? score : new Decimal(score),
+          averageScore: score instanceof Decimal ? score : new Decimal(score),
+          validRecordsCount: 1
         };
         return acc;
       }, {}),
@@ -1084,7 +1144,7 @@ async function calculateOverallRoundData() {
 
     if (is2019) {
       // 2019年小组赛
-      const validInfo = await get2019ValidLevelInfo(playerDataForCalculator, yamlData.value);
+      const validInfo = await get2019ValidLevelInfo(playerDataForCalculator, yamlData.value!);
       timeoutPenalty = validInfo.timeoutPenalty;
 
       // 构造validRounds显示信息
@@ -1100,7 +1160,7 @@ async function calculateOverallRoundData() {
       });
     } else if (isShowValidLevel) {
       // 2020-2024年及以后初赛
-      const validInfo = await getPreliminaryValidInfoEnhanced(props.year, playerDataForCalculator, yamlData.value);
+      const validInfo = await getPreliminaryValidInfoEnhanced(props.year, playerDataForCalculator, yamlData.value!);
       // 仅2020、2021年有超时扣分，2022及以后恒为0
       if (yearNum === 2020 || yearNum === 2021) {
         timeoutPenalty = validInfo.timeoutPenalty;
@@ -1114,7 +1174,7 @@ async function calculateOverallRoundData() {
       validRounds = Array.from({ length: expectedRoundCount }, (_, index) => {
         const roundSelection = validInfo.roundSelections[index];
         const selectedTopic = roundSelection?.selectedTopic;
-        const hasScore = selectedTopic && playerDataForCalculator.roundScores[selectedTopic]?.averageScore > 0;
+        const hasScore = selectedTopic && playerDataForCalculator.roundScores[selectedTopic]?.averageScore.greaterThan(0);
 
         return {
           round: `round${index + 1}`, // 轮次标识
@@ -1182,10 +1242,10 @@ async function calculateOverallRoundData() {
       totalScore = roundScores.reduce((acc: Decimal, curr) => acc.plus(curr instanceof Decimal ? curr : new Decimal(curr)), new Decimal(0));
     } else if (is2019) {
       // 2019年小组赛，使用重构后的计算函数
-      totalScore = await calculate2019TotalScore(playerDataForCalculator, yamlData.value);
+      totalScore = await calculate2019TotalScore(playerDataForCalculator, yamlData.value!);
     } else if (isShowValidLevel) {
       // 2020-2024年初赛，使用重构后的计算函数
-      totalScore = await calculateValidLevelTotalScore(props.year, playerDataForCalculator, yamlData.value);
+      totalScore = await calculateValidLevelTotalScore(props.year, playerDataForCalculator, yamlData.value!);
     } else {
       // 其它情况，简单相加
       totalScore = roundScores.reduce((acc: Decimal, curr) => acc.plus(curr instanceof Decimal ? curr : new Decimal(curr)), new Decimal(0));
@@ -1296,7 +1356,7 @@ async function calculateOverallRoundData() {
   });
 
   // 按小组组织选手数据
-  const groupedPlayers: Record<string, any[]> = {}
+  const groupedPlayers: Record<string, (typeof rankedPlayers)[number][]> = {}
   // 保持原始顺序：遍历allPlayerCodes，按顺序分组
   allPlayerCodes.forEach(playerCode => {
     const player = rankedPlayers.find(p => p.playerCode === playerCode);
@@ -1506,7 +1566,7 @@ function isPublicJudge(judgeCode: string): boolean {
   return props.year === '2023' && props.round === 'P1' && judgeCode.startsWith('JZ');
 }
 
-function isReEvaluationJudge(judgeCode: string, record: any): boolean {
+function isReEvaluationJudge(judgeCode: string, record: ScoreRecord): boolean {
   // 首先检查是否是JR评委
   if (!isBackupJudge(judgeCode) || !scoreData.value) return false;
 
@@ -1843,12 +1903,21 @@ const filteredDetailRecords = computed(() => {
   return records
 })
 
+// 合并评分记录的扩展类型
+interface MergedScoreRecord extends ScoreRecord {
+  _originalIndex: number
+  judgeCodes: string[]
+  judgeNames: string[]
+  _mergeCount: number
+  isCollaborative?: boolean
+}
+
 // groupedDetailRecords 直接基于 filteredDetailRecords
 const groupedDetailRecords = computed(() => {
   if (!filteredDetailRecords.value.length) return []
 
   // 先按选手代码对记录进行分组
-  const groups: { [key: string]: any } = {}
+  const groups: Record<string, { playerCode: string; playerName: string; records: ScoreRecord[] }> = {}
 
   // 直接用全部 filteredDetailRecords
   const recordsToDisplay = filteredDetailRecords.value
@@ -1866,17 +1935,20 @@ const groupedDetailRecords = computed(() => {
   })
 
   // 合并内容完全相同的评分项（协商评分合并）
-  Object.values(groups).forEach((group: any) => {
-    const merged: any[] = []
-    const mergedMap: Record<string, any> = {}
+  Object.values(groups).forEach((group) => {
+    const merged: MergedScoreRecord[] = []
+    const mergedMap: Record<string, MergedScoreRecord> = {}
 
     // 按照原始顺序处理记录，保持评委顺序
-    group.records.forEach((rec: any, originalIndex: number) => {
+    group.records.forEach((rec, originalIndex: number) => {
       // 尚未评分的记录不参与合并，直接添加
       if (isNotYetRated(rec)) {
         merged.push({
           ...rec,
-          _originalIndex: originalIndex
+          _originalIndex: originalIndex,
+          judgeCodes: [rec.judgeCode],
+          judgeNames: [rec.judgeName],
+          _mergeCount: 1
         })
         return
       }
@@ -1906,8 +1978,8 @@ const groupedDetailRecords = computed(() => {
 
     // 按照原始顺序添加已评分的记录
     Object.values(mergedMap)
-      .sort((a: any, b: any) => a._originalIndex - b._originalIndex)
-      .forEach((item: any) => {
+      .sort((a, b) => a._originalIndex - b._originalIndex)
+      .forEach((item) => {
         if (item._mergeCount > 1) {
           // 合并评委名（去重）
           const judgeNames = Array.from(new Set(item.judgeNames.join(',').split(',').map((j: string) => j.trim()))).join(', ')
@@ -1918,7 +1990,7 @@ const groupedDetailRecords = computed(() => {
       })
 
     // 按照原始索引排序所有记录
-    merged.sort((a: any, b: any) => a._originalIndex - b._originalIndex)
+    merged.sort((a, b) => a._originalIndex - b._originalIndex)
 
     group.records = merged
   })
@@ -2030,21 +2102,23 @@ const filteredPlayerScores = computed(() => {
 })
 
 // 总分排名并列排名算法
-function assignRankingWithTiesForTotal(players: any[], scoreField: string = 'averageScore', rankField: string = 'displayRank') {
+function assignRankingWithTiesForTotal(players: PlayerScore[], scoreField: keyof PlayerScore = 'averageScore', rankField: string = 'displayRank') {
   let lastScore: string | null = null
   let lastRank = 0
   let skip = 0
   for (let i = 0; i < players.length; i++) {
+    const player = players[i] as unknown as Record<string, unknown>
+    const rawScore = player[scoreField]
     // 统一格式化分数字符串，避免小数精度误差
-    const currScore = players[i][scoreField] instanceof Decimal
-      ? players[i][scoreField].toFixed(3)
-      : new Decimal(players[i][scoreField]).toFixed(3)
+    const currScore = rawScore instanceof Decimal
+      ? rawScore.toFixed(3)
+      : new Decimal(rawScore as number | string).toFixed(3)
     if (lastScore !== null && currScore === lastScore) {
-      players[i][rankField] = lastRank
+      player[rankField] = lastRank
       skip++
     } else {
-      players[i][rankField] = lastRank + 1 + skip
-      lastRank = players[i][rankField]
+      player[rankField] = lastRank + 1 + skip
+      lastRank = player[rankField] as number
       skip = 0
     }
     lastScore = currScore
@@ -2102,7 +2176,7 @@ const filteredOverallRoundData = computed(() => {
   // 过滤每个小组的选手
   if (filteredData.groupedPlayers) {
     Object.keys(filteredData.groupedPlayers).forEach(group => {
-      filteredData.groupedPlayers[group] = filteredData.groupedPlayers[group].filter((player: any) => {
+      filteredData.groupedPlayers[group] = filteredData.groupedPlayers[group].filter((player: PlayerScore) => {
         // 直接匹配选手名或选手码
         if (isExact) {
           return player.playerName === processedKeyword ||
@@ -2212,7 +2286,7 @@ function getPlayerAverageScore(playerCode: string): string {
   if (!playerScore) return '-';
 
   // 检查该选手是否有尚未评分的记录
-  const hasNotYetRatedRecord = playerScore.records && playerScore.records.some((rec: any) => isNotYetRated(rec));
+  const hasNotYetRatedRecord = playerScore.records && playerScore.records.some((rec: ScoreRecord) => isNotYetRated(rec));
 
   // 如果有尚未评分的记录，显示横杠
   if (hasNotYetRatedRecord) return '-';
@@ -2347,11 +2421,12 @@ function downloadLevelFile(playerCode: string): void {
 
 // 监听props变化，加载所有子轮次评分数据
 watch(
-  () => [props.year, props.round, yamlData.value],
-  async ([year, round, yaml]) => {
+  () => [props.year, props.round, yamlData.value] as [string, string, MWCupYamlDoc | null],
+  async ([year, round, yaml]: [string, string, MWCupYamlDoc | null]) => {
     if (!yaml) return;
     // 查找当前轮次所属的多轮次key
-    const season = yaml?.season?.[year];
+    const yamlDoc = yaml as MWCupYamlDoc;
+    const season = yamlDoc?.season?.[year];
     if (!season || !season.rounds) return;
     let roundGroupKey = '';
     let isMultiRound = false;
@@ -2370,7 +2445,7 @@ watch(
       }
     }
     if (isMultiRound && roundGroupKey) {
-      await loadAllRounds(year, roundGroupKey, yaml);
+      await loadAllRounds(year, roundGroupKey, yamlDoc);
     } else {
       // 切换到单轮次或P1/P2时，清空多轮次评分数据
       multiRoundScores.value = {};

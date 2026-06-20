@@ -30,6 +30,12 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 
+defineProps<{
+  doc?: string
+}>()
+
+defineOptions({ inheritAttrs: false })
+
 marked.setOptions({
   breaks: true
 })

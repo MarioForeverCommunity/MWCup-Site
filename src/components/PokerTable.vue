@@ -145,6 +145,7 @@ import type { PokerCard } from '../types/poker'
 import { getCardDisplayInfo, getCardSortOrder } from '../types/poker'
 import { getRoundChineseName } from '../utils/roundNames'
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader'
+import type { MWCupYamlDoc, PlayerData } from '../types/mwcup'
 
 interface LevelIndexItem {
   name: string
@@ -485,26 +486,24 @@ function scrollToCard(index: number): void {
   })
 }
 
-function buildYamlPlayerMap(yamlData: any): YamlPlayerMap {
+function buildYamlPlayerMap(yamlData: MWCupYamlDoc): YamlPlayerMap {
   const map: YamlPlayerMap = {}
 
   if (!yamlData?.season) return map
 
   for (const [year, yearData] of Object.entries(yamlData.season)) {
     if (!yearData || typeof yearData !== 'object') continue
-    const typedYearData = yearData as { rounds?: any }
-    if (!typedYearData.rounds) continue
+    if (!yearData.rounds) continue
 
     map[year] = {}
 
-    for (const [roundKey, roundData] of Object.entries(typedYearData.rounds)) {
+    for (const [roundKey, roundData] of Object.entries(yearData.rounds)) {
       if (!roundData || typeof roundData !== 'object') continue
-      const typedRoundData = roundData as { players?: any }
-      if (!typedRoundData.players) continue
+      if (!roundData.players) continue
 
       map[year][roundKey] = {}
 
-      const processPlayers = (players: any) => {
+      const processPlayers = (players: PlayerData | Record<string, unknown>) => {
         if (typeof players === 'string') {
           return
         }
@@ -513,13 +512,13 @@ function buildYamlPlayerMap(yamlData: any): YamlPlayerMap {
             if (typeof value === 'string') {
               map[year][roundKey][code] = value
             } else if (typeof value === 'object' && value !== null) {
-              processPlayers(value)
+              processPlayers(value as Record<string, unknown>)
             }
           }
         }
       }
 
-      processPlayers(typedRoundData.players)
+      processPlayers(roundData.players)
     }
   }
 

@@ -78,14 +78,22 @@ import { useRoute, useRouter } from 'vue-router'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
 import { getRoundChineseName } from '../utils/roundNames'
+import type { RoundConfig, SeasonYearData } from '../types/mwcup'
 import ScoreTable from './ScoreTable.vue'
 import SubjectDisplay from './SubjectDisplay.vue'
 import ScheduleTable from './ScheduleTable.vue'
 
+defineProps<{
+  year?: string
+  round?: string
+}>()
+
+defineOptions({ inheritAttrs: false })
+
 const route = useRoute()
 const router = useRouter()
 
-const seasonData = ref<any>(null)
+const seasonData = ref<Record<string, SeasonYearData> | null>(null)
 const selectedYear = ref('')
 const selectedRound = ref('')
 
@@ -157,7 +165,7 @@ const availableRounds = computed(() => {
           for (const singleRound of parsedKey) {
             roundList.push({
               code: singleRound,
-              name: getRoundChineseName(singleRound, { ...roundData as any, year: selectedYear.value })
+              name: getRoundChineseName(singleRound, { ...roundData as RoundConfig, year: selectedYear.value })
             });
           }
           continue;
@@ -173,7 +181,7 @@ const availableRounds = computed(() => {
       for (const singleRound of singleRounds) {
         roundList.push({
           code: singleRound,
-          name: getRoundChineseName(singleRound, { ...roundData as any, year: selectedYear.value })
+          name: getRoundChineseName(singleRound, { ...roundData as RoundConfig, year: selectedYear.value })
         });
       }
       continue;
@@ -182,7 +190,7 @@ const availableRounds = computed(() => {
     // 处理普通的单轮次
     roundList.push({
       code: roundKey,
-      name: getRoundChineseName(roundKey, { ...roundData as any, year: selectedYear.value })
+      name: getRoundChineseName(roundKey, { ...roundData as RoundConfig, year: selectedYear.value })
     });
   }
 

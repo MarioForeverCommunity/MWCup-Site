@@ -1,9 +1,11 @@
 // 成绩显示格式化工具函数
 // 用于统一TotalPointsRanking.vue和PlayerRecords.vue中的成绩显示格式
 
+import type { MWCupYamlDoc } from '../types/mwcup';
+
 export interface ResultFormatterOptions {
   year: string;
-  yamlData: any;
+  yamlData: MWCupYamlDoc | null;
 }
 
 /**
@@ -29,8 +31,8 @@ export function formatResultDisplay(bestResult: string, options: ResultFormatter
     if (!roundData?.players) return 0;
 
     // 计算选手数量（每个组的选手总和）
-    Object.values(roundData.players).forEach((group: any) => {
-      if (typeof group === 'object') {
+    Object.values(roundData.players).forEach((group: unknown) => {
+      if (typeof group === 'object' && group !== null) {
         playerCount += Object.keys(group).length;
       }
     });
@@ -56,8 +58,8 @@ export function formatResultDisplay(bestResult: string, options: ResultFormatter
 
         if (prelimRoundKey && roundsData[prelimRoundKey]?.players) {
           // 计算选手数量
-          Object.values(roundsData[prelimRoundKey].players).forEach((group: any) => {
-            if (typeof group === 'object') {
+          Object.values(roundsData[prelimRoundKey].players).forEach((group: unknown) => {
+            if (typeof group === 'object' && group !== null) {
               playerCount += Object.keys(group).length;
             } else if (Array.isArray(group)) {
               playerCount += group.length;
@@ -80,8 +82,8 @@ export function formatResultDisplay(bestResult: string, options: ResultFormatter
 
         if (groupRoundKey && roundsData[groupRoundKey]?.players) {
           // 计算选手数量
-          Object.values(roundsData[groupRoundKey].players).forEach((group: any) => {
-            if (typeof group === 'object') {
+          Object.values(roundsData[groupRoundKey].players).forEach((group: unknown) => {
+            if (typeof group === 'object' && group !== null) {
               playerCount += Object.keys(group).length;
             }
           });
@@ -120,8 +122,8 @@ export function formatResultDisplay(bestResult: string, options: ResultFormatter
 
       if (groupRoundKey && roundsData[groupRoundKey]?.players) {
         // 计算选手数量
-        Object.values(roundsData[groupRoundKey].players).forEach((group: any) => {
-          if (typeof group === 'object') {
+        Object.values(roundsData[groupRoundKey].players).forEach((group: unknown) => {
+          if (typeof group === 'object' && group !== null) {
             playerCount += Object.keys(group).length;
           }
         });
@@ -141,8 +143,8 @@ export function formatResultDisplay(bestResult: string, options: ResultFormatter
 
       if (prelimRoundKey && roundsData[prelimRoundKey]?.players) {
         // 计算选手数量
-        Object.values(roundsData[prelimRoundKey].players).forEach((group: any) => {
-          if (typeof group === 'object') {
+        Object.values(roundsData[prelimRoundKey].players).forEach((group: unknown) => {
+          if (typeof group === 'object' && group !== null) {
             playerCount += Object.keys(group).length;
           } else if (Array.isArray(group)) {
             playerCount += group.length;
