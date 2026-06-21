@@ -56,8 +56,8 @@
             <td class="fourth">{{ champion.fourth || '-' }}</td>
             <td class="link">
               <a
-                v-if="urlMap[champion.year]"
-                :href="urlMap[champion.year]"
+                v-if="getUploadUrl(champion.year)"
+                :href="getUploadUrl(champion.year)"
                 target="_blank"
                 class="url-btn hover-scale"
               >
@@ -76,7 +76,7 @@
 import { ref, onMounted } from 'vue'
 import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
-import { uploadUrlMap as urlMap } from '../utils/urlMap'
+import { getUploadUrl } from '../utils/urlMap'
 
 import { loadRoundScoreData } from '../utils/scoreCalculator'
 import { loadTotalPointsData } from '../utils/totalPointsCalculator'

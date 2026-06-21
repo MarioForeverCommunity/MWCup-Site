@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getEditionOptions } from '../utils/editionHelper'
-import { uploadUrlMap as urlMap } from '../utils/urlMap'
+import { uploadUrlMap as urlMap, getYsepanPassword } from '../utils/urlMap'
 
 const route = useRoute()
 const router = useRouter()
@@ -54,7 +54,14 @@ const archiveOptions = getEditionOptions([...archiveYears]).map(opt =>
 // 构建URL映射
 
 // 当前显示的URL
-const currentUrl = computed(() => urlMap[activeYear.value])
+const currentUrl = computed(() => {
+  const item = urlMap[activeYear.value]
+  if (!item) return ''
+  return typeof item === 'string' ? item : item.url
+})
+
+// ysepan 网盘访问密码
+const ysepanPassword = computed(() => getYsepanPassword(activeYear.value))
 
 // 判断是否显示iframe（只有比赛系统显示）
 const showIframe = computed(() => competitionYears.includes(activeYear.value))
@@ -112,6 +119,12 @@ const openUrl = () => {
       </button>
     </div>
 
+    <!-- ysepan 网盘访问密码提示 -->
+    <div v-if="ysepanPassword" class="password-notice">
+      <span class="password-label">访问密码：</span>
+      <span class="password-value">{{ ysepanPassword }}</span>
+    </div>
+
     <div v-if="showConstructionNotice" class="construction-notice">
       <div class="notice-content">
         <div class="notice-icon">🚧</div>
@@ -147,6 +160,29 @@ const openUrl = () => {
   margin-top: var(--spacing-md);
   justify-content: center;
   align-items: center;
+}
+
+.password-notice {
+  text-align: center;
+  padding: 10px 20px;
+  background-color: var(--background-secondary);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+}
+
+.password-label {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.password-value {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 16px;
+  margin-left: 8px;
+  font-family: monospace;
+  user-select: all;
 }
 
 .iframe-container {
