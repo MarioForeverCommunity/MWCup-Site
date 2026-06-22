@@ -129,21 +129,7 @@ function isPlayerInYamlRound(seasonData: SeasonYearData, roundKey: string, playe
 
   if (!roundData) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
-      if (key.startsWith('[') && key.endsWith(']')) {
-        try {
-          const parsedKey = JSON.parse(key)
-          if (Array.isArray(parsedKey) && parsedKey.includes(roundKey)) {
-            roundData = data
-            break
-          }
-        } catch {
-          const rounds = key.slice(1, -1).split(',').map(r => r.trim())
-          if (rounds.includes(roundKey)) {
-            roundData = data
-            break
-          }
-        }
-      } else if (key.includes(',')) {
+      if (key.includes(',')) {
         const rounds = key.split(',').map(r => r.trim())
         if (rounds.includes(roundKey)) {
           roundData = data

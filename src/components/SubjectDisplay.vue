@@ -121,19 +121,6 @@ async function loadSmwpVersion() {
     // 如果直接查找失败，尝试在组合轮次中查找
     if (!roundData) {
       for (const [roundKey, data] of Object.entries(yearData.rounds)) {
-        // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
-        if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
-          try {
-            const parsedKey = JSON.parse(roundKey)
-            if (Array.isArray(parsedKey) && parsedKey.includes(props.round)) {
-              roundData = data
-              break
-            }
-          } catch {
-            // JSON解析失败，继续下一个
-          }
-        }
-
         // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
         if (roundKey.includes(',')) {
           const singleRounds = roundKey.split(',').map(r => r.trim())

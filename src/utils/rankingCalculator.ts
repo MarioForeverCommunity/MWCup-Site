@@ -4,7 +4,7 @@
 
 import { loadRoundScoreData, type PlayerScore } from './scoreCalculator';
 import { calculateFinalPublicScore } from './scoreCalculator';
-import * as YAML from 'js-yaml';
+import { load, YAML11_SCHEMA } from 'js-yaml';
 import { Decimal } from 'decimal.js';
 import { getRoundChineseName } from './roundNames';
 import type {
@@ -51,7 +51,7 @@ async function loadBaseData() {
     maxScoreData = await maxScoreResponse.json() as MaxScoreData;
 
     const yamlText = await yamlResponse.text();
-    yamlData = YAML.load(yamlText) as MWCupYamlDoc;
+    yamlData = load(yamlText, { schema: YAML11_SCHEMA }) as MWCupYamlDoc;
   }
 
   return { levelsData: levelsData!, maxScoreData: maxScoreData!, yamlData: yamlData! };

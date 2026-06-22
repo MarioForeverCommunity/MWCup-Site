@@ -916,7 +916,7 @@ const multiRoundLoading = ref(false)
 // 加载所有子轮次评分数据
 async function loadAllRounds(year: string, roundGroupKey: string, yaml: MWCupYamlDoc) {
   multiRoundLoading.value = true
-  const roundCodes = roundGroupKey.replace(/\[|\]/g, '').split(',').map(r => r.trim())
+  const roundCodes = roundGroupKey.split(',').map(r => r.trim())
   const result: Record<string, RoundScoreData | null> = {}
   for (const roundCode of roundCodes) {
     try {
@@ -1039,9 +1039,7 @@ async function calculateOverallRoundData() {
   let matchedRoundGroup: [string, RoundConfig] | undefined;
   for (const [key, value] of Object.entries(season.rounds)) {
     let roundCodes: string[];
-    if (key.includes('[') && key.includes(']')) {
-      roundCodes = key.replace(/\[|\]/g, '').split(',').map(r => r.trim());
-    } else if (key.includes(',')) {
+    if (key.includes(',')) {
       roundCodes = key.split(',').map(r => r.trim());
     } else {
       roundCodes = [key.trim()];
@@ -1052,10 +1050,8 @@ async function calculateOverallRoundData() {
     }
   }
 
-  // 判断匹配到的轮次组是否为多轮次（数组轮次）
-  const isMultiRound = matchedRoundGroup &&
-    (matchedRoundGroup[0].includes('[') && matchedRoundGroup[0].includes(']') ||
-     matchedRoundGroup[0].includes(','));
+  // 判断匹配到的轮次组是否为多轮次
+  const isMultiRound = matchedRoundGroup && matchedRoundGroup[0].includes(',');
 
   // 只有多轮次才显示赛况总表
   if (!isMultiRound) return null;
@@ -1064,7 +1060,7 @@ async function calculateOverallRoundData() {
   if (!rounds) return null
 
   const roundGroupKey = rounds[0];
-  const roundCodes = roundGroupKey.replace(/\[|\]/g, '').split(',').map(r => r.trim());
+  const roundCodes = roundGroupKey.split(',').map(r => r.trim());
 
   // 获取所有选手（包括未上传）
   const playerMapResult = buildPlayerJudgeMap(yamlData.value, props.year, roundGroupKey);
@@ -1502,14 +1498,8 @@ function isPlayerAdvanced(playerName: string): boolean {
   for (let i = 0; i < rounds.length; i++) {
     const roundKey = rounds[i];
 
-    // 检查是否是数组轮次（包含方括号和逗号）
-    if (roundKey.includes('[') && roundKey.includes(']')) {
-      const roundCodes = roundKey.replace(/\[|\]/g, '').split(',').map(r => r.trim());
-      if (roundCodes.includes(props.round)) {
-        currentRoundIndex = i;
-        break;
-      }
-    } else if (roundKey.includes(',')) {
+    // 检查是否是逗号分隔的多轮次
+    if (roundKey.includes(',')) {
       const roundCodes = roundKey.split(',').map(r => r.trim());
       if (roundCodes.includes(props.round)) {
         currentRoundIndex = i;
@@ -2432,9 +2422,9 @@ watch(
     let isMultiRound = false;
     for (const [key] of Object.entries(season.rounds)) {
       let roundCodes: string[];
-      // 只有key以[开头且以]结尾，或key包含逗号且不是P1/P2等，才算多轮次
-      if ((key.startsWith('[') && key.endsWith(']')) || (key.includes(',') && !['P1','P2','F','S','Q','R'].includes(key))) {
-        roundCodes = key.replace(/\[|\]/g, '').split(',').map(r => r.trim());
+      // key包含逗号即为多轮次
+      if (key.includes(',')) {
+        roundCodes = key.split(',').map(r => r.trim());
         isMultiRound = true;
       } else {
         roundCodes = [key.trim()];

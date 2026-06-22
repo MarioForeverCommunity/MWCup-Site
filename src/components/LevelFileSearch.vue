@@ -150,24 +150,6 @@ function onYearChange() {
     const roundList: { key: string; name: string }[] = []
 
     for (const [roundKey, roundData] of Object.entries(rounds)) {
-      // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
-      if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
-        try {
-          const parsedKey = JSON.parse(roundKey);
-          if (Array.isArray(parsedKey)) {
-            for (const singleRound of parsedKey) {
-              roundList.push({
-                key: singleRound,
-                name: getRoundChineseName(singleRound, { ...roundData as RoundConfig, year: selectedYear.value })
-              });
-            }
-            continue;
-          }
-        } catch {
-          // JSON解析失败，按普通轮次处理
-        }
-      }
-
       // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
       if (roundKey.includes(',')) {
         const singleRounds = roundKey.split(',').map(r => r.trim());
@@ -209,21 +191,8 @@ function onRoundChange() {
 
     // 查找包含当前选中轮次的轮次数据
     for (const [roundKey, roundData] of Object.entries(rounds)) {
-      // 检查是否是数组表示的轮次
-      if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
-        try {
-          const parsedKey = JSON.parse(roundKey);
-          if (Array.isArray(parsedKey) && parsedKey.includes(selectedRound.value)) {
-            targetRoundData = roundData;
-            break;
-          }
-        } catch {
-          // JSON解析失败，继续下一个
-        }
-      }
-
       // 检查是否是逗号分隔的多轮次
-      else if (roundKey.includes(',')) {
+      if (roundKey.includes(',')) {
         const singleRounds = roundKey.split(',').map(r => r.trim());
         if (singleRounds.includes(selectedRound.value)) {
           targetRoundData = roundData;

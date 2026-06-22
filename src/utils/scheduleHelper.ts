@@ -234,6 +234,8 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
       for (const [roundKey, roundVal] of Object.entries(season.rounds)) {
         if (roundVal && typeof roundVal.schedule === 'object' && roundVal.schedule !== null) {
           const scheduleObj = roundVal.schedule;
+          // 规范化多轮次键名（去除空格，使 I1, I2, I3 → I1,I2,I3），确保后续 regex 匹配正确
+          const normRoundKey = roundKey.replace(/\s+/g, '');
 
           // 处理带有topics和deadlines的轮次（初赛、小组赛、复赛等）
           if (scheduleObj.topics || scheduleObj.deadlines || scheduleObj.draw || scheduleObj.match?.deadlines) {
@@ -243,7 +245,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
               for (const [topicKey, topicValue] of Object.entries(scheduleObj.topics)) {
                 if (typeof topicValue === 'object' && topicValue !== null) {
                   const tv = topicValue as ScheduleLinkData;
-                  schedule[`${roundKey}-${topicKey}`] = {
+                  schedule[`${normRoundKey}-${topicKey}`] = {
                     time: tv.time,
                     tieba_tid: tv.tieba_tid,
                     mf_tid: tv.mf_tid
@@ -255,7 +257,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
             // 处理独立的deadlines
             if (scheduleObj.deadlines) {
               scheduleObj.deadlines.forEach((deadline: string, index: number) => {
-                schedule[`${roundKey}-deadline${index + 1}`] = {
+                schedule[`${normRoundKey}-deadline${index + 1}`] = {
                   time: deadline
                 };
               });
@@ -280,13 +282,13 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
                     }
                   }
 
-                  schedule[`${roundKey}-match`] = {
+                  schedule[`${normRoundKey}-match`] = {
                     start: scheduleObj.match.start,
                     links
                   };
                 } else {
                   // 原来的处理方式（单个链接）
-                  schedule[`${roundKey}-match`] = {
+                  schedule[`${normRoundKey}-match`] = {
                     time: scheduleObj.match.start,
                     tieba_tid: scheduleObj.match.tieba_tid,
                     mf_tid: scheduleObj.match.mf_tid
@@ -295,12 +297,12 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
 
                 // 添加每轮截止时间
                 scheduleObj.match.deadlines.forEach((deadline: string, index: number) => {
-                  schedule[`${roundKey}-deadline${index + 1}`] = {
+                  schedule[`${normRoundKey}-deadline${index + 1}`] = {
                     time: deadline
                   };
                 });
               } else {
-                schedule[`${roundKey}-match`] = scheduleObj.match;
+                schedule[`${normRoundKey}-match`] = scheduleObj.match;
               }
             }
 
@@ -310,7 +312,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
               // 添加评分截止时间的处理
               if (judgingData.deadlines) {
                 judgingData.deadlines.forEach((deadline: string, index: number) => {
-                  schedule[`${roundKey}-judging-deadline${index + 1}`] = {
+                  schedule[`${normRoundKey}-judging-deadline${index + 1}`] = {
                     time: deadline
                   };
                 });
@@ -333,7 +335,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
                   }
                 }
                 if (links.length > 0) {
-                  schedule[`${roundKey}-judging`] = {
+                  schedule[`${normRoundKey}-judging`] = {
                     start: judgingData.start,
                     end: judgingData.end,
                     links
@@ -349,7 +351,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
           // 处理全局性内容
           for (const [subStage, subValue] of Object.entries(scheduleObj)) {
             if (globalKeys.includes(subStage)) {
-              const key = `${roundKey}-${subStage}`;
+              const key = `${normRoundKey}-${subStage}`;
               if (!schedule[key] || (
                 (typeof subValue === 'object' && subValue !== null) &&
                 ('start' in subValue || 'time' in subValue)
@@ -378,7 +380,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
             // 处理普通内容
             const sv = typeof subValue === 'object' && subValue !== null ? subValue as Record<string, unknown> : null;
             const timeKey = sv ? `${sv.start}-${sv.end}` : '';
-            for (const rk of roundKey.split(',')) {
+            for (const rk of normRoundKey.split(',')) {
               const newKey = `${rk}-${subStage}`;
               if (timeKey && Object.entries(schedule).some(([k, v]) =>
                 typeof v === 'object' && v !== null &&
@@ -565,19 +567,7 @@ function findRoundData(seasonData: SeasonYearData, roundKey: string): RoundConfi
 
   if (seasonData.rounds) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
-      if (key.startsWith('[') && key.endsWith(']')) {
-        try {
-          const parsedKey = JSON.parse(key);
-          if (Array.isArray(parsedKey) && parsedKey.includes(roundKey)) {
-            return data;
-          }
-        } catch {
-          const rounds = key.slice(1, -1).split(',').map(r => r.trim());
-          if (rounds.includes(roundKey)) {
-            return data;
-          }
-        }
-      } else if (key.includes(',')) {
+      if (key.includes(',')) {
         const rounds = key.split(',').map(r => r.trim());
         if (rounds.includes(roundKey)) {
           return data;

@@ -157,24 +157,6 @@ const availableRounds = computed(() => {
   const rounds = seasonData.value[selectedYear.value].rounds
   const roundList: { code: string; name: string }[] = []
   for (const [roundKey, roundData] of Object.entries(rounds)) {
-    // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
-    if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
-      try {
-        const parsedKey = JSON.parse(roundKey);
-        if (Array.isArray(parsedKey)) {
-          for (const singleRound of parsedKey) {
-            roundList.push({
-              code: singleRound,
-              name: getRoundChineseName(singleRound, { ...roundData as RoundConfig, year: selectedYear.value })
-            });
-          }
-          continue;
-        }
-      } catch {
-        // JSON解析失败，按普通轮次处理
-      }
-    }
-
     // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
     if (roundKey.includes(',')) {
       const singleRounds = roundKey.split(',').map(r => r.trim());

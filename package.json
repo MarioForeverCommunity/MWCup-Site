@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "decimal.js": "^10.6.0",
-    "js-yaml": "^4.2.0",
+    "js-yaml": "^5.0.0",
     "marked": "^18.0.5",
     "papaparse": "^5.5.4",
     "vue": "^3.5.38",

@@ -178,7 +178,7 @@ export function isGroupedJudgeMap(judges: JudgeData): judges is GroupedJudgeMap 
 
 /**
  * 从 YAML 赛季数据中查找轮次配置
- * 支持直接键、方括号格式 [G1, G2, G3] 和逗号分隔格式 G1,G2,G3
+ * 支持直接键和逗号分隔的多轮次键（如 G1,G2,G3）
  */
 export function findRoundConfig(
   seasonData: SeasonYearData,
@@ -191,19 +191,7 @@ export function findRoundConfig(
 
   // 在多轮次键中查找
   for (const [key, data] of Object.entries(seasonData.rounds)) {
-    if (key.startsWith('[') && key.endsWith(']')) {
-      try {
-        const parsedKey = JSON.parse(key)
-        if (Array.isArray(parsedKey) && parsedKey.includes(roundKey)) {
-          return data
-        }
-      } catch {
-        const rounds = key.slice(1, -1).split(',').map(r => r.trim())
-        if (rounds.includes(roundKey)) {
-          return data
-        }
-      }
-    } else if (key.includes(',')) {
+    if (key.includes(',')) {
       const rounds = key.split(',').map(r => r.trim())
       if (rounds.includes(roundKey)) {
         return data
@@ -302,17 +290,7 @@ export function extractRoundKeys(roundsConfig: Record<string, RoundConfig>): str
   const rounds: string[] = []
 
   for (const [key] of Object.entries(roundsConfig)) {
-    if (key.startsWith('[') && key.endsWith(']')) {
-      try {
-        const roundList = JSON.parse(key)
-        if (Array.isArray(roundList)) {
-          rounds.push(...roundList)
-        }
-      } catch {
-        const roundList = key.slice(1, -1).split(',').map(r => r.trim())
-        rounds.push(...roundList)
-      }
-    } else if (key.includes(',')) {
+    if (key.includes(',')) {
       const roundList = key.split(',').map(r => r.trim())
       rounds.push(...roundList)
     } else {

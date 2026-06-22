@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import { load, YAML11_SCHEMA }from 'js-yaml';
 import type { MWCupYamlDoc, SeasonYearData } from '../types/mwcup';
 
 /**
@@ -35,7 +35,7 @@ function normalizeTids(obj: unknown): void {
 export async function loadYamlFromUrl(url: string): Promise<MWCupYamlDoc> {
   const res = await fetch(url);
   const text = await res.text();
-  const doc = yaml.load(text) as MWCupYamlDoc;
+  const doc = load(text, { schema: YAML11_SCHEMA }) as MWCupYamlDoc;
   normalizeTids(doc);
   return doc;
 }

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import yaml from 'js-yaml';
+import { load, YAML11_SCHEMA } from 'js-yaml';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,7 +16,7 @@ const output = [];
 let mwcupData = null;
 try {
   const yamlContent = fs.readFileSync(yamlPath, 'utf8');
-  mwcupData = yaml.load(yamlContent);
+  mwcupData = load(yamlContent, { schema: YAML11_SCHEMA });
   console.log('Loaded YAML data successfully');
 } catch (error) {
   console.error('Failed to load YAML data:', error);

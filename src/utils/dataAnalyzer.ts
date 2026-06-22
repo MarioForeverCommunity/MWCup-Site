@@ -163,21 +163,6 @@ async function getAllRounds(): Promise<{ year: number; round: string }[]> {
         for (const roundKey of Object.keys(roundsData)) {
           order++;
 
-          // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
-          if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
-            try {
-              const parsedKey = JSON.parse(roundKey);
-              if (Array.isArray(parsedKey)) {
-                for (const singleRound of parsedKey) {
-                  rounds.push({ year, round: singleRound, order });
-                }
-                continue;
-              }
-            } catch {
-              // JSON解析失败，按普通轮次处理
-            }
-          }
-
           // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
           if (roundKey.includes(',')) {
             const singleRounds = roundKey.split(',').map(r => r.trim());
@@ -277,23 +262,9 @@ async function getPlayerCountFromYaml(year: number, round: string): Promise<numb
     // 首先尝试直接查找轮次
     let roundData = yearData.rounds[round];
 
-    // 如果直接查找失败，尝试在数组格式键中查找
+    // 如果直接查找失败，尝试在逗号分隔的多轮次键中查找
     if (!roundData) {
       for (const [roundKey, data] of Object.entries(yearData.rounds)) {
-        // 检查是否是数组表示的轮次（如 "[G1, G2, G3, G4]"）
-        if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
-          try {
-            const parsedKey = JSON.parse(roundKey);
-            if (Array.isArray(parsedKey) && parsedKey.includes(round)) {
-              roundData = data;
-              break;
-            }
-          } catch {
-            // JSON解析失败，继续下一个
-          }
-        }
-
-        // 检查是否是逗号分隔的多轮次（如 "G1,G2,G3,G4"）
         if (roundKey.includes(',')) {
           const singleRounds = roundKey.split(',').map(r => r.trim());
           if (singleRounds.includes(round)) {
@@ -778,17 +749,9 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
 
       const roundsData = yearData.rounds;
       for (const [roundKey, roundData] of Object.entries(roundsData)) {
-        let roundList: string[] = [];
-        if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
-          try {
-            const parsedKey = JSON.parse(roundKey);
-            if (Array.isArray(parsedKey)) roundList = parsedKey;
-          } catch { roundList = [roundKey]; }
-        } else if (roundKey.includes(',')) {
-          roundList = roundKey.split(',').map(r => r.trim());
-        } else {
-          roundList = [roundKey];
-        }
+        const roundList = roundKey.includes(',')
+          ? roundKey.split(',').map(r => r.trim())
+          : [roundKey];
         for (const round of roundList) {
           const stageLevel = getStageLevel(round);
           if (!roundData.players) continue;
@@ -1051,20 +1014,8 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
       let roundData = yearData.rounds[round];
 
       if (!roundData) {
-        // 如果直接查找失败，尝试在数组格式键中查找
+        // 如果直接查找失败，尝试在逗号分隔的多轮次键中查找
         for (const [roundKey, data] of Object.entries(yearData.rounds)) {
-          if (roundKey.startsWith('[') && roundKey.endsWith(']')) {
-            try {
-              const parsedKey = JSON.parse(roundKey);
-              if (Array.isArray(parsedKey) && parsedKey.includes(round)) {
-                roundData = data;
-                break;
-              }
-            } catch {
-              // JSON解析失败，继续下一个
-            }
-          }
-
           if (roundKey.includes(',')) {
             const singleRounds = roundKey.split(',').map(r => r.trim());
             if (singleRounds.includes(round)) {

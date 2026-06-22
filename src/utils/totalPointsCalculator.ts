@@ -280,20 +280,8 @@ function extractRounds(roundsConfig: Record<string, RoundConfig>): string[] {
   const rounds: string[] = [];
 
   for (const [key] of Object.entries(roundsConfig)) {
-    if (key.startsWith('[') && key.endsWith(']')) {
-      // 处理方括号格式的多轮次键，如 [G1, G2, G3]
-      try {
-        const roundList = JSON.parse(key);
-        if (Array.isArray(roundList)) {
-          rounds.push(...roundList);
-        }
-      } catch {
-        // 如果JSON解析失败，尝试手动解析
-        const roundList = key.slice(1, -1).split(',').map(r => r.trim());
-        rounds.push(...roundList);
-      }
-    } else if (key.includes(',')) {
-      // 处理逗号分隔的轮次键
+    if (key.includes(',')) {
+      // 处理逗号分隔的多轮次键
       const roundList = key.split(',').map(r => r.trim());
       rounds.push(...roundList);
     } else {
@@ -375,24 +363,8 @@ function isPlayerInYamlRound(seasonData: SeasonYearData, roundKey: string, playe
   // 如果没有找到，检查多轮次键
   if (!roundData) {
     for (const [key, data] of Object.entries(seasonData.rounds)) {
-      // 检查方括号格式的多轮次键，如 [G1, G2, G3, G4]
-      if (key.startsWith('[') && key.endsWith(']')) {
-        try {
-          const parsedKey = JSON.parse(key);
-          if (Array.isArray(parsedKey) && parsedKey.includes(roundKey)) {
-            roundData = data;
-            break;
-          }
-        } catch {
-          // JSON解析失败，尝试手动解析
-          const rounds = key.slice(1, -1).split(',').map(r => r.trim());
-          if (rounds.includes(roundKey)) {
-            roundData = data;
-            break;
-          }
-        }
-      } else if (key.includes(',')) {
-        // 处理逗号分隔的轮次键
+      // 处理逗号分隔的多轮次键
+      if (key.includes(',')) {
         const rounds = key.split(',').map(r => r.trim());
         if (rounds.includes(roundKey)) {
           roundData = data;
