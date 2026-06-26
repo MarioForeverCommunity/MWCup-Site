@@ -67,7 +67,7 @@
                 <th v-if="year === '2018' && !['Q1', 'Q2'].includes(round)">总积分</th>
                 <th class="rank-col">小组内排名</th>
                 <th class="rank-col">总排名</th>
-                <th>是否晋级</th>
+                <th v-if="!filteredOverallRoundData?.isFRoundNonFinal">是否晋级</th>
               </tr>
             </thead>
             <tbody>
@@ -100,7 +100,7 @@
                       <td v-if="year === '2018' && !['Q1', 'Q2'].includes(round)" class="match-points">{{ player.matchPoints || 0 }}</td>
                       <td class="rank-col">{{ player.groupRank }}</td>
                       <td class="rank-col">{{ player.totalRank }}</td>
-                      <td :class="{'advanced': isPlayerAdvanced(player.playerName)}">{{ isPlayerAdvanced(player.playerName) ? '是' : '否' }}</td>
+                      <td v-if="!filteredOverallRoundData?.isFRoundNonFinal" :class="{'advanced': isPlayerAdvanced(player.playerName)}">{{ isPlayerAdvanced(player.playerName) ? '是' : '否' }}</td>
                     </tr>
                   </template>
                   <!-- 添加小组间的分隔线 -->
@@ -610,7 +610,8 @@ async function exportOverallToExcel() {
   header.push('总得分')
   // 2018年单循环赛制特有列（四分之一决赛不显示）
   if (props.year === '2018' && !['Q1', 'Q2'].includes(props.round)) header.push('胜', '平', '负', '总积分')
-  header.push('小组内排名', '总排名', '是否晋级')
+  header.push('小组内排名', '总排名')
+  if (!overall.isFRoundNonFinal) header.push('是否晋级')
 
   const data: (string | number)[][] = [header]
   const merges: XLSXRange[] = []
@@ -639,7 +640,8 @@ async function exportOverallToExcel() {
       if (props.year === '2018' && !['Q1', 'Q2'].includes(props.round)) {
         row.push(p.wins || 0, p.draws || 0, p.losses || 0, p.matchPoints || 0)
       }
-      row.push(p.groupRank ?? '-', p.totalRank ?? '-', (isPlayerAdvanced(p.playerName) ? '是' : '否'))
+      row.push(p.groupRank ?? '-', p.totalRank ?? '-')
+      if (!overall.isFRoundNonFinal) row.push(isPlayerAdvanced(p.playerName) ? '是' : '否')
       data.push(row)
     }
     // 合并小组列
@@ -967,6 +969,7 @@ interface OverallRoundData {
   isShowValidLevel: boolean
   validLevelColumns: { roundIndex: number; label: string }[]
   totalColumns: number
+  isFRoundNonFinal: boolean
 }
 const overallRoundData = ref<OverallRoundData | null>(null)
 const overallDataLoading = ref(false)
@@ -1053,13 +1056,16 @@ async function calculateOverallRoundData() {
   // 判断匹配到的轮次组是否为多轮次
   const isMultiRound = matchedRoundGroup && matchedRoundGroup[0].includes(',');
 
-  // 只有多轮次才显示赛况总表
-  if (!isMultiRound) return null;
-
+  // 判断是否为 F 开头的正赛轮次（不包括决赛）
   const rounds = matchedRoundGroup
   if (!rounds) return null
 
   const roundGroupKey = rounds[0];
+  const isFRoundNonFinal = roundGroupKey.startsWith('F') && roundGroupKey !== 'F';
+
+  // 只有多轮次或 F 开头的正赛轮次才显示赛况总表
+  if (!isMultiRound && !isFRoundNonFinal) return null;
+
   const roundCodes = roundGroupKey.split(',').map(r => r.trim());
 
   // 获取所有选手（包括未上传）
@@ -1377,7 +1383,7 @@ async function calculateOverallRoundData() {
   if (props.year === '2018') {
     totalColumns += 4; // 2018年：胜 + 平 + 负 + 总积分
   }
-  totalColumns += 3; // 小组排名 + 总排名 + 是否晋级
+  totalColumns += isFRoundNonFinal ? 2 : 3; // 小组排名 + 总排名 + (非F轮次才有的)是否晋级
 
   return {
     roundCodes,
@@ -1388,7 +1394,8 @@ async function calculateOverallRoundData() {
     groupOrder: Object.keys(groupedPlayers).sort(),
     isShowValidLevel,
     validLevelColumns,
-    totalColumns
+    totalColumns,
+    isFRoundNonFinal
   }
 }
 
