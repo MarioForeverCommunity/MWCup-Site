@@ -59,7 +59,7 @@
               {{ getCardDisplayInfo(card.cardCode).displayName }} {{ getCardMeaning(card.cardCode) }}
             </div>
             <div class="card-level-name">{{ getLevelDisplayName(card) }}</div>
-            <div class="card-source">{{ getPlayerName(card) }} · {{ getYearWithEdition(card.year) }}{{ getRoundDisplayName(card.round) }}</div>
+            <div class="card-source">{{ getPlayerName(card) }} · {{ getYearWithEdition(card.year) }}{{ getRoundDisplayName(card.round, card.year) }}</div>
           </div>
         </div>
       </div>
@@ -110,7 +110,7 @@
                   </div>
                 </div>
                 <div class="poker-footer">
-                  {{ card.playerCode }} {{ getPlayerName(card) }} {{ getYearWithEdition(card.year) }}{{ getRoundDisplayName(card.round) }}{{ !getLevelFileName(card) ? '*' : '' }}
+                  {{ card.playerCode }} {{ getPlayerName(card) }} {{ getYearWithEdition(card.year) }}{{ getRoundDisplayName(card.round, card.year) }}{{ !getLevelFileName(card) ? '*' : '' }}
                 </div>
                 <div class="poker-corner poker-corner-br">
                   <span class="corner-rank">{{ getPokerRank(card.cardCode) }}</span>
@@ -166,11 +166,20 @@ interface YamlPlayerMap {
   }
 }
 
+interface RoundMetaMap {
+  [year: string]: {
+    [round: string]: {
+      is_warmup: boolean
+    }
+  }
+}
+
 const loading = ref(true)
 const error = ref<string | null>(null)
 const allCards = ref<PokerCard[]>([])
 const levelIndex = ref<LevelIndexItem[]>([])
 const yamlPlayerMap = ref<YamlPlayerMap>({})
+const roundMetaMap = ref<RoundMetaMap>({})
 const selectedCards = ref<PokerCard[]>([])
 const isRandomDraw = ref(false)
 const drawCount = ref(5)
@@ -197,8 +206,9 @@ function formatComment(comment: string): string {
   return comment.replace(/\\n/g, '<br>　　')
 }
 
-function getRoundDisplayName(round: string): string {
-  return getRoundChineseName(round)
+function getRoundDisplayName(round: string, year: string): string {
+  const roundMeta = roundMetaMap.value[year]?.[round]
+  return getRoundChineseName(round, { is_warmup: roundMeta?.is_warmup })
 }
 
 function isRedCard(cardCode: string): boolean {
@@ -289,7 +299,7 @@ function findLevelInfo(card: PokerCard): LevelIndexItem | null {
     if (card.round === 'Q' && item.roundKey.startsWith('Q')) return true
     if (card.round === 'S' && item.roundKey.startsWith('S')) return true
     if (card.round === 'G' && item.roundKey.startsWith('G')) return true
-    if (card.round === 'P1' && (item.roundKey === 'P1' || item.roundType.includes('热身赛') || item.roundType.includes('预选赛'))) return true
+    if (card.round === 'P1' && (item.roundKey === 'P1' || item.roundType.includes('热身赛') || item.roundType.includes('预赛'))) return true
     if (card.round === 'P2' && (item.roundKey === 'P2' || item.roundType.includes('资格赛'))) return true
 
     return false
@@ -304,6 +314,8 @@ function getPlayerNameFromYaml(card: PokerCard): string | null {
 
   for (const [roundKey, roundPlayers] of Object.entries(yearMap)) {
     const roundMatch = card.round === roundKey ||
+      (card.round === 'P1' && roundKey.startsWith('P1')) ||
+      (card.round === 'P2' && roundKey.startsWith('P2')) ||
       (card.round === 'Q' && roundKey.startsWith('Q')) ||
       (card.round === 'S' && roundKey.startsWith('S')) ||
       (card.round === 'G' && roundKey.startsWith('G')) ||
@@ -525,6 +537,27 @@ function buildYamlPlayerMap(yamlData: MWCupYamlDoc): YamlPlayerMap {
   return map
 }
 
+function buildRoundMetaMap(yamlData: MWCupYamlDoc): RoundMetaMap {
+  const map: RoundMetaMap = {}
+
+  if (!yamlData?.season) return map
+
+  for (const [year, yearData] of Object.entries(yamlData.season)) {
+    if (!yearData || typeof yearData !== 'object') continue
+    if (!yearData.rounds) continue
+
+    for (const [roundKey, roundData] of Object.entries(yearData.rounds)) {
+      if (!roundData || typeof roundData !== 'object') continue
+      if (roundData.is_warmup) {
+        if (!map[year]) map[year] = {}
+        map[year][roundKey] = { is_warmup: true }
+      }
+    }
+  }
+
+  return map
+}
+
 async function loadData(): Promise<void> {
   try {
     loading.value = true
@@ -548,6 +581,7 @@ async function loadData(): Promise<void> {
 
     levelIndex.value = indexData
     yamlPlayerMap.value = buildYamlPlayerMap(yamlData)
+    roundMetaMap.value = buildRoundMetaMap(yamlData)
 
     const result = Papa.parse(csvText, {
       header: true,
