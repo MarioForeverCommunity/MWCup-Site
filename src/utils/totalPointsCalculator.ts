@@ -512,8 +512,9 @@ async function calculatePlayerTotalScore(year: string, playerData: PlayerRoundDa
   } else if (['2020', '2021'].includes(year)) {
     // 2020-2021年初赛：有效关卡制，有扣分
     totalScore = await calculateValidLevelTotalScore(year, playerData, yamlData, true);
-  } else if (['2022', '2023', '2024', '2025'].includes(year)) {
+  } else if (['2022', '2023', '2024', '2025'].includes(year) || isYearOnlyFRounds(yamlData, year)) {
     // 2022年之后初赛：有效关卡制，无扣分
+    // 仅包含F正赛轮次的年份也采用此规则
     totalScore = await calculateValidLevelTotalScore(year, playerData, yamlData, false);
   } else {
     // 普通年份：累加所有轮次分数
@@ -594,8 +595,7 @@ export async function calculate2019TotalScore(playerData: PlayerRoundData, yamlD
  */
 export async function calculateValidLevelTotalScore(year: string, playerData: PlayerRoundData, yamlData: MWCupYamlDoc, penaltyForMissing: boolean = true): Promise<Decimal> {
   let preliminaryScore: Decimal;
-  let otherRoundsScore = new Decimal(0);
-  const prelimRoundIds = ['I1', 'I2', 'I3', 'I4'];
+  const prelimRoundIds = getValidLevelRoundIds(yamlData, year);
   const playerCode = playerData.playerCodes[0];
   const yearNum = parseInt(year);
 
@@ -603,8 +603,9 @@ export async function calculateValidLevelTotalScore(year: string, playerData: Pl
   const levelFiles = await loadLevelIndexData();
   const playerLevels = getPlayerLevels(levelFiles, playerCode, yearNum);
 
-  // 获取初赛截止时间
-  const deadlines = getDeadlines(yamlData, year, 'I1');
+  // 获取截止时间（F正赛年份从F1获取，其他年份从I1获取）
+  const deadlineRoundKey = isYearOnlyFRounds(yamlData, year) ? 'F1' : 'I1';
+  const deadlines = getDeadlines(yamlData, year, deadlineRoundKey);
 
   if (yearNum === 2020) {
     // 2020年：3道题选2道，2个截止时间
@@ -626,15 +627,13 @@ export async function calculateValidLevelTotalScore(year: string, playerData: Pl
     if (preliminaryScore.isNegative()) {
       preliminaryScore = new Decimal(0);
     }
-  } else if (yearNum >= 2022) {
-    // 2022年之后：3道题选2道，2个截止时间，简单选择规则（无超时扣分）
-    preliminaryScore = await calculate2022OnwardsPreliminaryScore(playerData, playerLevels, deadlines);
   } else {
-    // 其他年份按普通方式计算
-    return calculateNormalTotalScore(playerData);
+    // 2022年之后及F正赛年份：3道题选2道，2个截止时间，简单选择规则（无超时扣分）
+    preliminaryScore = await calculate2022OnwardsPreliminaryScore(playerData, playerLevels, deadlines, prelimRoundIds);
   }
 
-  // 计算其他非初赛轮次的得分
+  // 计算其他非初赛/正赛轮次的得分
+  let otherRoundsScore = new Decimal(0);
   for (const round of playerData.participatedRounds) {
     if (!prelimRoundIds.includes(round) && playerData.roundScores[round]) {
       const score = new Decimal(playerData.roundScores[round].averageScore || 0);
@@ -800,8 +799,8 @@ async function calculate2021PreliminaryScore(playerData: PlayerRoundData, player
 /**
  * 2022年之后初赛计算：3道题选2道，2个截止时间，简单选择规则
  */
-async function calculate2022OnwardsPreliminaryScore(playerData: PlayerRoundData, playerLevels: LevelFile[], deadlines: string[]): Promise<Decimal> {
-  const prelimRounds = ['I1', 'I2', 'I3'];
+async function calculate2022OnwardsPreliminaryScore(playerData: PlayerRoundData, playerLevels: LevelFile[], deadlines: string[], prelimRoundIds: string[] = ['I1', 'I2', 'I3']): Promise<Decimal> {
+  const prelimRounds = prelimRoundIds;
 
   // 获取所有初赛关卡得分
   const levelScores: { roundKey: string; score: Decimal; level: LevelFile }[] = [];
@@ -1098,7 +1097,7 @@ async function calculateFinalRankings(year: string, yamlData: MWCupYamlDoc, play
 
 /**
  * 检查某年是否仅包含F1/F2/F3轮次（正赛轮次）
- * 这类年份应从积分排行中排除
+ * 这类年份采用2022年之后的有效关卡制计算总积分
  */
 export function isYearOnlyFRounds(yamlData: MWCupYamlDoc, year: string): boolean {
   const seasonData = yamlData.season?.[year];
@@ -1121,6 +1120,18 @@ export function isYearOnlyFRounds(yamlData: MWCupYamlDoc, year: string): boolean
   if (competitiveRounds.length === 0) return false;
 
   return competitiveRounds.every(r => r.startsWith('F'));
+}
+
+/**
+ * 获取该年份的有效关卡轮次ID列表
+ * F正赛年份返回F1/F2/F3，其他年份返回I1/I2/I3（或I4）
+ */
+export function getValidLevelRoundIds(yamlData: MWCupYamlDoc, year: string): string[] {
+  if (isYearOnlyFRounds(yamlData, year)) {
+    return ['F1', 'F2', 'F3'];
+  }
+  const yearNum = parseInt(year);
+  return yearNum === 2021 ? ['I1', 'I2', 'I3', 'I4'] : ['I1', 'I2', 'I3'];
 }
 
 // ===================== Helper functions for UI =====================
@@ -1216,8 +1227,9 @@ export async function getPreliminaryValidInfo(year: string, playerData: PlayerRo
   deadlineCount: number;
 }> {
   const yearNum = parseInt(year);
-  const prelimRounds = yearNum === 2021 ? ['I1', 'I2', 'I3', 'I4'] : ['I1', 'I2', 'I3'];
-  const deadlines = getDeadlines(yamlData, year, 'I1');
+  const prelimRounds = getValidLevelRoundIds(yamlData, year);
+  const deadlineRoundKey = isYearOnlyFRounds(yamlData, year) ? 'F1' : 'I1';
+  const deadlines = getDeadlines(yamlData, year, deadlineRoundKey);
   const levelFiles = await loadLevelIndexData();
   const playerCode = playerData.playerCodes?.[0] || '';
   const playerLevels = getPlayerLevels(levelFiles, playerCode, yearNum);

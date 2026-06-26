@@ -95,7 +95,8 @@
               <ul>
                 <li>2019年：小组赛4关取最高3关总分</li>
                 <li>2020-2021年：初赛有效关卡制，未上传/超时上传扣5分</li>
-                <li>2022年之后：初赛有效关卡制，未上传不扣分</li>
+                <li>2022-2025年：初赛有效关卡制，未上传不扣分</li>
+                <li>2026年之后：正赛单比赛阶段的有效关卡制</li>
               </ul>
             </li>
           </ul>
@@ -109,7 +110,7 @@
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Decimal } from 'decimal.js';
-import { loadTotalPointsData, isYearOnlyFRounds, type TotalPointsData, type PlayerTotalPoints } from '../utils/totalPointsCalculator';
+import { loadTotalPointsData, type TotalPointsData, type PlayerTotalPoints } from '../utils/totalPointsCalculator';
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader';
 import type { MWCupYamlDoc } from '../types/mwcup';
 import { getRoundChineseName } from '../utils/roundNames';
@@ -146,10 +147,6 @@ export default defineComponent({
       const currentYear = new Date().getFullYear();
       const years: string[] = [];
       for (let year = 2013; year <= currentYear; year++) {
-        // 排除仅包含F1/F2/F3轮次的年份
-        if (yamlData.value && isYearOnlyFRounds(yamlData.value, year.toString())) {
-          continue;
-        }
         years.push(year.toString());
       }
       return years.reverse(); // 最新年份在前

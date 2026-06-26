@@ -4,6 +4,7 @@ import {
   getPlayerLevels,
   isLevelUploadedBeforeDeadline,
   loadLevelIndexData,
+  isYearOnlyFRounds,
   type PlayerRoundData
 } from './totalPointsCalculator';
 import type { MWCupYamlDoc } from '../types/mwcup';
@@ -23,7 +24,8 @@ export async function getPreliminaryValidInfoEnhanced(year: string, playerData: 
 
   // 获取详细的超时信息
   const yearNum = parseInt(year);
-  const deadlines = getDeadlines(yamlData, year, 'I1');
+  const deadlineRoundKey = isYearOnlyFRounds(yamlData, year) ? 'F1' : 'I1';
+  const deadlines = getDeadlines(yamlData, year, deadlineRoundKey);
   const levelFiles = await loadLevelIndexData();
   const playerCode = playerData.playerCodes?.[0] || '';
   const playerLevels = getPlayerLevels(levelFiles, playerCode, yearNum);
