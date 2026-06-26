@@ -150,11 +150,11 @@ season:
             J2: Fahlee_5
         schedule:
           registration:
-            start: 2013-07-07T10:00 
+            start: 2013-07-07T10:00
             end: 2013-07-10T16:00
             tieba_tid: 2441649793
           match:
-            start: 2013-07-11T10:00 
+            start: 2013-07-11T10:00
             end: 2013-07-13T15:00
             tieba_tid: 2450143073
           judging:
@@ -1825,7 +1825,7 @@ season:
             time: 2019-07-15T18:00
             tieba_tid: 6195075257
           topics: # 本届 G1~G4 表示小组赛第几题
-            G1: 
+            G1:
               time: 2019-07-15T20:00  # 题目公布时间
               tieba_tid: 6195160662 # 题目贴
             G2:
@@ -1966,7 +1966,7 @@ season:
           J4: '123568024'
           J5: '1168438795'
           J6: s小s飞s侠s
-          J7: LLX奶油马里奥  
+          J7: LLX奶油马里奥
         schedule:
           registration:
             start: 2019-10-10T18:00
@@ -2056,7 +2056,7 @@ season:
             J2: yuyangmiau
             JR1: s小s飞s侠s
             JR2: LLX奶油马里奥
-            JR3: '1168438795'          
+            JR3: '1168438795'
         schedule:
           draw:
             time: 2020-07-15T18:00

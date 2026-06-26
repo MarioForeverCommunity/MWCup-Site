@@ -2,6 +2,16 @@
 
 在此代码库中工作的 AI 编码助手的约定。
 
+## 应用概述
+
+Mario Worker 杯官网 — 一个关卡设计比赛的官方网站。核心功能：赛程浏览（14届/2012-2026）、评分查询、关卡搜索、统计排名（单关/多关/积分）、数据导出（Excel）。
+
+**数据流**: `public/data/` 静态文件 → `src/utils/` 工具函数（fetch + 解析 + 计算）→ `src/components/` Vue 组件渲染。无全局状态管理（无 Pinia/Vuex），数据在组件本地管理，通过路由 props 传递。
+
+**测试**: 无测试框架。质量保证依赖 TypeScript 编译检查 + ESLint。
+
+**自定义脚本**: `scripts/generateLevelIndex.js` 扫描 `public/data/levels/` 并匹配 YAML 元数据，生成 `levels/index.json`（该文件在 .gitignore 中，需本地生成）。
+
 ## 技术栈
 
 - **框架**: Vue 3 (Composition API, `<script setup lang="ts">`)
