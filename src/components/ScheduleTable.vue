@@ -86,6 +86,10 @@ const filteredSchedule = computed(() => {
       if (props.round === 'F') {
         return item.stage === '决赛';
       }
+      // 如果是正赛轮次（F1、F2、F3等），显示所有正赛阶段
+      if (props.round.startsWith('F') && props.round !== 'F') {
+        return item.stage === '正赛';
+      }
       // 如果是预选赛或资格赛轮次
       if (props.round === 'P1') {
         return item.stage === '预选赛' || item.stage === '热身赛';

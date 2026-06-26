@@ -253,6 +253,7 @@ function extractRoundFromPath(path: string): { roundKey: string, roundName: stri
     { pattern: /初赛|I\d+/, key: 'I', name: '初赛' },
     { pattern: /复赛|R\d*/, key: 'R', name: '复赛' },
     { pattern: /半决赛|S\d*/, key: 'S', name: '半决赛' },
+    { pattern: /正赛|F\d+/, key: 'F', name: '正赛' },
     { pattern: /决赛|F/, key: 'F', name: '决赛' },
     { pattern: /小组赛|G\d+/, key: 'G', name: '小组赛' },
     { pattern: /四分之一决赛|Q\d*/, key: 'Q', name: '四分之一决赛' }
@@ -279,6 +280,7 @@ function getRoundDisplayName(roundKey: string): string {
     'Q': '四分之一决赛', 'Q1': '四分之一决赛第一轮', 'Q2': '四分之一决赛第二轮',
     'R': '复赛', 'R1': '复赛第一题', 'R2': '复赛第二题', 'R3': '复赛第三题',
     'S': '半决赛', 'S1': '半决赛第一轮', 'S2': '半决赛第二轮',
+    'F1': '正赛第一题', 'F2': '正赛第二题', 'F3': '正赛第三题',
     'F': '决赛'
   }
 

@@ -70,6 +70,7 @@ const getStageDisplayName = (round: string): string => {
   if (round.startsWith('Q')) return '四分之一决赛'
   if (round.startsWith('S')) return '半决赛'
   if (round === 'F') return '决赛'
+  if (round.startsWith('F') && round !== 'F') return '正赛'
   if (round === 'P2') return '资格赛'
   // P1的处理需要特殊判断是热身赛还是预选赛
   if (round === 'P1') return '预选赛' // 默认为预选赛，后续会根据YAML数据修正

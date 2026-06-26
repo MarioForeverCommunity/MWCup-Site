@@ -112,6 +112,7 @@ const getStageNameForWiki = (round: string): string => {
   if (round.startsWith('Q')) return '四分之一决赛'
   if (round.startsWith('S')) return '半决赛'
   if (round === 'F') return '决赛'
+  if (round.startsWith('F') && round !== 'F') return '正赛'
   if (round === 'P1') {
     // 需要检查是否为热身赛
     const roundData = seasonData.value?.[selectedYear.value]?.rounds?.[round]
@@ -178,7 +179,7 @@ const availableRounds = computed(() => {
 
   // 按轮次类型排序
   return roundList.sort((a, b) => {
-    const order = ['P1', 'P2', 'I1', 'I2', 'I3', 'I4', 'G1', 'G2', 'G3', 'G4', 'Q1', 'Q2', 'Q', 'R1', 'R2', 'R3', 'R', 'S1', 'S2', 'S', 'F']
+    const order = ['P1', 'P2', 'I1', 'I2', 'I3', 'I4', 'G1', 'G2', 'G3', 'G4', 'Q1', 'Q2', 'Q', 'R1', 'R2', 'R3', 'R', 'S1', 'S2', 'S', 'F1', 'F2', 'F3', 'F']
     const aIndex = order.indexOf(a.code)
     const bIndex = order.indexOf(b.code)
     if (aIndex === -1 && bIndex === -1) return a.code.localeCompare(b.code)

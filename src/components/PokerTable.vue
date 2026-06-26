@@ -307,7 +307,7 @@ function getPlayerNameFromYaml(card: PokerCard): string | null {
       (card.round === 'Q' && roundKey.startsWith('Q')) ||
       (card.round === 'S' && roundKey.startsWith('S')) ||
       (card.round === 'G' && roundKey.startsWith('G')) ||
-      (card.round === 'F' && roundKey === 'F')
+      (card.round === 'F' && (roundKey === 'F' || roundKey.startsWith('F')))
 
     if (!roundMatch) continue
 

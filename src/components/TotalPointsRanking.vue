@@ -109,7 +109,7 @@
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Decimal } from 'decimal.js';
-import { loadTotalPointsData, type TotalPointsData, type PlayerTotalPoints } from '../utils/totalPointsCalculator';
+import { loadTotalPointsData, isYearOnlyFRounds, type TotalPointsData, type PlayerTotalPoints } from '../utils/totalPointsCalculator';
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader';
 import type { MWCupYamlDoc } from '../types/mwcup';
 import { getRoundChineseName } from '../utils/roundNames';
@@ -146,6 +146,10 @@ export default defineComponent({
       const currentYear = new Date().getFullYear();
       const years: string[] = [];
       for (let year = 2013; year <= currentYear; year++) {
+        // 排除仅包含F1/F2/F3轮次的年份
+        if (yamlData.value && isYearOnlyFRounds(yamlData.value, year.toString())) {
+          continue;
+        }
         years.push(year.toString());
       }
       return years.reverse(); // 最新年份在前
@@ -323,13 +327,14 @@ export default defineComponent({
 
     // 初始化
     onMounted(async () => {
-      availableYears.value = getAvailableYears();
       // 如果路由参数中有年份，使用路由参数
       if (props.year && props.year !== selectedYear.value) {
         selectedYear.value = props.year;
       }
       try {
         yamlData.value = await fetchMarioWorkerYaml();
+        // yamlData加载后再计算可用年份（需要过滤仅含F1/F2/F3的年份）
+        availableYears.value = getAvailableYears();
         await loadData();
       } catch {
       }

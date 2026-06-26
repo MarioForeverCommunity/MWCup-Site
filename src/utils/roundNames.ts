@@ -34,6 +34,9 @@ export function getRoundChineseName(roundCode: string, roundData?: RoundNameData
     'S1': '半决赛第一轮',
     'S2': '半决赛第二轮',
     'S': '半决赛',
+    'F1': '正赛第一题',
+    'F2': '正赛第二题',
+    'F3': '正赛第三题',
     'F': '决赛'
   }
 

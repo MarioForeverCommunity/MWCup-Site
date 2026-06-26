@@ -94,14 +94,22 @@ export function formatResultDisplay(bestResult: string, options: ResultFormatter
     }
   }
 
-  // 决赛的具体排名（冠军、亚军等）
-  if (bestResult.includes('冠军') || bestResult.includes('亚军') || bestResult.includes('季军') || bestResult.includes('第四名') || bestResult.includes('决赛第')) {
+  // 决赛/正赛的具体排名（冠军、亚军等）以及已格式化的正赛结果
+  if (bestResult.includes('冠军') || bestResult.includes('亚军') || bestResult.includes('季军') || bestResult.includes('第四名') || bestResult.includes('决赛第') || bestResult.includes('正赛/')) {
     return bestResult;
   }
 
   // 为轮次补充X强信息
   if (bestResult === '决赛') {
     return '决赛/4强'; // 进入决赛一般为4强
+  } else if (bestResult === '正赛') {
+    // 获取正赛选手数（取F1/F2/F3中最大选手数）
+    let playerCount = 0;
+    for (const fr of ['F1', 'F2', 'F3']) {
+      const count = getPlayerCountForRound(fr);
+      if (count > playerCount) playerCount = count;
+    }
+    return playerCount > 0 ? `正赛/${playerCount}强` : '正赛/4强';
   } else if (bestResult === '半决赛') {
     return '半决赛/4强';
   } else if (bestResult === '复赛' || bestResult.startsWith('复赛')) {

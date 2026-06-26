@@ -26,6 +26,7 @@ const stageMap: Record<string, string> = {
   S: '半决赛',
   R: '复赛',
   F: '决赛',
+  F1: '正赛', F2: '正赛', F3: '正赛',
   registration: '报名',
   draw: '抽签',
   match: '比赛',
@@ -45,6 +46,7 @@ const roundMap: Record<string, string> = {
   S: '半决赛',
   R: '复赛',
   F: '决赛',
+  F1: '正赛', F2: '正赛', F3: '正赛',
 };
 
 // 内容的排序权重
@@ -63,25 +65,27 @@ const contentOrder: Record<string, number> = {
 
 function getStageZh(mainStage: string, season?: SeasonYearData) {
   // 处理带有批量轮次的抽签情况（如 Q1,Q2-draw）
-  const drawMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-draw$/);
+  const drawMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-draw$/);
   if (drawMatch) {
     const stageType = drawMatch[1];
     return stageType === 'I' ? '初赛' :
       stageType === 'G' ? '小组赛' :
         stageType === 'Q' ? '四分之一决赛' :
           stageType === 'S' ? '半决赛' :
-            stageType === 'R' ? '复赛' : mainStage;
+            stageType === 'R' ? '复赛' :
+              stageType === 'F' ? '正赛' : mainStage;
   }
 
   // 处理带有批量轮次的情况（如 I1,I2,I3,I4-I1）
-  const batchMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-/);
+  const batchMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-/);
   if (batchMatch) {
     const stageType = batchMatch[1];
     return stageType === 'I' ? '初赛' :
       stageType === 'G' ? '小组赛' :
         stageType === 'Q' ? '四分之一决赛' :
           stageType === 'S' ? '半决赛' :
-            stageType === 'R' ? '复赛' : mainStage;
+            stageType === 'R' ? '复赛' :
+              stageType === 'F' ? '正赛' : mainStage;
   }
 
   // 处理热身赛标记
@@ -94,12 +98,20 @@ function getStageZh(mainStage: string, season?: SeasonYearData) {
   }
 
   // 处理单个轮次的情况
-  const m = mainStage.match(/^([GIQSR])(\d+)?$/);
-  if (m) return roundMap[m[1]] || mainStage;
+  const m = mainStage.match(/^([GIQSRF])(\d+)?$/);
+  if (m) {
+    // F+数字为正赛，单独F为决赛
+    if (m[1] === 'F' && m[2]) return '正赛';
+    return roundMap[m[1]] || mainStage;
+  }
 
   // 处理单轮比赛阶段的情况
-  const m2 = mainStage.match(/^([GIQSR])-\w+$/);
-  if (m2) return roundMap[m2[1]] || mainStage;
+  const m2 = mainStage.match(/^([GIQSRF])-\w+$/);
+  if (m2) {
+    // F+数字为正赛，单独F为决赛
+    if (m2[1] === 'F' && /\d/.test(mainStage)) return '正赛';
+    return roundMap[m2[1]] || mainStage;
+  }
 
   return stageMap[mainStage] || mainStage;
 }
@@ -107,14 +119,14 @@ function getStageZh(mainStage: string, season?: SeasonYearData) {
 function getContentZh(mainStage: string, contentKey: string, season?: SeasonYearData, scheduleObj?: Record<string, unknown>) {
 
   // 处理deadline的情况
-  const deadlineMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-deadline(\d+)$/);
+  const deadlineMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-deadline(\d+)$/);
   if (deadlineMatch) {
     const num = Number(deadlineMatch[2]);
     const cnNum = ['零','一','二','三','四','五','六','七','八','九','十'][num] || num;
     return `第${cnNum}关上传截止`;
   }
   // 处理评分截止
-  const judgingDeadlineMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-judging-deadline(\d+)$/);
+  const judgingDeadlineMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-judging-deadline(\d+)$/);
   if (judgingDeadlineMatch) {
     const num = Number(judgingDeadlineMatch[2]);
     const cnNum = ['零','一','二','三','四','五','六','七','八','九','十'][num] || num;
@@ -127,16 +139,16 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
   }
 
   // 处理批量轮次的promotion
-  const promotionMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-promotion$/);
+  const promotionMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-promotion$/);
   if (promotionMatch || contentKey === 'promotion') {
     return stageMap['promotion'];
   }
 
   // 处理批量轮次的情况（如 I1,I2,I3,I4-I1）
-  const batchMatch = mainStage.match(/^([GIQSR])(?:\d+(?:,[GIQSR]\d+)*)-([A-Za-z]+)(\d+)?$/);
+  const batchMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-([A-Za-z]+)(\d+)?$/);
   if (batchMatch) {
     const [, , action, num] = batchMatch;
-    if (action.match(/^[GIQSR]$/)) {
+    if (action.match(/^[GIQSRF]$/)) {
       // 处理题目公布（如 I1,I2,I3,I4-I1）
       const topicNum = Number(num);
       const cnNum = ['零','一','二','三','四','五','六','七','八','九','十'][topicNum] || topicNum;
@@ -165,7 +177,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
     }
     // mainStage 形如 I1-judging，判断 scheduleObj 里是否有 I2-judging、I3-judging
     if (scheduleObj && typeof scheduleObj === 'object') {
-      const mainMatch = mainStage.match(/^([GIQSR])(\d+)$/);
+      const mainMatch = mainStage.match(/^([GIQSRF])(\d+)$/);
       if (mainMatch) {
         const prefix = mainMatch[1];
         // 找出所有同类型 key
@@ -179,7 +191,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
   }
 
   // 处理常规轮次
-  const m = mainStage.match(/^([GIQSR])(\d+)$/);
+  const m = mainStage.match(/^([GIQSRF])(\d+)$/);
   let roundStr = '';
   if (m) {
     const num = Number(m[2]);
@@ -191,7 +203,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
   if (roundStr) return roundStr;
 
   // 处理单轮比赛阶段的情况
-  const m2 = mainStage.match(/^([GIQSR])-(\w+)$/);
+  const m2 = mainStage.match(/^([GIQSRF])-(\w+)$/);
   if (m2 && contentKey === '') {
     return stageMap[m2[2]] || m2[2];
   }
@@ -275,7 +287,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
 
                   for (const [topic, tid] of Object.entries(matchTids)) {
                     if (tid) {
-                      const num = topic.match(/[GIQSR](\d+)/)?.[1] || topic.match(/(\d+)$/)?.[1];
+                      const num = topic.match(/[GIQSRF](\d+)/)?.[1] || topic.match(/(\d+)$/)?.[1];
                       const cnNum = num ? `第${['零','一','二','三','四','五','六','七','八','九','十'][Number(num)] || num}题` : '链接';
                       // 不添加任何样式类，样式将在Vue组件中统一处理
                       links.push(`<a href="${getTidLink(tid as string, 'mf')}" target="_blank">${cnNum}</a>`);
@@ -328,7 +340,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
                 const links: string[] = [];
                 for (const [topic, tid] of Object.entries(judgingTids)) {
                   if (tid) {
-                    const num = topic.match(/[GIQSR](\d+)/)?.[1] || topic.match(/(\d+)$/)?.[1];
+                    const num = topic.match(/[GIQSRF](\d+)/)?.[1] || topic.match(/(\d+)$/)?.[1];
                     const cnNum = num ? `第${['零','一','二','三','四','五','六','七','八','九','十'][Number(num)] || num}题` : '链接';
                     // 不添加任何样式类，样式将在Vue组件中统一处理
                     links.push(`<a href="${getTidLink(tid as string, linkType)}" target="_blank">${cnNum}</a>`);
@@ -368,7 +380,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
 
             // 处理嵌套的轮次内容（如 G1, G2 等）
             if (typeof subValue === 'object' && subValue !== null && !('start' in subValue) && !('end' in subValue)) {
-              const roundNum = subStage.match(/[GIQSR](\d+)/)?.[1];
+              const roundNum = subStage.match(/[GIQSRF](\d+)/)?.[1];
               if (roundNum) {
                 for (const [action, actionValue] of Object.entries(subValue)) {
                   schedule[`${subStage}-${action}`] = actionValue;
@@ -404,7 +416,7 @@ export function getYearSchedules(doc: MWCupYamlDoc, _tidType: 'tieba' | 'mf' = '
       // 拆分主阶段和内容
       let mainStage = stage;
       let contentKey = '';
-      const m = stage.match(/^(G\d+|I\d+|Q\d+|S\d+|P1|P2|F)-(\w+)$/);
+      const m = stage.match(/^(G\d+|I\d+|Q\d+|S\d+|P1|P2|F\d*|F)-(\w+)$/);
       if (m) {
         mainStage = m[1];
         contentKey = m[2];

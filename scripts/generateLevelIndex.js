@@ -63,6 +63,7 @@ function extractYearAndRound(filePath) {
     '复赛': ['复赛'],
     '四分之一决赛': ['四分之一决赛'],
     '半决赛': ['半决赛'],
+    '正赛': ['正赛'],
     '决赛': ['决赛'],
   };
 
@@ -131,7 +132,7 @@ function findPlayerInfo(year, roundType, playerCode, mwcupData, filePath) {
         if (key.startsWith('R')) return roundType === '复赛';
         if (key.startsWith('Q')) return roundType === '四分之一决赛';
         if (key.startsWith('S')) return roundType === '半决赛';
-        if (key.startsWith('F')) return roundType === '决赛';
+        if (key.startsWith('F')) return roundType === '决赛' || roundType === '正赛';
         return false;
       });
       if (roundTypeMatches && specificRound) {
@@ -152,7 +153,7 @@ function findPlayerInfo(year, roundType, playerCode, mwcupData, filePath) {
       else if (roundKey.startsWith('R')) roundTypeMatches = roundType === '复赛';
       else if (roundKey.startsWith('Q')) roundTypeMatches = roundType === '四分之一决赛';
       else if (roundKey.startsWith('S')) roundTypeMatches = roundType === '半决赛';
-      else if (roundKey.startsWith('F')) roundTypeMatches = roundType === '决赛';
+      else if (roundKey.startsWith('F')) roundTypeMatches = roundType === '决赛' || roundType === '正赛';
     }
     const playerInfo = findPlayerInRound(roundData.players, playerCode);
     if (playerInfo && (roundTypeMatches || !roundType)) {
@@ -633,6 +634,12 @@ function refineRoundType(roundType, roundKey, year) {
     const idx = parseInt(roundKey.slice(1), 10);
     if (!isNaN(idx)) {
       return `半决赛第${['一','二'][idx-1]||idx}轮`;
+    }
+  }
+  if (roundKey.startsWith('F') && roundKey !== 'F') {
+    const idx = parseInt(roundKey.slice(1), 10);
+    if (!isNaN(idx)) {
+      return `正赛第${['一','二','三'][idx-1]||idx}题`;
     }
   }
   return roundType;

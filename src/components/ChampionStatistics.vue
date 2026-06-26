@@ -269,8 +269,34 @@ function extractDates(yearData: SeasonYearData, _year: string) {
       }
     }
   }
+  // 如果仍然没有找到，查找F1/F2/F3轮次（仅有正赛的年份如2026）
+  if (!mainStartFound) {
+    for (const roundKey of Object.keys(rounds)) {
+      const round = rounds[roundKey]
+      // 处理逗号分隔的多轮次键（如 "F1, F2, F3"）
+      const roundKeys = roundKey.includes(',')
+        ? roundKey.split(',').map(r => r.trim())
+        : [roundKey]
+      if (roundKeys.some(r => r.startsWith('F') && r !== 'F')) {
+        const sched = round?.schedule as RoundSchedule | undefined
+        if (sched?.match?.start) {
+          dates.mainStart = formatDate(sched.match.start)
+          break
+        }
+      }
+    }
+  }
   // 正赛结束：决赛F的judging结束时间
-  const finalRound = yearData.rounds.F
+  let finalRound = yearData.rounds.F
+  // 如果没有独立F轮次，查找F1/F2/F3组合键
+  if (!finalRound) {
+    for (const [key, data] of Object.entries(rounds)) {
+      if (key.includes(',') && key.split(',').map(r => r.trim()).some(r => r.startsWith('F'))) {
+        finalRound = data
+        break
+      }
+    }
+  }
   const finalSchedule = finalRound?.schedule as RoundSchedule | undefined
   if (finalSchedule?.judging?.end) {
     dates.mainEnd = formatDate(finalSchedule.judging.end)
@@ -307,7 +333,17 @@ async function loadChampions() {
         }
         try {
           // 尝试加载并使用决赛评分数据
-          const scoreData = await loadRoundScoreData(year, 'F', yamlDoc)
+          let scoreData = await loadRoundScoreData(year, 'F', yamlDoc)
+          // 如果没有独立F轮次，尝试加载F1/F2/F3（取第一个有数据的）
+          if (!scoreData?.playerScores?.length) {
+            for (const fr of ['F1', 'F2', 'F3']) {
+              const frData = await loadRoundScoreData(year, fr, yamlDoc)
+              if (frData?.playerScores?.length) {
+                scoreData = frData
+                break
+              }
+            }
+          }
           if (scoreData?.playerScores?.length > 0) {
             // 按平均分排序，兼容Decimal
             const sortedPlayers = [...scoreData.playerScores].sort(
@@ -405,7 +441,16 @@ async function loadChampions() {
           console.warn(`${year} 年决赛评分数据加载失败:`, err)
 
           // 使用 yaml 中的记录作为备选
-          const finalRound = data.rounds?.F
+          let finalRound = data.rounds?.F
+          // 如果没有独立F轮次，尝试查找F1/F2/F3组合键
+          if (!finalRound?.players) {
+            for (const [key, data2] of Object.entries(data.rounds || {})) {
+              if (key.includes(',') && key.split(',').map(r => r.trim()).some(r => r.startsWith('F'))) {
+                finalRound = data2
+                break
+              }
+            }
+          }
           if (!finalRound?.players) {
             console.warn(`${year} 年决赛选手记录不存在，跳过`)
             continue
