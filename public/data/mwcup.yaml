@@ -3030,3 +3030,25 @@ season:
             start: 2026-02-20T22:00
             end: 2026-02-28T22:00
             mf_tid: 3805
+      P2:
+        smwp_version: [1.7.11, 1.7.12]
+        players:
+        judges:
+          J1:
+          J2:
+        subjects:
+          'A': 第一题
+          'B': 第二题
+        schedule:
+          match:
+            start: 2026-07-03T20:00
+            end: 2026-07-12T22:00
+          judging:
+            start: 2026-07-03T20:00
+            end: 2026-07-18T22:00
+          voting:
+            start: 2026-07-12T22:00
+            end: 2026-07-18T22:00
+          post_match_checkin:
+            start: 2026-07-03T20:00
+            end: 2026-07-19T16:00
