@@ -118,7 +118,15 @@ function getStageZh(mainStage: string, season?: SeasonYearData) {
 
 function getContentZh(mainStage: string, contentKey: string, season?: SeasonYearData, scheduleObj?: Record<string, unknown>) {
 
-  const hasVoting = mainStage !== undefined && !!scheduleObj && Object.keys(scheduleObj).some(k => k.startsWith(mainStage) && k.endsWith('-voting'));
+  const hasVoting = mainStage !== undefined && !!scheduleObj && (() => {
+    if (mainStage.includes(',')) {
+      return mainStage.split(',').some(part => {
+        const p = part.trim();
+        return Object.keys(scheduleObj).some(k => k.startsWith(p) && k.endsWith('-voting'));
+      });
+    }
+    return Object.keys(scheduleObj).some(k => k.startsWith(mainStage) && k.endsWith('-voting'));
+  })();
 
   // 处理deadline的情况
   const deadlineMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-deadline(\d+)$/);
