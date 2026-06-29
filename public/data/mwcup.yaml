@@ -3049,6 +3049,24 @@ season:
           voting:
             start: 2026-07-12T22:00
             end: 2026-07-18T22:00
-          post_match_checkin:
+      F1, F2, F3:
+        smwp_version: [1.7.11, 1.7.12]
+        players:
+        judges:
+          J1:
+          J2:
+        schedule:
+          pre_match_checkin:
             start: 2026-07-03T20:00
             end: 2026-07-19T16:00
+          match:
+            start: 2026-07-19T20:00
+            deadlines:
+              - 2026-07-29T22:00
+              - 2026-08-07T22:00
+          judging:
+            start: 2026-07-19T20:00
+            end: 2026-08-15T22:00
+          voting:
+            start: 2026-08-07T22:00
+            end: 2026-08-15T22:00
