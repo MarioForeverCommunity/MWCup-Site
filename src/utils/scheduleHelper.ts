@@ -145,7 +145,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
   }
 
   // 处理批量轮次的情况（如 I1,I2,I3,I4-I1）
-  const batchMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-([A-Za-z]+)(\d+)?$/);
+  const batchMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-([A-Za-z_]+)(\d+)?$/);
   if (batchMatch) {
     const [, , action, num] = batchMatch;
     if (action.match(/^[GIQSRF]$/)) {
@@ -166,6 +166,8 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
       return judging?.deadlines ? '评分开始' : '评分';
     } else if (action === 'draw') {
       return '抽签';
+    } else if (action === 'pre_match_checkin') {
+      return '参赛选手签到';
     }
   }
 
@@ -225,6 +227,7 @@ function getContentWeight(content: string) {
   if (content.startsWith('评分')) return 4.6;
   if (content.includes('题公布')) return 4.2;
   if (content === '比赛开始') return 4;
+  if (content === '参赛选手签到') return contentOrder['pre_match_checkin'];
 
   // 对于基础内容类型使用预定义的权重
   for (const [key, weight] of Object.entries(contentOrder)) {
