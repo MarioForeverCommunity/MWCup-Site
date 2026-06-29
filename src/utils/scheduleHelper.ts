@@ -118,6 +118,8 @@ function getStageZh(mainStage: string, season?: SeasonYearData) {
 
 function getContentZh(mainStage: string, contentKey: string, season?: SeasonYearData, scheduleObj?: Record<string, unknown>) {
 
+  const hasVoting = mainStage !== undefined && !!scheduleObj && Object.keys(scheduleObj).some(k => k.startsWith(mainStage) && k.endsWith('-voting'));
+
   // 处理deadline的情况
   const deadlineMatch = mainStage.match(/^([GIQSRF])(?:\d+(?:,[GIQSRF]\d+)*)-deadline(\d+)$/);
   if (deadlineMatch) {
@@ -161,6 +163,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
     } else if (action === 'match') {
       return '比赛开始';
     } else if (action === 'judging') {
+      if (hasVoting) return '评委评分';
       // 从season中获取当前轮次的judging数据
       const judging = season?.rounds?.[mainStage.split('-')[0]]?.schedule?.judging;
       return judging?.deadlines ? '评分开始' : '评分';
@@ -175,7 +178,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
   if (contentKey === 'judging' || contentKey === 'voting') {
     // mainStage 含逗号，说明是批量轮次
     if (mainStage.includes(',')) {
-      return contentKey === 'judging' ? '评分' : '大众评分';
+      return contentKey === 'judging' ? (hasVoting ? '评委评分' : '评分') : '大众评分';
     }
     // mainStage 形如 I1-judging，判断 scheduleObj 里是否有 I2-judging、I3-judging
     if (scheduleObj && typeof scheduleObj === 'object') {
@@ -186,7 +189,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
         const similarKeys = Object.keys(scheduleObj).filter(k => k.startsWith(prefix) && k.endsWith('-' + contentKey));
         // 如果只有当前 key，说明是批量合并
         if (similarKeys.length === 1) {
-          return contentKey === 'judging' ? '评分' : '大众评分';
+          return contentKey === 'judging' ? (hasVoting ? '评委评分' : '评分') : '大众评分';
         }
       }
     }
@@ -200,7 +203,7 @@ function getContentZh(mainStage: string, contentKey: string, season?: SeasonYear
     const cnNum = ['零','一','二','三','四','五','六','七','八','九','十'][num] || num;
     roundStr = `第${cnNum}轮`;
   }
-  const contentZh = stageMap[contentKey] || contentKey;
+  const contentZh = contentKey === 'judging' && hasVoting ? '评委评分' : (stageMap[contentKey] || contentKey);
   if (roundStr && contentZh) return `${roundStr}${contentZh}`;
   if (roundStr) return roundStr;
 
@@ -224,6 +227,7 @@ function getContentWeight(content: string) {
   // 处理带有数字的内容（如"第一轮截止"）
   if (content.includes('关上传截止')) return 4.5;
   if (content.includes('关评分截止')) return 4.7;
+  if (content === '评委评分') return contentOrder['judging'];
   if (content.startsWith('评分')) return 4.6;
   if (content.includes('题公布')) return 4.2;
   if (content === '比赛开始') return 4;
