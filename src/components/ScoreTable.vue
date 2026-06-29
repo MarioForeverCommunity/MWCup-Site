@@ -548,7 +548,7 @@ import { getPreliminaryValidInfoEnhanced } from '../utils/preliminaryValidInfoHe
 import { shouldShowScoreData, shouldApplyDeadlineFilter, getJudgingEndTime } from '../utils/scheduleHelper';
 
 // 通过 NoSubmissionRecord.d.ts 扩展了 ScoreRecord 类型，添加了 isNoSubmission 属性
-import '../NoSubmissionRecord.d.ts'
+import '../types/NoSubmissionRecord.d.ts'
 
 // 设置Decimal的精度和舍入模式
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP })
