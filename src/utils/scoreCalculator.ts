@@ -87,6 +87,7 @@ export const SCORING_SCHEMES = {
   C: ['得体度', '美观度', '独特度', '思辨度', '完成度', '合理度', '有效度', '参与度', '耐玩度', '成就度', '加分项', '扣分项'],
   D: ['欣赏性', '创新性', '设计性', '游戏性', '加分项', '扣分项'],
   E: ['得体度', '美观度', '独特度', '思辨度', '完成度', '合理度', '有效度', '参与度', '耐玩度', '成就度', '加分项', '扣分项', '换算后大众评分'],
+  F: [], // 纯大众评分方案，无评委评分项
   S: ['总分'] // 特殊的总分制
 };
 
@@ -776,8 +777,19 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   if (!roundData) {
     throw new Error(`找不到${year}年${getRoundChineseName(round, { year: String(year) })}的比赛数据`);
   }
-  // 加载用户映射
-  // const userMapping = await loadUserMapping();
+
+  // 获取当前轮次的评分方案
+  let scoringScheme: keyof typeof SCORING_SCHEMES = (seasonData?.scoring_scheme as keyof typeof SCORING_SCHEMES) || 'A';
+  const currentRoundData = seasonData?.rounds?.[round];
+  if (currentRoundData?.scoring_scheme) {
+    scoringScheme = currentRoundData.scoring_scheme as keyof typeof SCORING_SCHEMES;
+  }
+
+  // 方案F：纯大众评分，不加载评委CSV
+  if (scoringScheme === 'F') {
+    return await handlePublicOnlyScoring(yamlData, year, round);
+  }
+
   // 首先检查是否为特殊的总分制评分
   const directScores = handleDirectScores(yamlData, year, round);
   if (directScores) {
@@ -1113,4 +1125,95 @@ export function handleDirectScores(yamlData: MWCupYamlDoc, year: string, round: 
   }
 
   return null;
+}
+
+/**
+ * 处理纯大众评分方案（方案F）
+ * 不需要评委CSV，直接从大众评分CSV计算最终得分
+ */
+export async function handlePublicOnlyScoring(yamlData: MWCupYamlDoc, year: string, round: string): Promise<RoundScoreData> {
+  const playerMap = buildPlayerJudgeMap(yamlData, year, round);
+  const records: ScoreRecord[] = [];
+  const playerScores: PlayerScore[] = [];
+
+  // 加载大众评分数据
+  const publicScores = await loadPublicVotingData(year, round, yamlData);
+
+  if (!publicScores || publicScores.length === 0) {
+    throw new Error(`暂无${year}年${getRoundChineseName(round, { year: String(year) })}大众评分数据`);
+  }
+
+  // 为每个选手构建评分记录
+  for (const publicScore of publicScores) {
+    const playerCode = publicScore.playerCode;
+    const playerName = publicScore.playerName;
+    const finalScore = new Decimal(publicScore.finalPublicScore);
+
+    // 创建一个代表大众评分的记录
+    const record: ScoreRecord = {
+      playerCode,
+      judgeCode: 'PUBLIC',
+      originalJudgeCode: 'PUBLIC',
+      playerName,
+      judgeName: '大众评分',
+      scores: {},
+      totalScore: finalScore,
+      isRevoked: false,
+      isBackup: false,
+      isCollaborative: false,
+      collaborativeJudges: [],
+      scoringScheme: 'F'
+    };
+
+    records.push(record);
+    playerScores.push({
+      playerCode,
+      playerName,
+      records: [record],
+      totalSum: finalScore,
+      averageScore: finalScore,
+      validRecordsCount: publicScore.validVotesCount,
+      publicScore: finalScore,
+      finalScore: finalScore
+    });
+  }
+
+  // 添加未上传关卡的选手（从YAML中查找）
+  const existingPlayerCodes = new Set(publicScores.map(ps => ps.playerCode));
+  for (const [playerCode, playerName] of Object.entries(playerMap.players)) {
+    if (!existingPlayerCodes.has(playerCode)) {
+      const noSubmissionRecord: ScoreRecord = {
+        playerCode,
+        judgeCode: 'no_submission',
+        originalJudgeCode: 'no_submission',
+        playerName: String(playerName),
+        judgeName: '未上传',
+        scores: {},
+        totalScore: new Decimal(0),
+        isNoSubmission: true,
+        scoringScheme: 'F'
+      };
+      records.push(noSubmissionRecord);
+      playerScores.push({
+        playerCode,
+        playerName: String(playerName),
+        records: [noSubmissionRecord],
+        totalSum: new Decimal(0),
+        averageScore: new Decimal(0),
+        validRecordsCount: 0,
+        publicScore: new Decimal(0),
+        finalScore: new Decimal(0)
+      });
+    }
+  }
+
+  return {
+    year,
+    round,
+    scoringScheme: 'F',
+    columns: [],
+    playerScores,
+    allRecords: records,
+    publicScores
+  };
 }

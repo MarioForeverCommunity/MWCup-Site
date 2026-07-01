@@ -2998,12 +2998,13 @@ season:
             end: 2025-08-13T22:00
             mf_tid: 3675
   2026:
-    scoring_scheme: E
+    scoring_scheme: F
     host: Fahlee
     chief_judge: false
     rounds:
       P1:
         is_warmup: true
+        scoring_scheme: E
         smwp_version: [1.7.11, 1.7.12]
         players:
           '1': 数字1528君
@@ -3031,11 +3032,8 @@ season:
             end: 2026-02-28T22:00
             mf_tid: 3805
       P2:
-        smwp_version: [1.7.11, 1.7.12]
+        smwp_version: 1.7.12
         players:
-        judges:
-          J1:
-          J2:
         subjects:
           'A': 第一题
           'B': 第二题
@@ -3050,11 +3048,8 @@ season:
             start: 2026-07-12T22:00
             end: 2026-07-18T22:00
       F1, F2, F3:
-        smwp_version: [1.7.11, 1.7.12]
+        smwp_version: 1.7.12
         players:
-        judges:
-          J1:
-          J2:
         schedule:
           pre_match_checkin:
             start: 2026-07-03T20:00

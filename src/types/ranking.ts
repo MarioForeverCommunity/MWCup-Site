@@ -52,6 +52,7 @@ export interface RankingFilters {
     C: boolean;
     D: boolean;
     E: boolean;
+    F: boolean;
   };
   onlyHighScore?: boolean; // 仅展示得分率高于87.000%的关卡
 }

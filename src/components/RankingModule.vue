@@ -70,6 +70,10 @@
             <span class="checkbox-text">2025 版大众评选方案</span>
           </label>
           <label class="checkbox-label">
+            <input type="checkbox" v-model="filters.scoringSchemes.F" @change="handleFilterChange">
+            <span class="checkbox-text">大众评选方案（无评委）</span>
+          </label>
+          <label class="checkbox-label">
             <input type="checkbox" v-model="filters.onlyHighScore" @change="handleFilterChange">
             <span class="checkbox-text">仅显示得分率高于 87%</span>
           </label>
@@ -490,7 +494,8 @@ const filters = reactive<RankingFilters>({
     B: true,
     C: true,
     D: true,
-    E: true
+    E: true,
+    F: true
   },
   onlyHighScore: true
 })

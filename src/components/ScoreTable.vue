@@ -115,7 +115,7 @@
       </div>
 
       <!-- 详细评分表 -->
-      <div class="detailed-scores">
+      <div v-if="scoreData.scoringScheme !== 'F'" class="detailed-scores">
         <div class="section-title">
           <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportDetailedToExcel">导出表格</button></h4>
         </div>
@@ -287,8 +287,8 @@
           </table>
         </div>
 
-        <!-- 大众评分表 (仅评分方案E)，截止前不显示 -->
-        <div v-if="scoreData && scoreData.scoringScheme === 'E' && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
+        <!-- 大众评分表 (评分方案E和F)，截止前不显示 -->
+        <div v-if="['E', 'F'].includes(scoreData.scoringScheme) && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
           <div class="section-title">
             <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
           </div>
@@ -374,9 +374,13 @@
                   <th>排名</th>
                   <th>选手</th>
                   <th>关卡名</th>
-                  <th v-if="scoreData.scoringScheme !== 'E'">有效评分次数</th>
+                  <th v-if="scoreData.scoringScheme !== 'E' && scoreData.scoringScheme !== 'F'">有效评分次数</th>
+                  <th v-if="scoreData.scoringScheme === 'F'">评分人数</th>
                   <template v-if="scoreData.scoringScheme === 'E'">
                     <th>评委评分</th>
+                    <th>大众评分</th>
+                  </template>
+                  <template v-else-if="scoreData.scoringScheme === 'F'">
                     <th>大众评分</th>
                   </template>
                   <template v-else>
@@ -424,12 +428,19 @@
                         <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
                       </template>
                     </td>
-                    <td v-if="scoreData.scoringScheme !== 'E'" class="count">{{ player.validRecordsCount }}</td>
+                    <td v-if="scoreData.scoringScheme !== 'E' && scoreData.scoringScheme !== 'F'" class="count">{{ player.validRecordsCount }}</td>
+                    <td v-if="scoreData.scoringScheme === 'F'" class="count">{{ player.validRecordsCount }}</td>
                     <template v-if="scoreData.scoringScheme === 'E'">
                       <td class="judge-total">
                         <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
                         <template v-else>{{ formatScore(player.judgeAverage) }}</template>
                       </td>
+                      <td class="public-score">
+                        <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
+                        <template v-else>{{ formatScore(player.publicScore) }}</template>
+                      </td>
+                    </template>
+                    <template v-else-if="scoreData.scoringScheme === 'F'">
                       <td class="public-score">
                         <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
                         <template v-else>{{ formatScore(player.publicScore) }}</template>
@@ -441,6 +452,9 @@
                     <template v-if="scoreData.scoringScheme === 'E'">
                       {{ formatScore(player.finalScore) }}
                     </template>
+                    <template v-else-if="scoreData.scoringScheme === 'F'">
+                      {{ formatScore(player.publicScore) }}
+                    </template>
                     <template v-else>
                       {{ formatScore(player.averageScore) }}
                     </template>
@@ -451,6 +465,9 @@
                     </template>
                     <template v-else-if="scoreData.scoringScheme === 'E'">
                       {{ player.finalScore !== undefined ? calculateScoreRate(player.finalScore) : '-' }}
+                    </template>
+                    <template v-else-if="scoreData.scoringScheme === 'F'">
+                      {{ player.publicScore !== undefined ? calculateScoreRate(player.publicScore) : '-' }}
                     </template>
                     <template v-else>
                       {{ player.averageScore !== undefined ? calculateScoreRate(player.averageScore) : '-' }}
@@ -2252,6 +2269,7 @@ function getScoringSchemeDisplayName(scheme: string | undefined): string {
     'C': '2020 版评分标准',
     'D': '2023 版投票评选方案',
     'E': '2020 版评分标准',
+    'F': '大众评选方案（无评委）',
     'S': '2015 半决赛'
   }
 
