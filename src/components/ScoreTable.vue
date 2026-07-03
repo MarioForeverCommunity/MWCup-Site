@@ -300,7 +300,7 @@
               rel="noopener noreferrer"
               class="scheme-link"
             >
-              2025 版大众评选方案
+              MW 杯大众评选方案
             </a>
           </p>
           <p class="scoring-note">注：基础分按欣赏性得分×1.5、创新性得分×1.5、设计性得分×3、游戏性得分×4的方式计算</p>

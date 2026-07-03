@@ -3041,6 +3041,7 @@ season:
           match:
             start: 2026-07-03T20:00
             end: 2026-07-12T22:00
+            mf_tid: 3876
           voting:
             start: 2026-07-12T22:00
             end: 2026-07-18T22:00
@@ -3051,6 +3052,7 @@ season:
           pre_match_checkin:
             start: 2026-07-03T20:00
             end: 2026-07-19T16:00
+            mf_tid: 3875
           match:
             start: 2026-07-19T20:00
             deadlines:
