@@ -580,6 +580,10 @@ function getSubject(year, roundType, playerCode) {
       roundKey = key;
       break;
     }
+    if (key.startsWith('P2') && roundType === '资格赛') {
+      roundKey = key;
+      break;
+    }
   }
 
   if (!roundKey || !rounds[roundKey]?.subjects) {
