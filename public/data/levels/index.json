@@ -17170,5 +17170,21 @@
     "hasPlayerInfo": true,
     "isMultiLevel": false,
     "multiLevelFolder": null
+  },
+  {
+    "name": "1-zqh的资格赛关卡.smwl",
+    "path": "2026年第十五届/资格赛/1-zqh的资格赛关卡.smwl",
+    "mtime": "2026-07-03T13:42:45.000Z",
+    "size": 1412,
+    "playerCode": "1",
+    "year": 2026,
+    "roundType": "资格赛",
+    "playerName": "zqh——123",
+    "roundKey": "P2",
+    "groupCode": null,
+    "subject": null,
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
   }
 ]
