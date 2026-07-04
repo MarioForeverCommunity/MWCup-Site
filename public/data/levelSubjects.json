@@ -8,7 +8,9 @@
         {"playerCode": "4", "subject": "A"},
         {"playerCode": "5", "subject": "A"}
       ],
-      "资格赛": []
+      "资格赛": [
+        {"playerCode": "1", "subject": "A"}
+      ]
     }
   }
 }
