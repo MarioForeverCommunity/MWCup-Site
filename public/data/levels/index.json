@@ -17186,5 +17186,21 @@
     "hasPlayerInfo": true,
     "isMultiLevel": false,
     "multiLevelFolder": null
+  },
+  {
+    "name": "2-跳绳.smwl",
+    "path": "2026年第十五届/资格赛/2-跳绳.smwl",
+    "mtime": "2026-07-04T14:47:21.000Z",
+    "size": 6730,
+    "playerCode": "2",
+    "year": 2026,
+    "roundType": "资格赛",
+    "playerName": "有名氏",
+    "roundKey": "P2",
+    "groupCode": null,
+    "subject": "第二题",
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
   }
 ]
