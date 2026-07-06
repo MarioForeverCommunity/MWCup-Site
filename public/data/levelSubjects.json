@@ -11,7 +11,8 @@
       "资格赛": [
         {"playerCode": "1", "subject": "A"},
         {"playerCode": "2", "subject": "B"},
-        {"playerCode": "3", "subject": "B"}
+        {"playerCode": "3", "subject": "B"},
+        {"playerCode": "4", "subject": "B"}
       ]
     }
   }
