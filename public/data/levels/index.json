@@ -17202,5 +17202,21 @@
     "hasPlayerInfo": true,
     "isMultiLevel": false,
     "multiLevelFolder": null
+  },
+  {
+    "name": "3-Speedrun castle.smwl",
+    "path": "2026年第十五届/资格赛/3-Speedrun castle.smwl",
+    "mtime": "2026-07-06T07:51:06.000Z",
+    "size": 3291,
+    "playerCode": "3",
+    "year": 2026,
+    "roundType": "资格赛",
+    "playerName": "一只果果果果果",
+    "roundKey": "P2",
+    "groupCode": null,
+    "subject": "第二题",
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
   }
 ]
