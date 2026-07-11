@@ -17234,5 +17234,21 @@
     "hasPlayerInfo": true,
     "isMultiLevel": false,
     "multiLevelFolder": null
+  },
+  {
+    "name": "5-There is no CP.smwl",
+    "path": "2026年第十五届/资格赛/5-There is no CP.smwl",
+    "mtime": "2026-07-11T16:06:32.000Z",
+    "size": 10717,
+    "playerCode": "5",
+    "year": 2026,
+    "roundType": "资格赛",
+    "playerName": "AngryStar6K",
+    "roundKey": "P2",
+    "groupCode": null,
+    "subject": "第一题",
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
   }
 ]
