@@ -3051,6 +3051,7 @@ season:
           voting:
             start: 2026-07-12T22:00
             end: 2026-07-18T22:00
+            mf_tid: 3886
       F1, F2, F3:
         smwp_version: 1.7.12
         players:
