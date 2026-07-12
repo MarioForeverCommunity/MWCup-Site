@@ -17250,5 +17250,21 @@
     "hasPlayerInfo": true,
     "isMultiLevel": false,
     "multiLevelFolder": null
+  },
+  {
+    "name": "6-资格赛-蘑菇聚会.smwl",
+    "path": "2026年第十五届/资格赛/6-资格赛-蘑菇聚会.smwl",
+    "mtime": "2026-07-12T08:49:11.000Z",
+    "size": 6582,
+    "playerCode": "6",
+    "year": 2026,
+    "roundType": "资格赛",
+    "playerName": "LLX奶油马里奥",
+    "roundKey": "P2",
+    "groupCode": null,
+    "subject": "第二题",
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
   }
 ]

@@ -13,7 +13,8 @@
         {"playerCode": "2", "subject": "B"},
         {"playerCode": "3", "subject": "B"},
         {"playerCode": "4", "subject": "B"},
-        {"playerCode": "5", "subject": "A"}
+        {"playerCode": "5", "subject": "A"},
+        {"playerCode": "6", "subject": "B"}
       ]
     }
   }
