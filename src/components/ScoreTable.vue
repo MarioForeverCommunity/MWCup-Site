@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <!-- 详细评分表 -->
+      <!-- 详细评分表（非F方案，即有评委评分的方案） -->
       <div v-if="scoreData.scoringScheme !== 'F'" class="detailed-scores">
         <div class="section-title">
           <h4>{{ scoreData.scoringScheme === 'E' ? '评委评分' : '详细评分' }} <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportDetailedToExcel">导出表格</button></h4>
@@ -286,205 +286,205 @@
             </tbody>
           </table>
         </div>
+      </div>
 
-        <!-- 大众评分表 (评分方案E和F)，截止前不显示 -->
-        <div v-if="['E', 'F'].includes(scoreData.scoringScheme) && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
-          <div class="section-title">
-            <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
-          </div>
-          <p class="scheme-info">
-            评分标准:
-            <a
-              href="https://www.marioforever.net/thread-3479-1-1.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="scheme-link"
-            >
-              MW 杯大众评选方案
-            </a>
-          </p>
-          <p class="scoring-note">注：基础分按欣赏性得分×1.5、创新性得分×1.5、设计性得分×3、游戏性得分×4的方式计算</p>
-          <div class="table-wrapper">
-            <table ref="publicTableRef" class="table-base score-table">
-              <thead>
-                <tr>
-                  <th>选手</th>
-                  <th>大众评分员</th>
-                  <th>欣赏性</th>
-                  <th>创新性</th>
-                  <th>设计性</th>
-                  <th>游戏性</th>
-                  <th>附加分</th>
-                  <th v-if="hasPublicPenalty">扣分</th>
-                  <th>换算后总分</th>
-                  <th>大众最终得分</th>
-                </tr>
-              </thead>
-              <tbody>
-                <template v-for="(playerPublicScore, playerIndex) in filteredPublicScoresWithSearch" :key="playerPublicScore.playerCode">
-                  <template v-for="(vote, voteIndex) in playerPublicScore.votes" :key="`${playerPublicScore.playerCode}-${vote.voterName}`">
-                    <tr>
-                      <!-- 只在该选手的第一行显示选手信息，并合并行 -->
-                      <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="player-name player-cell-merged">
-                        <span v-if="playerPublicScore.playerCode !== playerPublicScore.playerName && !playerPublicScore.playerCode.startsWith('~')" class="player-code">{{ playerPublicScore.playerCode }}</span>
-                        <span class="player-name-text">{{ playerPublicScore.playerName }}</span>
-                      </td>
-                      <td class="voter-name" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.voterName }}</td>
-                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.appreciation }} <span class="converted-score">({{ formatScore(vote.appreciation * 1.5) }})</span></td>
-                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.innovation }} <span class="converted-score">({{ formatScore(vote.innovation * 1.5) }})</span></td>
-                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.design }} <span class="converted-score">({{ formatScore(vote.design * 3) }})</span></td>
-                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.gameplay }} <span class="converted-score">({{ formatScore(vote.gameplay * 4) }})</span></td>
-                      <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.bonus }} <span v-if="getDisplayedBonus(vote.bonus) !== vote.bonus.toString()" class="converted-score">({{ getDisplayedBonus(vote.bonus) }})</span></td>
-                      <td v-if="hasPublicPenalty" class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.penalty || 0 }}</td>
-                      <td class="score-cell total-score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ formatScore(vote.totalScore) }}</td>
-                      <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="final-score">
-                        {{ formatScore(playerPublicScore.finalPublicScore) }}
-                        <span v-if="searchJudge && searchJudge.trim()" class="filtered-count">
-                          ({{ playerPublicScore.votes.length }}位评委)
-                        </span>
-                      </td>
-                    </tr>
-                  </template>
-                  <!-- 添加选手间分隔线 -->
-                  <tr v-if="playerIndex < filteredPublicScores.length - 1" class="player-separator">
-                    <td :colspan="hasPublicPenalty ? 10 : 9" class="separator-cell"></td>
+      <!-- 评分截止时间提示（E和F方案） -->
+      <div v-if="!shouldShowTotalRanking" class="total-ranking-hidden">
+        <div class="error-state">
+          <span class="notice-icon">⏰</span>
+          <span class="notice-text">{{ totalRankingDeadlineHint }}</span>
+        </div>
+      </div>
+
+      <!-- 大众评分表（E和F方案），截止前不显示 -->
+      <div v-if="['E', 'F'].includes(scoreData.scoringScheme) && scoreData.publicScores && scoreData.publicScores.length > 0 && shouldShowTotalRanking" class="public-scores">
+        <div class="section-title">
+          <h4>大众评分 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportPublicToExcel">导出表格</button></h4>
+        </div>
+        <p class="scheme-info">
+          评分标准:
+          <a
+            href="https://www.marioforever.net/thread-3479-1-1.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="scheme-link"
+          >
+            MW 杯大众评选方案
+          </a>
+        </p>
+        <p class="scoring-note">注：基础分按欣赏性得分×1.5、创新性得分×1.5、设计性得分×3、游戏性得分×4的方式计算</p>
+        <div class="table-wrapper">
+          <table ref="publicTableRef" class="table-base score-table">
+            <thead>
+              <tr>
+                <th>选手</th>
+                <th>大众评分员</th>
+                <th>欣赏性</th>
+                <th>创新性</th>
+                <th>设计性</th>
+                <th>游戏性</th>
+                <th>附加分</th>
+                <th v-if="hasPublicPenalty">扣分</th>
+                <th>换算后总分</th>
+                <th>大众最终得分</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="(playerPublicScore, playerIndex) in filteredPublicScoresWithSearch" :key="playerPublicScore.playerCode">
+                <template v-for="(vote, voteIndex) in playerPublicScore.votes" :key="`${playerPublicScore.playerCode}-${vote.voterName}`">
+                  <tr>
+                    <!-- 只在该选手的第一行显示选手信息，并合并行 -->
+                    <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="player-name player-cell-merged">
+                      <span v-if="playerPublicScore.playerCode !== playerPublicScore.playerName && !playerPublicScore.playerCode.startsWith('~')" class="player-code">{{ playerPublicScore.playerCode }}</span>
+                      <span class="player-name-text">{{ playerPublicScore.playerName }}</span>
+                    </td>
+                    <td class="voter-name" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.voterName }}</td>
+                    <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.appreciation }} <span class="converted-score">({{ formatScore(vote.appreciation * 1.5) }})</span></td>
+                    <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.innovation }} <span class="converted-score">({{ formatScore(vote.innovation * 1.5) }})</span></td>
+                    <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.design }} <span class="converted-score">({{ formatScore(vote.design * 3) }})</span></td>
+                    <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.gameplay }} <span class="converted-score">({{ formatScore(vote.gameplay * 4) }})</span></td>
+                    <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.bonus }} <span v-if="getDisplayedBonus(vote.bonus) !== vote.bonus.toString()" class="converted-score">({{ getDisplayedBonus(vote.bonus) }})</span></td>
+                    <td v-if="hasPublicPenalty" class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.penalty || 0 }}</td>
+                    <td class="score-cell total-score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ formatScore(vote.totalScore) }}</td>
+                    <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="final-score">
+                      {{ formatScore(playerPublicScore.finalPublicScore) }}
+                      <span v-if="searchJudge && searchJudge.trim()" class="filtered-count">
+                        ({{ playerPublicScore.votes.length }}位评委)
+                      </span>
+                    </td>
                   </tr>
                 </template>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 总分排名表 -->
-        <div v-if="shouldShowTotalRanking" class="player-totals">
-          <div class="section-title">
-            <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格</button></h4>
-          </div>
-          <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 大众评分×25%</p>
-          <div class="table-wrapper">
-            <table ref="totalTableRef" class="table-base total-table">
-              <thead>
-                <tr v-if="scoreData.scoringScheme === 'S'">
-                  <th>排名</th>
-                  <th>选手</th>
-                  <th>最终得分</th>
-                  <th>得分率</th>
+                <!-- 添加选手间分隔线 -->
+                <tr v-if="playerIndex < filteredPublicScores.length - 1" class="player-separator">
+                  <td :colspan="hasPublicPenalty ? 10 : 9" class="separator-cell"></td>
                 </tr>
-                <tr v-else>
-                  <th>排名</th>
-                  <th>选手</th>
-                  <th>关卡名</th>
-                  <th v-if="scoreData.scoringScheme !== 'E' && scoreData.scoringScheme !== 'F'">有效评分次数</th>
-                  <th v-if="scoreData.scoringScheme === 'F'">评分人数</th>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 总分排名表 -->
+      <div v-if="shouldShowTotalRanking" class="player-totals">
+        <div class="section-title">
+          <h4>总分排名 <button class="btn-base btn-secondary header-action-btn export-btn" @click="exportTotalToExcel">导出表格</button></h4>
+        </div>
+        <p v-if="scoreData && scoreData.scoringScheme === 'E'" class="scoring-note">注：最终得分 = 评委评分×75% + 大众评分×25%</p>
+        <div class="table-wrapper">
+          <table ref="totalTableRef" class="table-base total-table">
+            <thead>
+              <tr v-if="scoreData.scoringScheme === 'S'">
+                <th>排名</th>
+                <th>选手</th>
+                <th>最终得分</th>
+                <th>得分率</th>
+              </tr>
+              <tr v-else>
+                <th>排名</th>
+                <th>选手</th>
+                <th>关卡名</th>
+                <th v-if="scoreData.scoringScheme !== 'E' && scoreData.scoringScheme !== 'F'">有效评分次数</th>
+                <th v-if="scoreData.scoringScheme === 'F'">评分人数</th>
+                <template v-if="scoreData.scoringScheme === 'E'">
+                  <th>评委评分</th>
+                  <th>大众评分</th>
+                </template>
+                <template v-else-if="scoreData.scoringScheme === 'F'">
+                  <th>大众评分</th>
+                </template>
+                <template v-else>
+                  <th>总分之和</th>
+                </template>
+                <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
+                <th>得分率</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="player in filteredPlayerScoresWithRank" :key="player.playerCode">
+                <!-- 成绩无效的选手，排名显示为横杠，但得分保持显示原始值 -->
+                <td class="rank">
+                  <template v-if="player.records.length > 0 && player.records[0].isCanceled">-</template>
+                  <template v-else-if="player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传'">-</template>
+                  <template v-else>{{ player.displayRank }}</template>
+                </td>
+                <td class="player-name">
+                  <span v-if="player.playerCode !== player.playerName && !player.playerCode.startsWith('~')" class="player-code">{{ player.playerCode }}</span>
+                  <span class="player-name-text">{{ player.playerName }}</span>
+                </td>
+
+                <!-- S方案不显示关卡名和评分次数列 -->
+                <template v-if="scoreData.scoringScheme !== 'S'">
+                  <td class="level-file">
+                    <template v-if="player.playerCode.startsWith('~')">取消资格</template>
+                    <template v-else-if="player.records.length > 0 && player.records[0].isUnworking">
+                      <span
+                        v-if="getPlayerLevelFile(player.playerCode)"
+                        class="level-file-link unworking-level"
+                        @click="downloadLevelFile(player.playerCode)"
+                      >
+                        {{ getPlayerLevelFileName(player.playerCode) }}（无法运行）
+                      </span>
+                      <span v-else class="unworking-level">{{ getPlayerLevelFileName(player.playerCode) }}（无法运行）</span>
+                    </template>
+                    <template v-else>
+                      <span
+                        v-if="getPlayerLevelFile(player.playerCode)"
+                        class="level-file-link"
+                        @click="downloadLevelFile(player.playerCode)"
+                      >
+                        {{ getPlayerLevelFileName(player.playerCode) }}
+                      </span>
+                      <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
+                    </template>
+                  </td>
+                  <td v-if="scoreData.scoringScheme !== 'E' && scoreData.scoringScheme !== 'F'" class="count">{{ player.validRecordsCount }}</td>
+                  <td v-if="scoreData.scoringScheme === 'F'" class="count">{{ player.validRecordsCount }}</td>
                   <template v-if="scoreData.scoringScheme === 'E'">
-                    <th>评委评分</th>
-                    <th>大众评分</th>
+                    <td class="judge-total">
+                      <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
+                      <template v-else>{{ formatScore(player.judgeAverage) }}</template>
+                    </td>
+                    <td class="public-score">
+                      <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
+                      <template v-else>{{ formatScore(player.publicScore) }}</template>
+                    </td>
                   </template>
                   <template v-else-if="scoreData.scoringScheme === 'F'">
-                    <th>大众评分</th>
+                    <td class="public-score">
+                      <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
+                      <template v-else>{{ formatScore(player.publicScore) }}</template>
+                    </td>
+                  </template>
+                  <td v-else class="sum">{{ formatScore(player.totalSum) }}</td>
+                </template>
+                <td class="average">
+                  <template v-if="scoreData.scoringScheme === 'E'">
+                    {{ formatScore(player.finalScore) }}
+                  </template>
+                  <template v-else-if="scoreData.scoringScheme === 'F'">
+                    {{ formatScore(player.publicScore) }}
                   </template>
                   <template v-else>
-                    <th>总分之和</th>
+                    {{ formatScore(player.averageScore) }}
                   </template>
-                  <th>最终得分<span v-if="scoreData.scoringScheme === 'E'" class="special-scheme-indicator">*</span></th>
-                  <th>得分率</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="player in filteredPlayerScoresWithRank" :key="player.playerCode">
-                  <!-- 成绩无效的选手，排名显示为横杠，但得分保持显示原始值 -->
-                  <td class="rank">
-                    <template v-if="player.records.length > 0 && player.records[0].isCanceled">-</template>
-                    <template v-else-if="player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传'">-</template>
-                    <template v-else>{{ player.displayRank }}</template>
-                  </td>
-                  <td class="player-name">
-                    <span v-if="player.playerCode !== player.playerName && !player.playerCode.startsWith('~')" class="player-code">{{ player.playerCode }}</span>
-                    <span class="player-name-text">{{ player.playerName }}</span>
-                  </td>
-
-                  <!-- S方案不显示关卡名和评分次数列 -->
-                  <template v-if="scoreData.scoringScheme !== 'S'">
-                    <td class="level-file">
-                      <template v-if="player.playerCode.startsWith('~')">取消资格</template>
-                      <template v-else-if="player.records.length > 0 && player.records[0].isUnworking">
-                        <span
-                          v-if="getPlayerLevelFile(player.playerCode)"
-                          class="level-file-link unworking-level"
-                          @click="downloadLevelFile(player.playerCode)"
-                        >
-                          {{ getPlayerLevelFileName(player.playerCode) }}（无法运行）
-                        </span>
-                        <span v-else class="unworking-level">{{ getPlayerLevelFileName(player.playerCode) }}（无法运行）</span>
-                      </template>
-                      <template v-else>
-                        <span
-                          v-if="getPlayerLevelFile(player.playerCode)"
-                          class="level-file-link"
-                          @click="downloadLevelFile(player.playerCode)"
-                        >
-                          {{ getPlayerLevelFileName(player.playerCode) }}
-                        </span>
-                        <span v-else>{{ getPlayerLevelFileName(player.playerCode) }}</span>
-                      </template>
-                    </td>
-                    <td v-if="scoreData.scoringScheme !== 'E' && scoreData.scoringScheme !== 'F'" class="count">{{ player.validRecordsCount }}</td>
-                    <td v-if="scoreData.scoringScheme === 'F'" class="count">{{ player.validRecordsCount }}</td>
-                    <template v-if="scoreData.scoringScheme === 'E'">
-                      <td class="judge-total">
-                        <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
-                        <template v-else>{{ formatScore(player.judgeAverage) }}</template>
-                      </td>
-                      <td class="public-score">
-                        <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
-                        <template v-else>{{ formatScore(player.publicScore) }}</template>
-                      </td>
-                    </template>
-                    <template v-else-if="scoreData.scoringScheme === 'F'">
-                      <td class="public-score">
-                        <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">-</template>
-                        <template v-else>{{ formatScore(player.publicScore) }}</template>
-                      </td>
-                    </template>
-                    <td v-else class="sum">{{ formatScore(player.totalSum) }}</td>
+                </td>
+                <td class="score-rate">
+                  <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">
+                    -
                   </template>
-                  <td class="average">
-                    <template v-if="scoreData.scoringScheme === 'E'">
-                      {{ formatScore(player.finalScore) }}
-                    </template>
-                    <template v-else-if="scoreData.scoringScheme === 'F'">
-                      {{ formatScore(player.publicScore) }}
-                    </template>
-                    <template v-else>
-                      {{ formatScore(player.averageScore) }}
-                    </template>
-                  </td>
-                  <td class="score-rate">
-                    <template v-if="player.records[0]?.isCanceled || (player.validRecordsCount === 0 && getPlayerLevelFileName(player.playerCode) === '未上传')">
-                      -
-                    </template>
-                    <template v-else-if="scoreData.scoringScheme === 'E'">
-                      {{ player.finalScore !== undefined ? calculateScoreRate(player.finalScore) : '-' }}
-                    </template>
-                    <template v-else-if="scoreData.scoringScheme === 'F'">
-                      {{ player.publicScore !== undefined ? calculateScoreRate(player.publicScore) : '-' }}
-                    </template>
-                    <template v-else>
-                      {{ player.averageScore !== undefined ? calculateScoreRate(player.averageScore) : '-' }}
-                    </template>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 评分截止时间提示 -->
-        <div v-if="!shouldShowTotalRanking" class="total-ranking-hidden">
-          <div class="error-state">
-            <span class="notice-icon">⏰</span>
-            <span class="notice-text">{{ totalRankingDeadlineHint }}</span>
-          </div>
+                  <template v-else-if="scoreData.scoringScheme === 'E'">
+                    {{ player.finalScore !== undefined ? calculateScoreRate(player.finalScore) : '-' }}
+                  </template>
+                  <template v-else-if="scoreData.scoringScheme === 'F'">
+                    {{ player.publicScore !== undefined ? calculateScoreRate(player.publicScore) : '-' }}
+                  </template>
+                  <template v-else>
+                    {{ player.averageScore !== undefined ? calculateScoreRate(player.averageScore) : '-' }}
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
