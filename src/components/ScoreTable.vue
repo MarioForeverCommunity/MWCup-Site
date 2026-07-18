@@ -323,7 +323,7 @@
                 <th>创新性</th>
                 <th>设计性</th>
                 <th>游戏性</th>
-                <th>附加分</th>
+                <th v-if="hasPublicBonus">附加分</th>
                 <th v-if="hasPublicPenalty">扣分</th>
                 <th>换算后总分</th>
                 <th>大众最终得分</th>
@@ -343,7 +343,7 @@
                     <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.innovation }} <span class="converted-score">({{ formatScore(vote.innovation * 1.5) }})</span></td>
                     <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.design }} <span class="converted-score">({{ formatScore(vote.design * 3) }})</span></td>
                     <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.gameplay }} <span class="converted-score">({{ formatScore(vote.gameplay * 4) }})</span></td>
-                    <td class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.bonus }} <span v-if="getDisplayedBonus(vote.bonus) !== vote.bonus.toString()" class="converted-score">({{ getDisplayedBonus(vote.bonus) }})</span></td>
+                    <td v-if="hasPublicBonus" class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.bonus }} <span v-if="getDisplayedBonus(vote.bonus) !== vote.bonus.toString()" class="converted-score">({{ getDisplayedBonus(vote.bonus) }})</span></td>
                     <td v-if="hasPublicPenalty" class="score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ vote.penalty || 0 }}</td>
                     <td class="score-cell total-score-cell" :class="{'public-score-halved': vote.isHalved, 'public-score-removed': vote.isRemoved}">{{ formatScore(vote.totalScore) }}</td>
                     <td v-if="voteIndex === 0" :rowspan="playerPublicScore.votes.length" class="final-score">
@@ -356,7 +356,7 @@
                 </template>
                 <!-- 添加选手间分隔线 -->
                 <tr v-if="playerIndex < filteredPublicScores.length - 1" class="player-separator">
-                  <td :colspan="hasPublicPenalty ? 10 : 9" class="separator-cell"></td>
+                  <td :colspan="(hasPublicPenalty ? 1 : 0) + (hasPublicBonus ? 1 : 0) + 8" class="separator-cell"></td>
                 </tr>
               </template>
             </tbody>
@@ -792,6 +792,7 @@ async function exportPublicToExcel() {
   const sj = (searchJudge.value || '').trim()
 
   const hasPenalty = hasPublicPenalty.value
+  const hasBonus = hasPublicBonus.value
 
   const header = [
     '选手码', '选手',
@@ -799,9 +800,9 @@ async function exportPublicToExcel() {
     '欣赏性', '欣赏性(换算×1.5)',
     '创新性', '创新性(换算×1.5)',
     '设计性', '设计性(换算×3)',
-    '游戏性', '游戏性(换算×4)',
-    '附加分'
+    '游戏性', '游戏性(换算×4)'
   ] as string[]
+  if (hasBonus) header.push('附加分')
   if (hasPenalty) header.push('扣分')
   header.push('换算后总分', '大众最终得分')
 
@@ -834,9 +835,9 @@ async function exportPublicToExcel() {
         a, +(a * 1.5).toFixed(3),
         i2, +(i2 * 1.5).toFixed(3),
         d, +(d * 3).toFixed(3),
-        g, +(g * 4).toFixed(3),
-        bonus
+        g, +(g * 4).toFixed(3)
       ]
+      if (hasBonus) row.push(bonus)
       if (hasPenalty) row.push(penalty)
       row.push(
         // 换算后总分
@@ -1600,6 +1601,14 @@ const hasPublicPenalty = computed(() => {
   if (!scoreData.value || !scoreData.value.publicScores) return false;
   return scoreData.value.publicScores.some(
     (player) => player.votes && player.votes.some(v => v.penalty !== undefined && Number(v.penalty) !== 0)
+  );
+});
+
+// 计算是否有大众评分的附加分（用于控制附加分列的显示）
+const hasPublicBonus = computed(() => {
+  if (!scoreData.value || !scoreData.value.publicScores) return false;
+  return scoreData.value.publicScores.some(
+    (player) => player.votes && player.votes.some(v => v.bonus !== undefined && Number(v.bonus) !== 0)
   );
 });
 
