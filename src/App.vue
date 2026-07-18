@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { COMPETITION_YEARS } from './utils/editionHelper'
 import packageJson from '../package.json'
 
 const router = useRouter()
@@ -34,7 +35,11 @@ const setActiveTab = (tab: string) => {
       router.push('/matches')
       break
     case 'upload':
-      router.push('/upload')
+      if (route.path.startsWith('/upload/')) {
+        // 已在上传系统页面且URL包含年份，不跳转
+        break
+      }
+      router.push('/upload/' + COMPETITION_YEARS[0])
       break
     case 'levels':
       router.push('/levels')

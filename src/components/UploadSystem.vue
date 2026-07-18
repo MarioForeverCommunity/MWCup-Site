@@ -2,14 +2,15 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getEditionOptions } from '../utils/editionHelper'
+import { COMPETITION_YEARS, ARCHIVE_YEARS } from '../utils/editionHelper'
 import { uploadUrlMap as urlMap, getYsepanPassword } from '../utils/urlMap'
 
 const route = useRoute()
 const router = useRouter()
 
 // 所有支持的年份，分为比赛系统和网盘两部分
-const competitionYears = ['2026', '2025', '2024', '2023', '2022']
-const archiveYears = ['2021', '2020', '2019', '2018', '2017', '2016', '2015', '2014', '2013', '2012']
+const competitionYears = COMPETITION_YEARS
+const archiveYears = ARCHIVE_YEARS
 const years = [...competitionYears, ...archiveYears] as const
 
 type Year = (typeof years)[number]
