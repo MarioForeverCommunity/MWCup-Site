@@ -3016,8 +3016,8 @@ season:
           J1: 我懂你不懂的lz
           J2: 玛丽的死对头
         subjects:
-          'A': 第一题
-          'B': 第二题
+          A: 第一题
+          B: 第二题
         schedule:
           match:
             start: 2026-02-06T20:00
@@ -3043,8 +3043,8 @@ season:
             '5': AngryStar6K
             '6': LLX奶油马里奥
         subjects:
-          'A': 第一题
-          'B': 第二题
+          A: 第一题
+          B: 第二题
         schedule:
           match:
             start: 2026-07-03T20:00
@@ -3057,6 +3057,14 @@ season:
       F1, F2, F3:
         smwp_version: 1.7.12
         players:
+          A: 超级玛丽迷01
+          B: LLX奶油马里奥
+          C: 芝士未名
+          D: 数字1528君
+          E: 一只果果果果果
+          F: zqh——123
+          G: AngryStar6K
+          H: 有名氏
         schedule:
           pre_match_checkin:
             start: 2026-07-03T20:00
@@ -3067,6 +3075,10 @@ season:
             deadlines:
               - 2026-07-29T22:00
               - 2026-08-07T22:00
+            mf_tid:
+              F1: 3892
+              F2: 3893
+              F3: 3894
           voting:
             start: 2026-08-07T22:00
             end: 2026-08-15T22:00
