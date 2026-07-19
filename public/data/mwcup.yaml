@@ -2144,7 +2144,7 @@ season:
   2021:
     scoring_scheme: C
     smwp_version: 1.7.6+
-    host: Fahlee_5
+    host: Fahlee
     chief_judge: [yuyangmiau, s小s飞s侠s]
     rounds:
       P1:
@@ -2366,7 +2366,7 @@ season:
     scoring_scheme: C
     smwp_version: 1.7.8
     host: '1168438795'
-    chief_judge: ['1168438795', Fahlee_5]
+    chief_judge: ['1168438795', Fahlee]
     rounds:
       P1:
         is_warmup: true
