@@ -192,9 +192,11 @@ function extractDates(yearData: SeasonYearData, _year: string) {
     if (p1Schedule.match?.start) {
       dates.p1Start = formatDate(p1Schedule.match.start)
     }
-    // P1结束：judging结束时间（如果没有judging.end，则使用judging.start）
+    // P1结束：优先judging.end，其次voting.end，再依次降级
     if (p1Schedule.judging?.end) {
       dates.p1End = formatDate(p1Schedule.judging.end)
+    } else if (p1Schedule.voting?.end) {
+      dates.p1End = formatDate(p1Schedule.voting.end)
     } else if (p1Schedule.judging?.start) {
       dates.p1End = formatDate(p1Schedule.judging.start)
     } else if (typeof p1Schedule.post_match_checkin !== 'string' && p1Schedule.post_match_checkin?.start) {
@@ -210,9 +212,11 @@ function extractDates(yearData: SeasonYearData, _year: string) {
     if (p2Schedule.match?.start) {
       dates.p2Start = formatDate(p2Schedule.match.start)
     }
-    // P2结束：judging结束时间（如果没有judging.end，则使用judging.start）
+    // P2结束：优先judging.end，其次voting.end，再降级到judging.start
     if (p2Schedule.judging?.end) {
       dates.p2End = formatDate(p2Schedule.judging.end)
+    } else if (p2Schedule.voting?.end) {
+      dates.p2End = formatDate(p2Schedule.voting.end)
     } else if (p2Schedule.judging?.start) {
       dates.p2End = formatDate(p2Schedule.judging.start)
     }
@@ -300,6 +304,9 @@ function extractDates(yearData: SeasonYearData, _year: string) {
   const finalSchedule = finalRound?.schedule as RoundSchedule | undefined
   if (finalSchedule?.judging?.end) {
     dates.mainEnd = formatDate(finalSchedule.judging.end)
+  } else if (finalSchedule?.voting?.end) {
+    // 没有judging.end时，使用voting.end（如2026年纯大众评选方案）
+    dates.mainEnd = formatDate(finalSchedule.voting.end)
   }
 
   return dates
