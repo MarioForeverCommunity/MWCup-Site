@@ -1107,6 +1107,8 @@ export async function analyzeJudgeRecords(): Promise<JudgeRecord[]> {
 
   // 获取YAML数据用于查找评委用户名
   const yamlData = await fetchMarioWorkerYaml();
+  // 加载用户数据用于查找社区UID
+  const users = await loadUserData();
 
   // 预加载所有轮次的原始 CSV 数据（并行，排除2012年）
   const roundsToPreload = rounds.filter(({ year }) => year !== 2012);
@@ -1134,8 +1136,12 @@ export async function analyzeJudgeRecords(): Promise<JudgeRecord[]> {
       // 获取用于显示的首选名称
       const displayName = await getPreferredDisplayName(yamlJudgeName);
       if (!judgeRecords[unifiedUserId]) {
+        // 查找评委的社区UID
+        const matchedUser = findUserByName(users, yamlJudgeName);
+        const communityUid = matchedUser?.社区UID || '';
         judgeRecords[unifiedUserId] = {
           judgeName: displayName,
+          communityUid,
           participatedYears: [],
           totalRounds: 0,
           totalLevels: 0,

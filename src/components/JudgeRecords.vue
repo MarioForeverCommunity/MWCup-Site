@@ -42,6 +42,7 @@
         <table class="table-base records-table">
           <thead>
             <tr>
+              <th class="uid-col">社区UID</th>
               <th>评委名称</th>
               <th>参评届数</th>
               <th>参评轮数</th>
@@ -53,6 +54,9 @@
             <template v-for="record in paginatedRecords" :key="record.judgeName">
               <!-- 评委信息行 -->
               <tr class="record-row" :class="{ 'active-row': expandedJudge === record.judgeName }">
+                <td class="uid-cell">
+                  <span class="uid-badge">{{ record.communityUid || '-' }}</span>
+                </td>
                 <td class="judge-cell">
                   <div class="judge-info">
                     <span class="judge-name">{{ record.judgeName }}</span>
@@ -89,7 +93,7 @@
 
               <!-- 详细信息展开行 -->
               <tr v-if="expandedJudge === record.judgeName" :key="`${record.judgeName}-details`" class="details-row animate-fadeInUp">
-                <td colspan="5">
+                <td colspan="6">
                   <div class="yearly-details">
                     <div class="section-title">
                       <h4>{{ record.judgeName }} 的年度详细数据</h4>

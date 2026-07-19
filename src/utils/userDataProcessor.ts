@@ -31,6 +31,7 @@ export interface PlayerRecord {
 
 export interface JudgeRecord {
   judgeName: string;
+  communityUid: string;
   participatedYears: number[];
   totalRounds: number;
   totalLevels: number;
