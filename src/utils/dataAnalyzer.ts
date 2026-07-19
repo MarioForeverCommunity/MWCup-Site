@@ -6,7 +6,7 @@ import { loadUserData, findUserIdByName, getStageLevel, getStageName, isValidJud
 import { fetchMarioWorkerYaml } from './yamlLoader';
 import { getRoundChineseName } from './roundNames';
 import { buildPlayerJudgeMap, loadRoundScoreData } from './scoreCalculator';
-import { loadTotalPointsData } from './totalPointsCalculator';
+import { isYearOnlyFRounds, loadTotalPointsData } from './totalPointsCalculator';
 import { Decimal } from 'decimal.js';
 import type { PlayerJudgeMap, LevelIndexItem } from '../types/mwcup';
 
@@ -307,6 +307,63 @@ async function getPlayerCountFromYaml(year: number, round: string): Promise<numb
     console.error(`获取YAML选手数量失败 ${year}${round}:`, error);
     return 0;
   }
+}
+
+/**
+ * 从轮次配置中提取选手名称列表
+ */
+function extractPlayerNamesFromRound(roundData: { players?: unknown } | undefined): string[] {
+  if (!roundData?.players) return [];
+
+  if (Array.isArray(roundData.players)) {
+    return roundData.players.filter((player): player is string => typeof player === 'string' && player.length > 0);
+  }
+
+  if (typeof roundData.players !== 'object' || !roundData.players) {
+    return [];
+  }
+
+  const firstValue = Object.values(roundData.players)[0];
+  if (typeof firstValue === 'string') {
+    return Object.values(roundData.players).filter((player): player is string => typeof player === 'string' && player.length > 0);
+  }
+
+  const playerNames: string[] = [];
+  for (const groupData of Object.values(roundData.players)) {
+    if (typeof groupData === 'object' && groupData) {
+      playerNames.push(...Object.values(groupData).filter((player): player is string => typeof player === 'string' && player.length > 0));
+    }
+  }
+
+  return playerNames;
+}
+
+/**
+ * 从YAML中查找指定年份和轮次的配置
+ */
+function findYamlRoundData(
+  yamlData: Awaited<ReturnType<typeof fetchMarioWorkerYaml>>,
+  year: number,
+  round: string
+): { players?: unknown } | undefined {
+  const yearData = yamlData?.season?.[year.toString()];
+  if (!yearData?.rounds) return undefined;
+
+  const directRoundData = yearData.rounds[round];
+  if (directRoundData) {
+    return directRoundData;
+  }
+
+  for (const [roundKey, roundData] of Object.entries(yearData.rounds)) {
+    if (!roundKey.includes(',')) continue;
+
+    const singleRounds = roundKey.split(',').map(r => r.trim());
+    if (singleRounds.includes(round)) {
+      return roundData;
+    }
+  }
+
+  return undefined;
 }
 
 /**
@@ -652,6 +709,64 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
       // 计算排名（只对正式赛阶段）
       if (stageLevel > 1) {
         playerScores.sort((a, b) => b.score.comparedTo(a.score));
+        const isMedalRound = round === 'F';
+
+        if (isMedalRound) {
+          const finalRoundData = findYamlRoundData(yamlData, year, round);
+          const finalistNames = extractPlayerNamesFromRound(finalRoundData);
+          const rankedUnifiedUserIds = new Set(playerScores.map(player => player.unifiedUserId));
+
+          for (const playerName of finalistNames) {
+            const unifiedUserId = await getUnifiedUserId(playerName);
+            if (rankedUnifiedUserIds.has(unifiedUserId)) {
+              continue;
+            }
+
+            const userId = findUserIdByName(users, playerName);
+            if (!userId) {
+              continue;
+            }
+            const displayName = await getPreferredDisplayName(playerName);
+
+            if (!playerRecords[unifiedUserId]) {
+              playerRecords[unifiedUserId] = {
+                userId,
+                participatedYears: [],
+                mainEventYears: [],
+                totalLevels: 0,
+                maxScore: 0,
+                maxScoreRate: 0,
+                bestStage: '',
+                bestRank: Infinity,
+                bestStageLevel: 0,
+                bestStageYear: undefined,
+                bestStageRound: undefined,
+                bestStageRank: undefined,
+                championCount: 0,
+                runnerUpCount: 0,
+                thirdPlaceCount: 0
+              };
+              playerMaxScoreInfo[unifiedUserId] = { maxScore: new Decimal(0), maxPossibleScore: 100 };
+            }
+
+            const record = playerRecords[unifiedUserId];
+            if (!record.participatedYears.includes(year)) {
+              record.participatedYears.push(year);
+            }
+            if (!record.mainEventYears.includes(year)) {
+              record.mainEventYears.push(year);
+            }
+
+            playerScores.push({
+              playerCode: '',
+              score: new Decimal(0),
+              unifiedUserId,
+              displayName,
+              userId
+            });
+            rankedUnifiedUserIds.add(unifiedUserId);
+          }
+        }
 
         playerScores.forEach((player, index) => {
           const rank = index + 1;
@@ -681,11 +796,11 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           }
 
           // 统计冠亚季军
-          if (stageLevel === 6) {
+          if (isMedalRound) {
             if (rank === 1) record.championCount++;
             else if (rank === 2) record.runnerUpCount++;
             // 季军仅统计2020年及之后
-            else if (rank === 3) record.thirdPlaceCount++;
+            else if (rank === 3 && year >= 2020) record.thirdPlaceCount++;
           }
         });
       }
@@ -817,6 +932,38 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
     }
   }
   // --- END 修正 ---
+
+  // 对仅包含 F1/F2/F3 的年份，按年度总积分排名统计冠亚季军
+  if (yamlData?.season) {
+    for (const year of Object.keys(yamlData.season)) {
+      if (!isYearOnlyFRounds(yamlData, year)) {
+        continue;
+      }
+
+      try {
+        const totalPointsData = await loadTotalPointsData(year, yamlData);
+        const medalists = totalPointsData.players.slice(0, 3);
+
+        for (const [index, player] of medalists.entries()) {
+          const unifiedUserId = await getUnifiedUserId(player.playerName);
+          const record = playerRecords[unifiedUserId];
+          if (!record) {
+            continue;
+          }
+
+          if (index === 0) {
+            record.championCount++;
+          } else if (index === 1) {
+            record.runnerUpCount++;
+          } else if (index === 2) {
+            record.thirdPlaceCount++;
+          }
+        }
+      } catch (error) {
+        console.warn(`统计 ${year} 年正赛冠亚季军失败:`, error);
+      }
+    }
+  }
 
   return Object.values(playerRecords).filter(record => {
     // 过滤掉只参加过2012年的选手
