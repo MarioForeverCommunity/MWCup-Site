@@ -20,7 +20,6 @@ export function formatResultDisplay(bestResult: string, options: ResultFormatter
     if (!yamlData?.season?.[year]?.rounds) return 0;
 
     const rounds = yamlData.season[year].rounds;
-    let playerCount = 0;
 
     // 查找对应轮次的配置
     const roundData = rounds[roundCode] ||
@@ -30,12 +29,25 @@ export function formatResultDisplay(bestResult: string, options: ResultFormatter
 
     if (!roundData?.players) return 0;
 
-    // 计算选手数量（每个组的选手总和）
-    Object.values(roundData.players).forEach((group: unknown) => {
-      if (typeof group === 'object' && group !== null) {
-        playerCount += Object.keys(group).length;
+    let playerCount = 0;
+
+    // 计算选手数量（支持不同数据结构）
+    if (Array.isArray(roundData.players)) {
+      playerCount = roundData.players.filter(Boolean).length;
+    } else if (typeof roundData.players === 'object') {
+      const firstValue = Object.values(roundData.players)[0];
+      if (typeof firstValue === 'string') {
+        // 扁平结构：players: { '1': 用户名, ... }
+        playerCount = Object.keys(roundData.players).filter(k => !k.startsWith('~')).length;
+      } else {
+        // 分组结构：players: { A: { A1: 用户名, ... }, ... }
+        for (const groupData of Object.values(roundData.players)) {
+          if (typeof groupData === 'object' && groupData !== null) {
+            playerCount += Object.keys(groupData).filter(k => !k.startsWith('~')).length;
+          }
+        }
       }
-    });
+    }
 
     return playerCount;
   };

@@ -47,6 +47,41 @@ export interface AttendanceData {
 }
 
 let userDataCache: UserData[] | null = null;
+// 姓名 -> 用户记录的查找映射，避免重复的线性搜索
+let userNameIndex: Map<string, UserData> | null = null;
+
+/**
+ * 构建姓名 -> 用户的索引映射
+ * 将百度用户名、社区用户名、社区曾用名都映射到同一个用户记录
+ */
+function buildUserNameIndex(users: UserData[]): Map<string, UserData> {
+  const index = new Map<string, UserData>();
+  for (const user of users) {
+    if (user.百度用户名) index.set(user.百度用户名, user);
+    if (user.社区用户名) index.set(user.社区用户名, user);
+    for (const name of user.社区曾用名) {
+      if (name) index.set(name, user);
+    }
+  }
+  return index;
+}
+
+/**
+ * 根据用户名查找用户记录（使用索引，O(1) 复杂度）
+ */
+export function findUserByName(users: UserData[], playerName: string): UserData | null {
+  // 优先使用索引（当 users 引用与缓存一致时）
+  if (userNameIndex && users === userDataCache) {
+    return userNameIndex.get(playerName) || null;
+  }
+  // 降级到线性搜索（兼容外部传入的 users 数组）
+  return users.find(user => {
+    if (user.百度用户名 === playerName) return true;
+    if (user.社区用户名 === playerName) return true;
+    if (user.社区曾用名.includes(playerName)) return true;
+    return false;
+  }) || null;
+}
 
 /**
  * 加载users.csv数据
@@ -89,6 +124,8 @@ export async function loadUserData(): Promise<UserData[]> {
     }).filter(user => user.序号 > 0);
 
     userDataCache = users;
+    // 构建姓名索引，加速后续查找
+    userNameIndex = buildUserNameIndex(users);
     return users;
   } catch (error) {
     console.error('加载用户数据失败:', error);
@@ -100,16 +137,7 @@ export async function loadUserData(): Promise<UserData[]> {
  * 根据用户名查找用户ID
  */
 export function findUserIdByName(users: UserData[], playerName: string): number | null {
-  const user = users.find(user => {
-    // 检查百度用户名
-    if (user.百度用户名 === playerName) return true;
-    // 检查社区用户名
-    if (user.社区用户名 === playerName) return true;
-    // 检查社区曾用名（支持多个）
-    if (user.社区曾用名.includes(playerName)) return true;
-    return false;
-  });
-
+  const user = findUserByName(users, playerName);
   return user ? user.序号 : null;
 }
 
@@ -119,7 +147,7 @@ export function findUserIdByName(users: UserData[], playerName: string): number 
 export function getStageLevel(roundCode: string): number {
   const round = roundCode.toUpperCase();
 
-  // 决赛 (Final)
+  // 决赛/正赛 (Final) — F 为决赛，F1/F2/F3 为正赛，同级别
   if (round.includes('F')) return 6;
   // 半决赛 (Semi-final)
   if (round.includes('S')) return 5;
@@ -133,6 +161,17 @@ export function getStageLevel(roundCode: string): number {
   if (round.includes('P')) return 1;
 
   return 0;
+}
+
+/**
+ * 根据轮次代号获取阶段名称
+ * 区分决赛(F)和正赛(F1/F2/F3)
+ */
+export function getStageNameFromRound(roundCode: string): string {
+  const round = roundCode.toUpperCase();
+  if (/^F\d+$/.test(round)) return '正赛';
+  if (round === 'F') return '决赛';
+  return getStageName(getStageLevel(roundCode));
 }
 
 /**
@@ -175,4 +214,5 @@ export function isValidJudge(judgeCode: string): boolean {
  */
 export function clearUserDataCache(): void {
   userDataCache = null;
+  userNameIndex = null;
 }

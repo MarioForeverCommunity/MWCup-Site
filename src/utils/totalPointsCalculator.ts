@@ -13,6 +13,14 @@ import { findRoundConfig, isGroupedPlayerMap, isFlatPlayerMap } from '../types/m
 // 设置Decimal的精度和舍入模式
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
 
+// 关卡文件索引缓存（同会话内静态数据不会变化）
+let levelIndexDataCache: LevelFile[] | null = null;
+let levelIndexDataPromise: Promise<LevelFile[]> | null = null;
+
+// 总分积分数据缓存：按 year 键索引
+const totalPointsDataCache = new Map<string, TotalPointsData>();
+const totalPointsDataPromise = new Map<string, Promise<TotalPointsData>>();
+
 // 关卡文件接口
 interface LevelFile {
   name: string;
@@ -40,15 +48,35 @@ export interface PlayerRoundData {
 
 // 加载关卡索引数据
 export async function loadLevelIndexData(): Promise<LevelFile[]> {
-  try {
-    const response = await fetch('/data/levels/index.json');
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.warn('加载levels/index.json失败:', error);
+  // 命中缓存直接返回
+  if (levelIndexDataCache) {
+    return levelIndexDataCache;
   }
-  return [];
+  // 复用进行中的 Promise，避免并发重复请求
+  if (!levelIndexDataPromise) {
+    levelIndexDataPromise = (async () => {
+      try {
+        const response = await fetch('/data/levels/index.json');
+        if (response.ok) {
+          const data = await response.json();
+          levelIndexDataCache = data;
+          return data;
+        }
+      } catch (error) {
+        console.warn('加载levels/index.json失败:', error);
+      }
+      return [];
+    })();
+  }
+  return levelIndexDataPromise;
+}
+
+/**
+ * 清除关卡索引数据缓存
+ */
+export function clearLevelIndexDataCache(): void {
+  levelIndexDataCache = null;
+  levelIndexDataPromise = null;
 }
 
 // 获取指定年份和轮次的截止时间
@@ -147,6 +175,48 @@ export interface TotalPointsData {
  * 加载某年度的总分积分排行数据
  */
 export async function loadTotalPointsData(year: string, yamlData: MWCupYamlDoc): Promise<TotalPointsData> {
+  const seasonData = yamlData.season[year];
+  if (!seasonData || !seasonData.rounds) {
+    return {
+      year,
+      players: [],
+      availableRounds: [],
+      hasData: false
+    };
+  }
+
+  // 命中缓存直接返回（同会话内静态数据不会变化）
+  const cached = totalPointsDataCache.get(year);
+  if (cached) {
+    return cached;
+  }
+  // 复用进行中的 Promise，避免并发重复计算
+  const inFlight = totalPointsDataPromise.get(year);
+  if (inFlight) {
+    return inFlight;
+  }
+  const promise = loadTotalPointsDataInternal(year, yamlData).then(data => {
+    totalPointsDataCache.set(year, data);
+    return data;
+  }).finally(() => {
+    totalPointsDataPromise.delete(year);
+  });
+  totalPointsDataPromise.set(year, promise);
+  return promise;
+}
+
+/**
+ * 清除总分积分数据缓存
+ */
+export function clearTotalPointsDataCache(): void {
+  totalPointsDataCache.clear();
+  totalPointsDataPromise.clear();
+}
+
+/**
+ * loadTotalPointsData 的内部实现（无缓存逻辑）
+ */
+async function loadTotalPointsDataInternal(year: string, yamlData: MWCupYamlDoc): Promise<TotalPointsData> {
   const seasonData = yamlData.season[year];
   if (!seasonData || !seasonData.rounds) {
     return {

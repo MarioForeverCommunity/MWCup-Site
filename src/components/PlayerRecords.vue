@@ -95,10 +95,10 @@
                 <td class="years-cell">
                   <div class="participation-display">
                     <span class="participation-count">{{ getParticipatedYearsWithout2012(record).length }}届</span>
-                    <span class="main-event-count">（正赛{{ record.mainEventYears.filter(year => year !== 2012).length }}届）</span>
+                    <span class="main-event-count">（正赛{{ getMainEventYearsWithout2012(record).length }}届）</span>
                     <div class="participation-years">
                       <span
-                        v-for="year in record.participatedYears.filter(y => y !== 2012)"
+                        v-for="year in getParticipatedYearsWithout2012(record)"
                         :key="year"
                         :class="{ 'preliminary-only': !record.mainEventYears.includes(year) }"
                       >{{ year }}</span>
@@ -127,7 +127,7 @@
                 </td>
                 <td class="action-cell">
                   <button
-                    v-if="record.mainEventYears.filter(year => year !== 2012).length > 0"
+                    v-if="getMainEventYearsWithout2012(record).length > 0"
                     @click="toggleDetails(record.userId)"
                     class="detail-btn hover-scale"
                     :class="{
@@ -156,11 +156,11 @@
                         <div class="year-stats">
                           <div class="stat-item">
                             <span class="stat-label">排名</span>
-                            <span class="stat-value">{{ yearData.rank || '未知' }}</span>
+                            <span class="detailed-value">{{ yearData.rank || '未知' }}</span>
                           </div>
                           <div class="stat-item">
                             <span class="stat-label">成绩</span>
-                            <span class="stat-value">{{ yearData.bestResult || '未知' }}</span>
+                            <span class="detailed-value">{{ yearData.bestResult || '未知' }}</span>
                           </div>
                         </div>
                       </div>
@@ -205,6 +205,20 @@ const sortBy = ref('totalLevels')
 const expandedPlayer = ref<number | null>(null)
 const playerYearlyData = ref<{ [userId: number]: YearlyPlayerData[] }>({})
 
+// userId -> UserData 的查找映射，避免模板中重复线性搜索
+const userByIdMap = computed(() => {
+  const map = new Map<number, UserData>()
+  for (const user of users.value) {
+    map.set(user.序号, user)
+  }
+  return map
+})
+
+// 缓存排除2012年后的参赛年份，避免重复创建数组
+const participatedYearsCache = new WeakMap<PlayerRecord, number[]>()
+// 缓存排除2012年后的正赛年份，避免重复创建数组
+const mainEventYearsCache = new WeakMap<PlayerRecord, number[]>()
+
 // 切换详细信息显示
 const toggleDetails = async (userId: number) => {
   if (expandedPlayer.value === userId) {
@@ -224,7 +238,7 @@ const getExpandedPlayerData = (userId: number): YearlyPlayerData[] => {
 
 // 获取用户的所有可能用户名
 const getAllPlayerNames = (userId: number): string[] => {
-  const user = users.value.find(u => u.序号 === userId)
+  const user = userByIdMap.value.get(userId)
   if (!user) return [`用户${userId}`]
 
   const names: string[] = []
@@ -243,10 +257,12 @@ const getAllPlayerNames = (userId: number): string[] => {
 
   // 如果有社区UID，查找所有相同社区UID的用户的用户名
   if (user.社区UID?.trim()) {
-    const sameUidUsers = users.value.filter(u =>
-      u.社区UID?.trim() === user.社区UID?.trim() && u.序号 !== userId
-    )
-    sameUidUsers.forEach(collectUserNames)
+    const targetUid = user.社区UID.trim()
+    for (const u of users.value) {
+      if (u.社区UID?.trim() === targetUid && u.序号 !== userId) {
+        collectUserNames(u)
+      }
+    }
   }
 
   // 去重并过滤空字符串
@@ -371,7 +387,7 @@ const filteredRecords = computed(() => {
       case 'participatedYears':
         return getParticipatedYearsWithout2012(b).length - getParticipatedYearsWithout2012(a).length
       case 'mainEventYears':
-        return b.mainEventYears.filter(year => year !== 2012).length - a.mainEventYears.filter(year => year !== 2012).length
+        return getMainEventYearsWithout2012(b).length - getMainEventYearsWithout2012(a).length
       case 'bestRank':
         if (a.bestRank === 0 && b.bestRank === 0) return 0
         if (a.bestRank === 0) return 1
@@ -390,9 +406,22 @@ const filteredRecords = computed(() => {
   return filtered
 })
 
-// 排除2012年的参赛年份
+// 排除2012年的参赛年份（带缓存，避免重复创建数组）
 const getParticipatedYearsWithout2012 = (record: PlayerRecord): number[] => {
-  return record.participatedYears.filter(year => year !== 2012)
+  const cached = participatedYearsCache.get(record)
+  if (cached) return cached
+  const result = record.participatedYears.filter(year => year !== 2012)
+  participatedYearsCache.set(record, result)
+  return result
+}
+
+// 排除2012年的正赛年份（带缓存，避免重复创建数组）
+const getMainEventYearsWithout2012 = (record: PlayerRecord): number[] => {
+  const cached = mainEventYearsCache.get(record)
+  if (cached) return cached
+  const result = record.mainEventYears.filter(year => year !== 2012)
+  mainEventYearsCache.set(record, result)
+  return result
 }
 
 // 活跃选手数（参加过3届以上，排除2012年）
@@ -426,7 +455,7 @@ const championPlayersCount = computed(() => {
 
 // 获取选手用户名
 const getPlayerName = (userId: number): string => {
-  const user = users.value.find(u => u.序号 === userId)
+  const user = userByIdMap.value.get(userId)
   if (!user) return `用户${userId}`
 
   // 优先显示社区用户名，其次百度用户名
@@ -435,7 +464,7 @@ const getPlayerName = (userId: number): string => {
 
 // 获取社区UID
 const getCommunityUid = (userId: number): string => {
-  const user = users.value.find(u => u.序号 === userId)
+  const user = userByIdMap.value.get(userId)
   if (!user || !user.社区UID) return '-'
   return user.社区UID.toString()
 }
@@ -665,7 +694,7 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
-.stat-value {
+.detailed-value {
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-primary);

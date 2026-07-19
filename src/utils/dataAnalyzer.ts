@@ -2,16 +2,26 @@
  * 比赛数据分析工具 - 分析选手战绩、评委数据和上传率
  */
 
-import { loadUserData, findUserIdByName, getStageLevel, getStageName, isValidJudge, type PlayerRecord, type JudgeRecord, type AttendanceData } from './userDataProcessor';
+import { loadUserData, findUserIdByName, findUserByName, getStageLevel, getStageNameFromRound, isValidJudge, type PlayerRecord, type JudgeRecord, type AttendanceData } from './userDataProcessor';
 import { fetchMarioWorkerYaml } from './yamlLoader';
 import { getRoundChineseName } from './roundNames';
-import { buildPlayerJudgeMap, loadRoundScoreData } from './scoreCalculator';
+import { buildPlayerJudgeMap, loadRoundScoreData, fetchCachedCsvText, clearCsvTextCache } from './scoreCalculator';
 import { isYearOnlyFRounds, loadTotalPointsData } from './totalPointsCalculator';
 import { Decimal } from 'decimal.js';
+import { findRoundConfig } from '../types/mwcup';
 import type { PlayerJudgeMap, LevelIndexItem } from '../types/mwcup';
 
 // 设置Decimal的精度和舍入模式
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
+
+// 统一用户标识符缓存：避免对同一选手名重复查找
+const unifiedUserIdCache = new Map<string, string>();
+// 首选显示名称缓存：避免对同一选手名重复查找
+const preferredDisplayNameCache = new Map<string, string>();
+
+// 轮次原始 CSV 数据缓存：按 year_round 键索引（供 analyzeJudgeRecords/analyzeAttendanceData 使用）
+const roundDataCache = new Map<string, RoundData[]>();
+const roundDataPromise = new Map<string, Promise<RoundData[]>>();
 
 interface RoundData {
   选手码?: string;
@@ -80,14 +90,34 @@ async function getMaxScore(year: number, round: string): Promise<number> {
 }
 
 /**
- * 加载指定轮次的CSV数据
+ * 加载指定轮次的CSV数据（带缓存）
  */
 async function loadRoundData(year: number, round: string): Promise<RoundData[]> {
-  try {
-    const response = await fetch(`/data/scores/${year}${round}.csv`);
-    if (!response.ok) return [];
+  const cacheKey = `${year}_${round}`;
+  // 命中缓存直接返回
+  const cached = roundDataCache.get(cacheKey);
+  if (cached) return cached;
+  // 复用进行中的 Promise，避免并发重复请求与解析
+  const inFlight = roundDataPromise.get(cacheKey);
+  if (inFlight) return inFlight;
 
-    const text = await response.text();
+  const promise = loadRoundDataInternal(year, round).then(data => {
+    roundDataCache.set(cacheKey, data);
+    return data;
+  }).finally(() => {
+    roundDataPromise.delete(cacheKey);
+  });
+  roundDataPromise.set(cacheKey, promise);
+  return promise;
+}
+
+/**
+ * loadRoundData 的内部实现（无缓存逻辑）
+ */
+async function loadRoundDataInternal(year: number, round: string): Promise<RoundData[]> {
+  try {
+    const csvUrl = `/data/scores/${year}${round}.csv`;
+    const text = await fetchCachedCsvText(csvUrl);
     const lines = text.split('\n').filter(line => line.trim() && !line.startsWith('//'));
 
     if (lines.length === 0) return [];
@@ -125,6 +155,35 @@ async function loadRoundData(year: number, round: string): Promise<RoundData[]> 
 }
 
 /**
+ * 并行预加载多轮次的原始 CSV 数据（分批控制并发，填充 loadRoundData 缓存）
+ */
+async function preloadRoundData(rounds: { year: number; round: string }[], batchSize = 8): Promise<void> {
+  for (let i = 0; i < rounds.length; i += batchSize) {
+    const batch = rounds.slice(i, i + batchSize);
+    await Promise.all(batch.map(async ({ year, round }) => {
+      try {
+        await loadRoundData(year, round);
+      } catch {
+        // 忽略错误，主循环中会再次处理
+      }
+    }));
+  }
+}
+
+/**
+ * 清除轮次原始数据缓存
+ */
+export function clearRoundDataCache(): void {
+  roundDataCache.clear();
+  roundDataPromise.clear();
+  clearCsvTextCache();
+  playerCountCache.clear();
+  // 同时清除依赖于用户数据的缓存
+  unifiedUserIdCache.clear();
+  preferredDisplayNameCache.clear();
+}
+
+/**
  * 获取轮次优先级，用于正确排序
  */
 function getRoundPriority(round: string): number {
@@ -142,7 +201,34 @@ function getRoundPriority(round: string): number {
 /**
  * 获取所有可用的比赛轮次
  */
+// 轮次列表缓存（避免各分析函数重复解析 YAML）
+let allRoundsCache: { year: number; round: string }[] | null = null;
+let allRoundsPromise: Promise<{ year: number; round: string }[]> | null = null;
+
 async function getAllRounds(): Promise<{ year: number; round: string }[]> {
+  // 命中缓存直接返回
+  if (allRoundsCache) return allRoundsCache;
+  // 复用进行中的 Promise
+  if (allRoundsPromise) return allRoundsPromise;
+
+  allRoundsPromise = getAllRoundsInternal().then(rounds => {
+    allRoundsCache = rounds;
+    return rounds;
+  }).finally(() => {
+    allRoundsPromise = null;
+  });
+  return allRoundsPromise;
+}
+
+/**
+ * 清除轮次列表缓存
+ */
+export function clearAllRoundsCache(): void {
+  allRoundsCache = null;
+  allRoundsPromise = null;
+}
+
+async function getAllRoundsInternal(): Promise<{ year: number; round: string }[]> {
   const rounds: { year: number; round: string; order: number }[] = [];
 
   try {
@@ -250,7 +336,20 @@ async function getAllRounds(): Promise<{ year: number; round: string }[]> {
 /**
  * 从YAML数据中获取指定年份和轮次的选手数量
  */
+// 选手数量缓存：按 year_round 键索引
+const playerCountCache = new Map<string, number>();
+
 async function getPlayerCountFromYaml(year: number, round: string): Promise<number> {
+  const cacheKey = `${year}_${round}`;
+  const cached = playerCountCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  const count = await getPlayerCountFromYamlInternal(year, round);
+  playerCountCache.set(cacheKey, count);
+  return count;
+}
+
+async function getPlayerCountFromYamlInternal(year: number, round: string): Promise<number> {
   try {
     const yamlData = await fetchMarioWorkerYaml();
     const seasonData = yamlData?.season;
@@ -407,37 +506,34 @@ function getJudgeNameFromYaml(judgeCode: string, playerMap: PlayerJudgeMap, play
 async function getUnifiedUserId(yamlUserName: string): Promise<string> {
   if (!yamlUserName) return yamlUserName;
 
+  // 命中缓存直接返回
+  const cached = unifiedUserIdCache.get(yamlUserName);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  let result = yamlUserName;
   try {
     const users = await loadUserData();
-
-    // 在用户数据中查找匹配的用户
-    const matchedUser = users.find(user => {
-      // 检查是否匹配贴吧用户名
-      if (user.百度用户名 === yamlUserName) return true;
-      // 检查是否匹配社区用户名
-      if (user.社区用户名 === yamlUserName) return true;
-      // 检查是否匹配社区曾用名（支持多个）
-      if (user.社区曾用名.includes(yamlUserName)) return true;
-      return false;
-    });
+    // 使用索引查找（O(1)），降级到线性搜索
+    const matchedUser = findUserByName(users, yamlUserName);
 
     if (matchedUser) {
       // 检查是否有有效的社区UID
       if (matchedUser.社区UID && matchedUser.社区UID !== '') {
         // 根据社区UID生成统一标识符
-        return `community_${matchedUser.社区UID}`;
+        result = `community_${matchedUser.社区UID}`;
       } else {
         // 如果没有社区UID，则使用用户序号
-        return `user_${matchedUser.序号}`;
+        result = `user_${matchedUser.序号}`;
       }
     }
-
-    // 如果没有找到匹配的用户，返回原始名称
-    return yamlUserName;
   } catch (error) {
     console.error('获取统一用户标识符失败:', error);
-    return yamlUserName;
   }
+
+  unifiedUserIdCache.set(yamlUserName, result);
+  return result;
 }
 
 /**
@@ -446,31 +542,28 @@ async function getUnifiedUserId(yamlUserName: string): Promise<string> {
 async function getPreferredDisplayName(yamlUserName: string): Promise<string> {
   if (!yamlUserName) return yamlUserName;
 
+  // 命中缓存直接返回
+  const cached = preferredDisplayNameCache.get(yamlUserName);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  let result = yamlUserName;
   try {
     const users = await loadUserData();
-
-    // 在用户数据中查找匹配的用户
-    const matchedUser = users.find(user => {
-      // 检查是否匹配贴吧用户名
-      if (user.百度用户名 === yamlUserName) return true;
-      // 检查是否匹配社区用户名
-      if (user.社区用户名 === yamlUserName) return true;
-      // 检查是否匹配社区曾用名（支持多个）
-      if (user.社区曾用名.includes(yamlUserName)) return true;
-      return false;
-    });
+    // 使用索引查找（O(1)），降级到线性搜索
+    const matchedUser = findUserByName(users, yamlUserName);
 
     if (matchedUser) {
       // 优先返回社区用户名，如无则返回贴吧用户名
-      return matchedUser.社区用户名 || matchedUser.百度用户名 || yamlUserName;
+      result = matchedUser.社区用户名 || matchedUser.百度用户名 || yamlUserName;
     }
-
-    // 如果没有找到匹配的用户，返回原始名称
-    return yamlUserName;
   } catch (error) {
     console.error('获取用户首选显示名称失败:', error);
-    return yamlUserName;
   }
+
+  preferredDisplayNameCache.set(yamlUserName, result);
+  return result;
 }
 
 /**
@@ -487,6 +580,38 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
 
   // 获取YAML数据用于查找选手用户名
   const yamlData = await fetchMarioWorkerYaml();
+
+  // 预加载所有轮次评分数据（并行），主循环中会命中缓存
+  // 使用批次控制并发数，避免浏览器连接数耗尽
+  const PRELOAD_BATCH_SIZE = 8;
+  const roundsToPreload = rounds.filter(({ year, round }) => !(year === 2012 && round === 'I2'));
+  for (let i = 0; i < roundsToPreload.length; i += PRELOAD_BATCH_SIZE) {
+    const batch = roundsToPreload.slice(i, i + PRELOAD_BATCH_SIZE);
+    await Promise.all(batch.map(async ({ year, round }) => {
+      try {
+        await loadRoundScoreData(year.toString(), round, yamlData);
+      } catch {
+        // 忽略错误，主循环中会再次处理
+      }
+    }));
+  }
+
+  // 预加载所有年份的总分积分数据（并行），用于后续的最佳排名计算
+  const currentYearForPreload = new Date().getFullYear();
+  const yearsToPreload: number[] = [];
+  for (let y = 2013; y <= currentYearForPreload; y++) {
+    yearsToPreload.push(y);
+  }
+  for (let i = 0; i < yearsToPreload.length; i += PRELOAD_BATCH_SIZE) {
+    const batch = yearsToPreload.slice(i, i + PRELOAD_BATCH_SIZE);
+    await Promise.all(batch.map(async (year) => {
+      try {
+        await loadTotalPointsData(year.toString(), yamlData);
+      } catch {
+        // 忽略错误，后续计算中会再次处理
+      }
+    }));
+  }
 
   // 分析每个轮次的数据
   for (const { year, round } of rounds) {
@@ -774,7 +899,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
 
           // 更新最佳阶段
           if (stageLevel > record.bestStageLevel) {
-            record.bestStage = getStageName(stageLevel);
+            record.bestStage = getStageNameFromRound(round);
             record.bestStageLevel = stageLevel;
             record.bestStageYear = year;
             record.bestStageRound = round;
@@ -784,7 +909,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
           playerStageResults.push({
             userId: player.userId,
             year,
-            stage: getStageName(stageLevel),
+            stage: getStageNameFromRound(round),
             stageLevel,
             totalScore: player.score,
             rank
@@ -896,7 +1021,7 @@ export async function analyzePlayerRecords(): Promise<PlayerRecord[]> {
             }
 
             if (!userBestStageLevel[unifiedUserId] || stageLevel > userBestStageLevel[unifiedUserId].stageLevel) {
-              userBestStageLevel[unifiedUserId] = { stageLevel, stage: getStageName(stageLevel), year, round };
+              userBestStageLevel[unifiedUserId] = { stageLevel, stage: getStageNameFromRound(round), year, round };
             }
           }
         }
@@ -983,6 +1108,10 @@ export async function analyzeJudgeRecords(): Promise<JudgeRecord[]> {
   // 获取YAML数据用于查找评委用户名
   const yamlData = await fetchMarioWorkerYaml();
 
+  // 预加载所有轮次的原始 CSV 数据（并行，排除2012年）
+  const roundsToPreload = rounds.filter(({ year }) => year !== 2012);
+  await preloadRoundData(roundsToPreload);
+
   for (const { year, round } of rounds) {
     // 排除2012年的数据
     if (year === 2012) continue;
@@ -1061,6 +1190,11 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
   // 获取YAML数据用于轮次名称转换
   const yamlData = await fetchMarioWorkerYaml();
   const seasonData = yamlData?.season;
+
+  // 预加载所有轮次的原始 CSV 数据（并行，排除2012年I2特殊处理轮次）
+  const roundsToPreload = rounds.filter(({ year, round }) => !(year === 2012 && round === 'I2'));
+  await preloadRoundData(roundsToPreload);
+
   for (const { year, round } of rounds) {
     // 特殊处理：2012年I2轮次，评分没有进行，使用关卡上传数据
     if (year === 2012 && round === 'I2') {
@@ -1130,26 +1264,48 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
       continue;
     }
 
-    const data = await loadRoundData(year, round);
-    if (data.length === 0) continue;
-
     // 从YAML获取该轮的选手数量
     const totalPlayers = await getPlayerCountFromYaml(year, round);
     if (totalPlayers === 0) continue;
 
-    // 处理特殊情况：2022、2023年P2使用选手用户名而不是选手码
-    const isSpecialRound = (year === 2022 || year === 2023) && round === 'P2';
-    const playerIdentifierKey = isSpecialRound ? '选手用户名' : '选手码';
+    // 检测评分方案是否为F（纯大众评分，无评委CSV）
+    const yearData = seasonData?.[year.toString()];
+    const roundConfig = yearData ? findRoundConfig(yearData, round) : null;
+    const scoringScheme = roundConfig?.scoring_scheme || yearData?.scoring_scheme;
+    const isSchemeF = scoringScheme === 'F';
 
-    const playerIdentifiers = [...new Set(data.map(row => row[playerIdentifierKey]))];
-    let validSubmissions = 0;
+    let validSubmissions: number;
 
-    for (const playerIdentifier of playerIdentifiers) {
-      if (!playerIdentifier) continue; // 跳过空值
-      const playerData = data.filter(row => row[playerIdentifierKey] === playerIdentifier);
-      if (playerData.length > 0) {
-        validSubmissions++;
+    if (isSchemeF) {
+      // 方案F：从大众投票CSV统计上传的选手码
+      try {
+        const voteCsvUrl = `/data/votes/${year}${round}.csv`;
+        const voteText = await fetchCachedCsvText(voteCsvUrl);
+        const voteLines = voteText.split('\n').filter(line => line.trim() && !line.startsWith('//'));
+        // 验证表头：防止SPA fallback返回HTML被误解析为CSV
+        if (voteLines.length === 0 || !voteLines[0].includes('选手码')) continue;
+        // 从数据行提取选手码并去重
+        const playerCodes = new Set(
+          voteLines.slice(1).map(line => line.split(',')[0]?.trim()).filter(Boolean)
+        );
+        validSubmissions = playerCodes.size;
+      } catch (error) {
+        console.error(`加载${year}年${round}轮大众评分数据失败:`, error);
+        continue;
       }
+    } else {
+      const data = await loadRoundData(year, round);
+      if (data.length === 0) continue;
+
+      // 处理特殊情况：2022、2023年P2使用选手用户名而不是选手码
+      const isSpecialRound = (year === 2022 || year === 2023) && round === 'P2';
+      const playerIdentifierKey = isSpecialRound ? '选手用户名' : '选手码';
+
+      // 统计有效上传数（去重后的非空选手标识符数量）
+      // Set 已天然去重，filter(Boolean) 过滤空值，无需再遍历 data 做冗余检查
+      validSubmissions = new Set(
+        data.map(row => row[playerIdentifierKey]).filter(Boolean)
+      ).size;
     }
 
     const attendanceRate = totalPlayers > 0 ? new Decimal(validSubmissions).div(totalPlayers).times(100).toNumber() : 0;
@@ -1191,31 +1347,34 @@ export async function analyzeAttendanceData(): Promise<AttendanceData[]> {
 
 /**
  * 判断哪个战绩更好（返回true表示result1更好）
- * 决赛成绩优先级：冠军 > 亚军 > 季军 > 4强 > 其他决赛成绩
- * 对于决赛外的其他阶段，仍按总积分排名优先
+ * 决赛/正赛成绩优先级：冠军 > 亚军 > 季军 > X强 > 其他决赛/正赛成绩
+ * 正赛与决赛同等优先级
+ * 对于决赛/正赛外的其他阶段，仍按总积分排名优先
  */
 function isBetterResult(result1: string, rank1: number, year1: number, result2: string, rank2: number, year2: number): boolean {
-  const isResult1Final = result1.includes('决赛');
-  const isResult2Final = result2.includes('决赛');
+  const isResult1Final = result1.includes('决赛') || result1.includes('正赛');
+  const isResult2Final = result2.includes('决赛') || result2.includes('正赛');
 
-  // 如果两个都是决赛成绩，按决赛内部排名比较
+  // 如果两个都是决赛/正赛成绩，按内部排名比较
   if (isResult1Final && isResult2Final) {
     const getFinalRank = (result: string): number => {
       if (result.includes('冠军')) return 1;
       if (result.includes('亚军')) return 2;
       if (result.includes('季军')) return 3;
-      if (result.includes('4强')) return 4;
-      return 999; // 其他决赛成绩排在最后
+      // 从"X强"中提取数字
+      const strongMatch = result.match(/(\d+)强/);
+      if (strongMatch) return parseInt(strongMatch[1]);
+      return 999; // 其他决赛/正赛成绩排在最后
     };
 
     const finalRank1 = getFinalRank(result1);
     const finalRank2 = getFinalRank(result2);
 
     if (finalRank1 !== finalRank2) {
-      return finalRank1 < finalRank2; // 决赛排名越小越好
+      return finalRank1 < finalRank2; // 排名越小越好
     }
 
-    // 决赛排名相同时，比较总积分排名
+    // 排名相同时，比较总积分排名
     if (rank1 !== rank2) {
       return rank1 < rank2;
     }
@@ -1224,11 +1383,11 @@ function isBetterResult(result1: string, rank1: number, year1: number, result2: 
     return year1 > year2;
   }
 
-  // 如果只有一个是决赛成绩，决赛成绩更好
+  // 如果只有一个是决赛/正赛成绩，该成绩更好
   if (isResult1Final && !isResult2Final) return true;
   if (!isResult1Final && isResult2Final) return false;
 
-  // 如果都不是决赛成绩，按原有逻辑：总积分排名优先
+  // 如果都不是决赛/正赛成绩，按原有逻辑：总积分排名优先
   if (rank1 !== rank2) {
     return rank1 < rank2;
   }

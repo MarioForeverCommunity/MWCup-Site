@@ -91,6 +91,47 @@ export const SCORING_SCHEMES = {
   S: ['总分'] // 特殊的总分制
 };
 
+// 轮次评分数据缓存：按 year_round 键索引（同会话内静态评分数据不会变化）
+const roundScoreDataCache = new Map<string, RoundScoreData>();
+// 进行中的加载 Promise：避免并发重复请求与解析
+const roundScoreDataPromise = new Map<string, Promise<RoundScoreData>>();
+
+// CSV 原始文本缓存：按 URL 索引，同时服务于评分数据加载和评委/出勤分析
+const csvTextCache = new Map<string, string>();
+const csvTextPromise = new Map<string, Promise<string> | undefined>();
+
+/**
+ * 获取 CSV 文本（带缓存）
+ * 供 scoreCalculator 和 dataAnalyzer 共享，避免同一 CSV 被重复 fetch
+ */
+export async function fetchCachedCsvText(url: string): Promise<string> {
+  const cached = csvTextCache.get(url);
+  if (cached !== undefined) return cached;
+
+  const inFlight = csvTextPromise.get(url);
+  if (inFlight) return inFlight;
+
+  const promise = fetch(url).then(async (response) => {
+    if (!response.ok) throw response;
+    const text = await response.text();
+    csvTextCache.set(url, text);
+    return text;
+  }).finally(() => {
+    csvTextPromise.delete(url);
+  });
+
+  csvTextPromise.set(url, promise);
+  return promise;
+}
+
+/**
+ * 清除 CSV 文本缓存
+ */
+export function clearCsvTextCache(): void {
+  csvTextCache.clear();
+  csvTextPromise.clear();
+}
+
 /**
  * 判断记录是否为尚未评分
  */
@@ -766,6 +807,40 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   if (!yamlData || !yamlData.season) {
     throw new Error('YAML配置数据无效');
   }
+
+  // 命中缓存直接返回（同会话内静态评分数据不会变化）
+  const cacheKey = `${year}_${round}`;
+  const cached = roundScoreDataCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  // 复用进行中的 Promise，避免并发重复请求与解析
+  const inFlight = roundScoreDataPromise.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+  const promise = loadRoundScoreDataInternal(year, round, yamlData).then(data => {
+    roundScoreDataCache.set(cacheKey, data);
+    return data;
+  }).finally(() => {
+    roundScoreDataPromise.delete(cacheKey);
+  });
+  roundScoreDataPromise.set(cacheKey, promise);
+  return promise;
+}
+
+/**
+ * 清除轮次评分数据缓存
+ */
+export function clearRoundScoreCache(): void {
+  roundScoreDataCache.clear();
+  roundScoreDataPromise.clear();
+}
+
+/**
+ * loadRoundScoreData 的内部实现（无缓存逻辑）
+ */
+async function loadRoundScoreDataInternal(year: string, round: string, yamlData: MWCupYamlDoc): Promise<RoundScoreData> {
   // 检查年份和轮次是否存在
   const seasonData = yamlData.season[year];
   if (!seasonData) {
@@ -799,18 +874,20 @@ export async function loadRoundScoreData(year: string, round: string, yamlData: 
   const csvUrl = `/data/scores/${year}${round}.csv`;
 
   try {
-    const response = await fetch(csvUrl);
-    if (!response.ok) {
-      if (response.status === 404) {
+    let csvText;
+    try {
+      csvText = await fetchCachedCsvText(csvUrl);
+    } catch (err) {
+      const response = (err as Response | undefined) ?? (err as { response?: Response })?.response;
+      const status = response?.status;
+      if (status === 404) {
         throw new Error(`暂无${year}年${getRoundChineseName(round, { ...roundData, year: String(year) })}评分数据`);
-      } else if (response.status >= 500) {
-        throw new Error(`服务器错误 (${response.status}): 无法获取评分数据`);
+      } else if (status && status >= 500) {
+        throw new Error(`服务器错误 (${status}): 无法获取评分数据`);
       } else {
-        throw new Error(`网络错误 (${response.status}): 无法加载评分数据`);
+        throw new Error(`网络错误 (${status ?? '未知'}): 无法加载评分数据`);
       }
     }
-
-    const csvText = await response.text();
     if (!csvText.trim()) {
       throw new Error(`评分文件 ${year}${round}.csv 为空`);
     }

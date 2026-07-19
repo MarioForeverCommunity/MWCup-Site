@@ -104,11 +104,11 @@
                         <div class="year-stats">
                           <div class="stat-item">
                             <span class="stat-label">轮数</span>
-                            <span class="stat-value">{{ data.rounds }}</span>
+                            <span class="detailed-value">{{ data.rounds }}</span>
                           </div>
                           <div class="stat-item">
                             <span class="stat-label">关卡</span>
-                            <span class="stat-value">{{ data.levels }}</span>
+                            <span class="detailed-value">{{ data.levels }}</span>
                           </div>
                         </div>
                       </div>
@@ -364,7 +364,7 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
-.stat-value {
+.detailed-value {
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-primary);

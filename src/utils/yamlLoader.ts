@@ -1,6 +1,10 @@
 import { load, YAML11_SCHEMA }from 'js-yaml';
 import type { MWCupYamlDoc, SeasonYearData } from '../types/mwcup';
 
+// YAML 文档缓存（同会话内 YAML 数据不会变化）
+let yamlDocCache: MWCupYamlDoc | null = null;
+let yamlDocPromise: Promise<MWCupYamlDoc> | null = null;
+
 /**
  * 归一化 YAML 中的 tieba_tid / mf_tid 字段
  * YAML 解析时帖子 ID 是数字，统一转为字符串以便下游使用
@@ -45,11 +49,32 @@ export async function loadYamlFromUrl(url: string): Promise<MWCupYamlDoc> {
  * @returns Mario Worker 杯YAML数据
  */
 export async function fetchMarioWorkerYaml(): Promise<MWCupYamlDoc> {
-  return await loadYamlFromUrl('/data/mwcup.yaml');
+  // 命中缓存直接返回
+  if (yamlDocCache) {
+    return yamlDocCache;
+  }
+  // 正在加载时复用同一个 Promise，避免并发重复请求
+  if (!yamlDocPromise) {
+    yamlDocPromise = loadYamlFromUrl('/data/mwcup.yaml').then(doc => {
+      yamlDocCache = doc;
+      return doc;
+    }).finally(() => {
+      yamlDocPromise = null;
+    });
+  }
+  return yamlDocPromise;
 }
 
 // 保持向后兼容性的别名
 export const fetchMWCupYaml = fetchMarioWorkerYaml;
+
+/**
+ * 清除 YAML 文档缓存
+ */
+export function clearYamlCache(): void {
+  yamlDocCache = null;
+  yamlDocPromise = null;
+}
 
 /**
  * 从YAML文档中提取季节数据
