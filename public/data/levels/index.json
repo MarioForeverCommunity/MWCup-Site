@@ -17092,6 +17092,22 @@
     "multiLevelFolder": null
   },
   {
+    "name": "H-地宫仪式.smwl",
+    "path": "2026年第十五届/正赛/第二题/H-地宫仪式.smwl",
+    "mtime": "2026-07-23T05:02:07.000Z",
+    "size": 18526,
+    "playerCode": "H",
+    "year": 2026,
+    "roundType": "正赛第二题",
+    "playerName": "有名氏",
+    "roundKey": "F2",
+    "groupCode": null,
+    "subject": null,
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
+  },
+  {
     "name": "1-catch fish.smwl",
     "path": "2026年第十五届/热身赛/1-catch fish.smwl",
     "mtime": "2026-02-09T09:46:29.000Z",
@@ -17254,8 +17270,8 @@
   {
     "name": "6-资格赛-蘑菇聚会.smwl",
     "path": "2026年第十五届/资格赛/6-资格赛-蘑菇聚会.smwl",
-    "mtime": "2026-07-12T08:49:11.000Z",
-    "size": 6582,
+    "mtime": "2026-07-12T08:49:05.000Z",
+    "size": 6775,
     "playerCode": "6",
     "year": 2026,
     "roundType": "资格赛",
