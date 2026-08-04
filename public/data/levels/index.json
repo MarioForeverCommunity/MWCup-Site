@@ -17188,6 +17188,22 @@
     "multiLevelFolder": null
   },
   {
+    "name": "H-千灯映夜祭（优化后）.smwl",
+    "path": "2026年第十五届/正赛/第三题/H-千灯映夜祭（优化后）.smwl",
+    "mtime": "2026-08-04T08:46:52.000Z",
+    "size": 46253,
+    "playerCode": "H",
+    "year": 2026,
+    "roundType": "正赛第三题",
+    "playerName": "有名氏",
+    "roundKey": "F3",
+    "groupCode": null,
+    "subject": null,
+    "hasPlayerInfo": true,
+    "isMultiLevel": false,
+    "multiLevelFolder": null
+  },
+  {
     "name": "A-Cave Trial.smwl",
     "path": "2026年第十五届/正赛/第二题/A-Cave Trial.smwl",
     "mtime": "2026-07-29T13:55:54.000Z",
