@@ -3001,6 +3001,7 @@ season:
     scoring_scheme: F
     host: Fahlee
     chief_judge: false
+    music_pack: mwcup_music_pack_2026.zip
     rounds:
       P1:
         is_warmup: true

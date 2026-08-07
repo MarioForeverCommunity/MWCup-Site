@@ -30,6 +30,12 @@
           >
         </div>
       </div>
+      <div class="form-group music-pack-download" v-if="currentMusicPackName">
+        <label class="form-label">音乐包：</label>
+        <button @click="downloadMusicPack" class="btn-primary" title="下载本届音乐包">
+          下载本届音乐包
+        </button>
+      </div>
     </div>
   </div>
   <div v-if="loading" class="loading-state animate-pulse">
@@ -89,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import {
   fetchLevelFilesFromLocal,
   matchPlayerName,
@@ -99,11 +105,13 @@ import { loadUserData } from '../utils/userDataProcessor'
 import { fetchMarioWorkerYaml } from '../utils/yamlLoader'
 import { getRoundChineseName } from '../utils/roundNames'
 import { getGroupDisplayName } from '../utils/levelMatcher'
-import { getEditionNumber } from '../utils/editionHelper'
+import { getEditionNumber, getEditionDisplayText } from '../utils/editionHelper'
 import type { MWCupYamlDoc, RoundConfig } from '../types/mwcup'
 
 // 关卡下载基础URL
 const LEVELS_BASE_URL = 'https://levels.smwp.marioforever.net/Mario Worker 杯/'
+// 音乐包下载基础URL（file.marioforever.net 网盘）
+const MUSIC_PACK_BASE_URL = 'https://file.marioforever.net/Mario Worker/Mario Worker 杯/'
 
 // 选择器模式的数据
 const selectedYear = ref('')
@@ -123,6 +131,12 @@ const searched = ref(false)
 
 // 缓存的 YAML 数据
 let yamlData: MWCupYamlDoc | null = null
+
+// 当前选中届次的音乐包文件名（无则为空，不显示下载按钮）
+const currentMusicPackName = computed(() => {
+  if (!selectedYear.value) return ''
+  return yamlData?.season?.[selectedYear.value]?.music_pack || ''
+})
 
 onMounted(() => {
   loadYamlData()
@@ -274,6 +288,20 @@ function downloadLevel(file: LevelFile) {
   const a = document.createElement('a')
   a.href = url
   a.download = file.name
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
+// 下载当前届次音乐包
+function downloadMusicPack() {
+  if (!currentMusicPackName.value) return
+  // 届次中文名（如“2026年第十五届”），与 rankingCalculator 的 editionMap 对应值一致
+  const editionName = getEditionDisplayText(selectedYear.value)
+  const url = MUSIC_PACK_BASE_URL + encodeURIComponent(editionName) + '/' + encodeURIComponent(currentMusicPackName.value)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = currentMusicPackName.value
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
@@ -567,6 +595,16 @@ function searchBySelectorAndKeyword() {
   flex-wrap: wrap;
   justify-content: center;
   margin-bottom: var(--spacing-lg);
+}
+
+/* 音乐包下载按钮，与 RoundSelector 的 Wiki 链接样式保持一致 */
+.music-pack-download .btn-primary {
+  font-size: 14px;
+  white-space: nowrap;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-input-group {

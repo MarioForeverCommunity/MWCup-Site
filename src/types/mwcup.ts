@@ -85,6 +85,8 @@ export interface RoundConfig {
 export interface SeasonYearData {
   rounds: Record<string, RoundConfig>
   scoring_scheme?: string
+  /** 音乐包文件名（用于关卡查询中下载音乐包） */
+  music_pack?: string
   [key: string]: unknown
 }
 
