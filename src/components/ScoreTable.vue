@@ -618,7 +618,7 @@ async function exportOverallToExcel() {
   // 表头
   const header: (string)[] = ['所在小组', '选手码', '选手']
   for (let i = 0; i < overall.roundCodes.length; i++) {
-    const label = `第${toChineseNumber(i + 1)}${props.year === '2012' ? '轮' : (overall.roundCodes[i].startsWith('I') ? '题' : '轮')}得分`
+    const label = `第${toChineseNumber(i + 1)}${props.year === '2012' ? '轮' : isTopicMode(overall.roundCodes[i]) ? '题' : '轮'}得分`
     header.push(label)
   }
   if (overall.isShowValidLevel && overall.validLevelColumns) {
@@ -954,7 +954,8 @@ async function loadAllRounds(year: string, roundGroupKey: string, yaml: MWCupYam
 function isTopicMode(roundCode: string): boolean {
   const year = props.year
   if (year === '2012') return false
-  return roundCode.startsWith('I') || (year === '2019' && roundCode.startsWith('G'))
+  // F1/F2/F3 等为 2026 年决赛的多题模式（排除单独的 'F' 决赛标识）
+  return roundCode.startsWith('I') || (year === '2019' && roundCode.startsWith('G')) || (roundCode.startsWith('F') && roundCode !== 'F')
 }
 
 // getPlayerGroup 函数已移除，相关功能已迁移到其他位置
