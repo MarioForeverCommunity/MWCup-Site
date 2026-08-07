@@ -3057,14 +3057,16 @@ season:
       F1, F2, F3:
         smwp_version: 1.7.12
         players:
-          A: 超级玛丽迷01
-          B: LLX奶油马里奥
-          C: 芝士未名
-          D: 数字1528君
-          E: 一只果果果果果
-          F: zqh——123
-          G: AngryStar6K
-          H: 有名氏
+          A:
+            A: 超级玛丽迷01
+            D: 数字1528君
+            F: zqh——123
+            H: 有名氏
+          B:
+            B: LLX奶油马里奥
+            C: 芝士未名
+            E: 一只果果果果果
+            G: AngryStar6K
         schedule:
           pre_match_checkin:
             start: 2026-07-03T20:00
@@ -3082,3 +3084,4 @@ season:
           voting:
             start: 2026-08-07T22:00
             end: 2026-08-15T22:00
+            mf_tid: 3918
