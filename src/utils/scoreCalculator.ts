@@ -969,41 +969,78 @@ export async function loadPublicVotingData(year: string, round: string, yamlData
 }
 
 /**
- * 加载用户数据映射
+ * 用户索引：按序号(id)、社区UID、用户名(社区用户名/百度用户名/曾用名/别名)查找显示名
  */
-async function loadUserMappings(): Promise<{[key: string]: string}> {
+interface UserIndex {
+  byId: Map<string, string>;   // 序号 -> 显示名（兼容旧数据文件的id写法）
+  byUid: Map<string, string>;  // 社区UID -> 显示名
+  byName: Map<string, string>; // 用户名(小写) -> 显示名（社区用户名/百度用户名/曾用名/别名）
+}
+
+/**
+ * 加载用户数据索引
+ */
+async function loadUserIndex(): Promise<UserIndex> {
+  const empty = { byId: new Map<string, string>(), byUid: new Map<string, string>(), byName: new Map<string, string>() };
   try {
     const response = await fetch('/data/users.csv');
-    if (!response.ok) return {};
+    if (!response.ok) return empty;
 
     const csvText = await response.text();
     const lines = csvText.trim().split('\n');
-    if (lines.length < 2) return {};
+    if (lines.length < 2) return empty;
 
     const headers = lines[0].split(',').map(h => h.trim());
     const idIndex = headers.findIndex(h => h === '序号');
+    const baiduIndex = headers.findIndex(h => h === '百度用户名');
     const usernameIndex = headers.findIndex(h => h === '社区用户名');
+    const uidIndex = headers.findIndex(h => h === '社区UID');
+    const formerIndex = headers.findIndex(h => h === '社区曾用名');
+    const aliasIndex = headers.findIndex(h => h === '别名');
 
-    if (idIndex === -1 || usernameIndex === -1) return {};
+    if (idIndex === -1 || usernameIndex === -1) return empty;
 
-    const userMappings: {[key: string]: string} = {};
+    const index: UserIndex = { byId: new Map(), byUid: new Map(), byName: new Map() };
 
     for (let i = 1; i < lines.length; i++) {
-      const cells = lines[i].split(',').map(cell => cell.trim());
-      if (cells.length <= Math.max(idIndex, usernameIndex)) continue;
+      // 使用parseCSVLine解析，处理引号包围的字段（如别名"wym,翼铭"）
+      const cells = parseCSVLine(lines[i]).map(cell => cell.trim());
+      const maxIndex = Math.max(idIndex, baiduIndex, usernameIndex, uidIndex, formerIndex, aliasIndex);
+      if (cells.length <= maxIndex) continue;
 
       const id = cells[idIndex];
-      const username = cells[usernameIndex] || `用户${id}`; // 如果没有社区用户名，使用默认格式
+      if (!id) continue;
 
-      if (id) {
-        userMappings[id] = username;
+      const communityName = cells[usernameIndex];
+      const baiduName = cells[baiduIndex];
+
+      // 序号映射保持旧行为：优先社区用户名，否则使用默认格式"用户{序号}"
+      index.byId.set(id, communityName || `用户${id}`);
+
+      // 用户名/UID映射的显示名：社区用户名 > 百度用户名 > 用户{序号}
+      const displayName = communityName || baiduName || `用户${id}`;
+
+      // 社区UID映射（数字，查找优先级低于序号）
+      const uid = cells[uidIndex];
+      if (uid) {
+        index.byUid.set(uid, displayName);
       }
+
+      // 用户名反向映射（大小写不敏感）：社区用户名/百度用户名/曾用名/别名
+      const addName = (name: string) => {
+        if (!name) return;
+        index.byName.set(name.toLowerCase(), displayName);
+      };
+      addName(communityName);
+      addName(baiduName);
+      if (formerIndex !== -1) cells[formerIndex].split(',').forEach(addName);
+      if (aliasIndex !== -1) cells[aliasIndex].split(',').forEach(addName);
     }
 
-    return userMappings;
+    return index;
   } catch (error) {
     console.error('加载用户数据失败:', error);
-    return {};
+    return empty;
   }
 }
 
@@ -1014,8 +1051,8 @@ async function parsePublicVotingCsv(csvText: string, yamlData: MWCupYamlDoc, yea
   const lines = csvText.trim().split('\n');
   if (lines.length === 0) return [];
 
-  // 加载用户映射
-  const userMappings = await loadUserMappings();
+  // 加载用户索引（序号/社区UID/用户名 -> 显示名）
+  const userIndex = await loadUserIndex();
 
   const headers = lines[0].split(',').map(h => h.trim());
   const playerCodeIndex = headers.findIndex(h => h === '选手码');
@@ -1054,8 +1091,13 @@ async function parsePublicVotingCsv(csvText: string, yamlData: MWCupYamlDoc, yea
     if (cells.length < headers.length) continue;
 
     const playerCode = cells[playerCodeIndex]?.trim();
-    const voterId = cells[voterIndex]?.trim();
-    const voterName = userMappings[voterId] || `用户${voterId}`; // 使用映射的用户名，如果没有则使用默认格式
+    const rawVoter = cells[voterIndex]?.trim();
+    // 大众评分员兼容两种写法：数字序号（旧数据文件）或社区用户名（新数据文件）
+    // 解析优先级：序号 > 社区UID > 用户名（社区用户名/百度用户名/曾用名/别名），未收录则直接显示原文
+    const voterName = userIndex.byId.get(rawVoter)
+      ?? userIndex.byUid.get(rawVoter)
+      ?? userIndex.byName.get(rawVoter.toLowerCase())
+      ?? rawVoter;
     const appreciation = parseFloat(cells[appreciationIndex]) || 0;
     const innovation = parseFloat(cells[innovationIndex]) || 0;
     const design = parseFloat(cells[designIndex]) || 0;
@@ -1063,7 +1105,8 @@ async function parsePublicVotingCsv(csvText: string, yamlData: MWCupYamlDoc, yea
     const bonus = parseFloat(cells[bonusIndex]) || 0;
     const penalty = penaltyIndex !== -1 ? (parseFloat(cells[penaltyIndex]) || 0) : 0;
 
-    if (!playerCode || !voterName) continue;
+    // 跳过选手码或大众评分员为空的记录
+    if (!playerCode || !rawVoter) continue;
 
     // 计算总分：欣赏性×1.5 + 创新性×1.5 + 设计性×3 + 游戏性×4
     let totalScore = new Decimal(appreciation * 1.5)
