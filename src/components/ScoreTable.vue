@@ -794,6 +794,16 @@ async function exportPublicToExcel() {
   const hasPenalty = hasPublicPenalty.value
   const hasBonus = hasPublicBonus.value
 
+  // 附加分换算（与页面 getDisplayedBonus 一致）：满分 8→×1.6、满分 10→×2，其他满分不换算
+  let bonusRatio: number | null = null
+  if (maxScoreData.value) {
+    const roundData = maxScoreData.value.maxScore?.[props.year]?.[props.round]
+    const bonusFullScore = roundData?.bonus_score || 5
+    if (bonusFullScore === 8) bonusRatio = 1.6
+    else if (bonusFullScore === 10) bonusRatio = 2
+  }
+  const showConvertedBonus = hasBonus && bonusRatio !== null
+
   const header = [
     '选手码', '选手',
     '大众评分员',
@@ -803,6 +813,7 @@ async function exportPublicToExcel() {
     '游戏性', '游戏性(换算×4)'
   ] as string[]
   if (hasBonus) header.push('附加分')
+  if (showConvertedBonus) header.push(`附加分(换算×${bonusRatio})`)
   if (hasPenalty) header.push('扣分')
   header.push('换算后总分', '大众最终得分')
 
@@ -838,6 +849,7 @@ async function exportPublicToExcel() {
         g, +(g * 4).toFixed(3)
       ]
       if (hasBonus) row.push(bonus)
+      if (showConvertedBonus) row.push(Number(getDisplayedBonus(bonus)))
       if (hasPenalty) row.push(penalty)
       row.push(
         // 换算后总分
@@ -1796,10 +1808,15 @@ const filteredPublicScoresWithSearch = computed(() => {
     const maxScore = Math.max(...scores);
     const voteCount = player.votes.length;
 
+    // 与 calculateFinalPublicScore 保持一致：只处理一个最高分和一个最低分
+    // 存在并列最高/最低分时，仅标记第一个（indexOf），避免所有并列投票都被折半/移除
+    const minIndex = scores.indexOf(minScore);
+    const maxIndex = scores.indexOf(maxScore);
+
     // 为每个投票添加标记
-    const votesWithFlags = player.votes.map(vote => {
-      const isMin = vote.totalScore === minScore;
-      const isMax = vote.totalScore === maxScore;
+    const votesWithFlags = player.votes.map((vote, index) => {
+      const isMin = index === minIndex;
+      const isMax = index === maxIndex;
 
       return {
         ...vote,
