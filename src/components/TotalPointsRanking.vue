@@ -133,7 +133,7 @@ export default defineComponent({
   setup(props) {
     const route = useRoute();
     const router = useRouter();
-    const selectedYear = ref('2025');
+    const selectedYear = ref('2026');
     const data = ref<TotalPointsData>({
       year: '',
       players: [],
@@ -147,8 +147,6 @@ export default defineComponent({
       const currentYear = new Date().getFullYear();
       const years: string[] = [];
       for (let year = 2013; year <= currentYear; year++) {
-        // 2026年数据未完成，暂不显示
-        if (year === 2026) continue;
         years.push(year.toString());
       }
       return years.reverse(); // 最新年份在前

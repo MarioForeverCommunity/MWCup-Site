@@ -65,7 +65,7 @@ const routes = [
       },
       {
         path: 'totalpoints',
-        redirect: { name: 'StatsTotalPoints', params: { year: '2025' } }
+        redirect: { name: 'StatsTotalPoints', params: { year: '2026' } }
       },
       {
         path: 'totalpoints/:year',

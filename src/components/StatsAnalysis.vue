@@ -86,7 +86,7 @@ const setActiveTab = (tabKey: string) => {
   if (tabKey === 'ranking') {
     router.push({ name: 'StatsRanking', params: { type: 'single' } })
   } else if (tabKey === 'totalpoints') {
-    router.push({ name: 'StatsTotalPoints', params: { year: '2025' } })
+    router.push({ name: 'StatsTotalPoints', params: { year: '2026' } })
   } else {
     // 其他标签页保持原有的路由结构
     router.push({ name: 'StatsSub', params: { stat: tabKey } })

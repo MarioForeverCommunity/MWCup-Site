@@ -1205,7 +1205,7 @@ async function calculateOverallRoundData() {
           round: `round${index + 1}`, // 轮次标识
           valid: Boolean(selectedTopic), // 是否有选中的题目
           label: selectedTopic ? (
-            hasScore ? `第${toChineseNumber(parseInt(selectedTopic.replace('I', '')))}题` : '未上传'
+            hasScore ? `第${toChineseNumber(parseInt(selectedTopic.replace(/[^0-9]/g, '')))}题` : '未上传'
           ) : '未上传',
           exclamation: roundSelection?.isTimeout || false
         };

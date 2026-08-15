@@ -8,7 +8,7 @@ import { loadRoundScoreData, type PlayerScore } from './scoreCalculator';
 import { Decimal } from 'decimal.js';
 import { shouldShowScoreData } from './scheduleHelper';
 import type { MWCupYamlDoc, SeasonYearData, RoundConfig, GroupedPlayerMap, FlatPlayerMap } from '../types/mwcup';
-import { findRoundConfig, isGroupedPlayerMap, isFlatPlayerMap } from '../types/mwcup';
+import { countPlayers, findRoundConfig, isGroupedPlayerMap, isFlatPlayerMap } from '../types/mwcup';
 
 // 设置Decimal的精度和舍入模式
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
@@ -247,6 +247,16 @@ async function loadTotalPointsDataInternal(year: string, yamlData: MWCupYamlDoc)
         continue;
       }
 
+      // 纯大众评分方案（F）：数据在 votes 目录而非 scores 目录
+      const roundScoringScheme = roundData?.scoring_scheme || seasonData.scoring_scheme;
+      if (roundScoringScheme === 'F') {
+        const voteResponse = await fetch(`/data/votes/${year}${round}.csv`);
+        if (voteResponse.ok) {
+          validRounds.push(round);
+        }
+        continue;
+      }
+
       // 检查CSV文件是否存在
       const response = await fetch(`/data/scores/${year}${round}.csv`);
       if (response.ok) {
@@ -290,7 +300,10 @@ async function loadTotalPointsDataInternal(year: string, yamlData: MWCupYamlDoc)
         // 存储轮次数据
         player.roundScores[round] = playerScore;
 
-        if (!player.participatedRounds.includes(round)) {
+        // 未上传关卡的选手不计入"参加比赛轮次"
+        // （方案F大众评分对每位选手都生成记录，需通过isNoSubmission排除，如2026年正赛）
+        const isNoSubmission = playerScore.records?.[0]?.isNoSubmission;
+        if (!isNoSubmission && !player.participatedRounds.includes(round)) {
           player.participatedRounds.push(round);
         }
         if (!player.playerCodes.includes(playerScore.playerCode)) {
@@ -472,6 +485,28 @@ function isPlayerInYamlRound(seasonData: SeasonYearData, roundKey: string, playe
 }
 
 /**
+ * 格式化决赛/正赛名次显示
+ * 前4名显示具体名次（冠军/亚军/季军/4强），第5名及之后显示"（总选手数）强"
+ */
+function formatFinalRank(rank: number, stageLabel: string, totalPlayers: number): string {
+  if (rank === 1) return `${stageLabel}/冠军`;
+  if (rank === 2) return `${stageLabel}/亚军`;
+  if (rank === 3) return `${stageLabel}/季军`;
+  if (rank === 4) return `${stageLabel}/4强`;
+  return totalPlayers > 0 ? `${stageLabel}/${totalPlayers}强` : `${stageLabel}/${rank}强`;
+}
+
+/**
+ * 获取某年份正赛/决赛阶段的总选手数（用于X强显示）
+ */
+function getFinalStagePlayerCount(yamlData: MWCupYamlDoc, year: string, roundKey: string): number {
+  const seasonData = yamlData.season?.[year];
+  if (!seasonData?.rounds) return 0;
+  const roundConfig = findRoundConfig(seasonData, roundKey);
+  return roundConfig ? countPlayers(roundConfig) : 0;
+}
+
+/**
  * 根据参与轮次计算最好成绩
  * 优先使用YAML中的晋级信息，如果没有则使用实际参与轮次
  */
@@ -483,19 +518,10 @@ function calculateBestResult(participatedRounds: string[], roundScores?: Record<
       // 如果是决赛，尝试获取具体排名
       if (realBestStage === '决赛' && roundScores && roundScores['F']) {
         const finalRoundData = roundScores['F'];
-        if (finalRoundData.rank !== undefined) {
-          const rank = finalRoundData.rank;
-          if (rank === 1) return '决赛/冠军';
-          if (rank === 2) return '决赛/亚军';
-          if (rank === 3) return '决赛/季军';
-          if (rank === 4) return '决赛/4强';
-        }
-        if (finalRoundData.ranking !== undefined) {
-          const rank = finalRoundData.ranking;
-          if (rank === 1) return '决赛/冠军';
-          if (rank === 2) return '决赛/亚军';
-          if (rank === 3) return '决赛/季军';
-          if (rank === 4) return '决赛/4强';
+        const rank = finalRoundData.rank ?? finalRoundData.ranking;
+        if (rank !== undefined) {
+          const totalPlayers = getFinalStagePlayerCount(yamlData, year, 'F');
+          return formatFinalRank(rank, '决赛', totalPlayers);
         }
       }
       // 如果是正赛（F1/F2/F3），尝试获取具体排名
@@ -505,10 +531,8 @@ function calculateBestResult(participatedRounds: string[], roundScores?: Record<
             const frData = roundScores[fr];
             const rank = frData.rank ?? frData.ranking;
             if (rank !== undefined) {
-              if (rank === 1) return '正赛/冠军';
-              if (rank === 2) return '正赛/亚军';
-              if (rank === 3) return '正赛/季军';
-              return `正赛/${rank}强`;
+              const totalPlayers = getFinalStagePlayerCount(yamlData, year, 'F1');
+              return formatFinalRank(rank, '正赛', totalPlayers);
             }
           }
         }
@@ -533,25 +557,10 @@ function calculateBestResult(participatedRounds: string[], roundScores?: Record<
     if (fRound && roundScores && roundScores[fRound]) {
       // 尝试从roundScores中获取排名信息
       const finalRoundData = roundScores[fRound];
-
-      // 如果有具体的排名数据
-      if (finalRoundData.rank !== undefined) {
-        const rank = finalRoundData.rank;
-        if (rank === 1) return `${stageLabel}/冠军`;
-        if (rank === 2) return `${stageLabel}/亚军`;
-        if (rank === 3) return `${stageLabel}/季军`;
-        if (rank === 4) return `${stageLabel}/4强`;
-        return `${stageLabel}/${rank}强`;
-      }
-
-      // 如果有ranking字段
-      if (finalRoundData.ranking !== undefined) {
-        const rank = finalRoundData.ranking;
-        if (rank === 1) return `${stageLabel}/冠军`;
-        if (rank === 2) return `${stageLabel}/亚军`;
-        if (rank === 3) return `${stageLabel}/季军`;
-        if (rank === 4) return `${stageLabel}/4强`;
-        return `${stageLabel}/${rank}强`;
+      const rank = finalRoundData.rank ?? finalRoundData.ranking;
+      if (rank !== undefined) {
+        const totalPlayers = year && yamlData ? getFinalStagePlayerCount(yamlData, year, fRound) : 0;
+        return formatFinalRank(rank, stageLabel, totalPlayers);
       }
     }
     return stageLabel;
@@ -1087,6 +1096,22 @@ async function calculateFinalRankings(year: string, yamlData: MWCupYamlDoc, play
     if (validRounds.includes(fr)) finalRounds.push(fr);
   }
   if (finalRounds.length === 0) return;
+
+  // F正赛轮次年份（如2026）：官方排名基于有效关卡总分（3题选2题），
+  // 而非单个轮次的平均分，避免最佳成绩显示错误
+  if (isYearOnlyFRounds(yamlData, year)) {
+    const finalPlayers = Object.values(playerDataByName)
+      .filter(p => p.roundScores['F1'] || p.roundScores['F2'] || p.roundScores['F3']);
+    finalPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
+    finalPlayers.forEach((p, index) => {
+      for (const fr of ['F1', 'F2', 'F3']) {
+        if (p.roundScores[fr]) {
+          p.roundScores[fr].rank = index + 1;
+        }
+      }
+    });
+    return;
+  }
 
   // 为每个决赛/正赛轮次计算排名
   for (const roundKey of finalRounds) {

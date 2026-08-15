@@ -78,8 +78,8 @@ import { fetchMarioWorkerYaml, extractSeasonData } from '../utils/yamlLoader'
 import { getEditionNumber } from '../utils/editionHelper'
 import { getUploadUrl } from '../utils/urlMap'
 
-import { loadRoundScoreData } from '../utils/scoreCalculator'
-import { loadTotalPointsData } from '../utils/totalPointsCalculator'
+import { loadRoundScoreData, type RoundScoreData, type PlayerScore } from '../utils/scoreCalculator'
+import { loadTotalPointsData, isYearOnlyFRounds, calculateValidLevelTotalScore, type PlayerRoundData } from '../utils/totalPointsCalculator'
 import { Decimal } from 'decimal.js'
 import type { SeasonYearData, RoundSchedule, PlayerData } from '../types/mwcup'
 import { isGroupedPlayerMap, isFlatPlayerMap } from '../types/mwcup'
@@ -339,19 +339,81 @@ async function loadChampions() {
           mainEnd: dates.mainEnd
         }
         try {
-          // 尝试加载并使用决赛评分数据
-          let scoreData = await loadRoundScoreData(year, 'F', yamlDoc)
-          // 如果没有独立F轮次，尝试加载F1/F2/F3（取第一个有数据的）
-          if (!scoreData?.playerScores?.length) {
-            for (const fr of ['F1', 'F2', 'F3']) {
-              const frData = await loadRoundScoreData(year, fr, yamlDoc)
-              if (frData?.playerScores?.length) {
-                scoreData = frData
-                break
+          // F正赛年份（如2026）：决赛成绩遵守正赛总分规则（3题选2题，按截止时间选择）
+          let scoreData: RoundScoreData | null = null
+          if (isYearOnlyFRounds(yamlDoc, year)) {
+            // 并行加载三轮正赛数据（忽略单轮加载失败）
+            const frDataList = await Promise.all(
+              ['F1', 'F2', 'F3'].map(fr =>
+                loadRoundScoreData(year, fr, yamlDoc).catch(() => null)
+              )
+            )
+            const validFrData = frDataList.filter((d): d is RoundScoreData => !!d && d.playerScores.length > 0)
+            if (validFrData.length > 0) {
+              // 正赛总分遵守正赛规则（calculateValidLevelTotalScore：3题选2题，按截止时间选择）
+              const playerMap = new Map<string, PlayerScore>()
+              for (const d of validFrData) {
+                for (const ps of d.playerScores) {
+                  if (!playerMap.has(ps.playerCode)) {
+                    playerMap.set(ps.playerCode, ps)
+                  }
+                }
+              }
+              const finalScores = new Map<string, Decimal>()
+              for (const ps of playerMap.values()) {
+                const playerData: PlayerRoundData = {
+                  playerCodes: [ps.playerCode],
+                  totalPoints: 0,
+                  participatedRounds: ['F1', 'F2', 'F3'],
+                  roundScores: {}
+                }
+                for (const d of validFrData) {
+                  const roundPs = d.playerScores.find(x => x.playerCode === ps.playerCode)
+                  if (roundPs) {
+                    playerData.roundScores[d.round] = roundPs
+                  }
+                }
+                finalScores.set(ps.playerCode, await calculateValidLevelTotalScore(year, playerData, yamlDoc))
+              }
+              // 构造合并后的赛果数据，playerScores 按正赛总分排序
+              scoreData = {
+                year,
+                round: 'F',
+                scoringScheme: 'F',
+                columns: [],
+                playerScores: Array.from(finalScores.entries()).map(([playerCode, total]) => ({
+                  playerCode,
+                  playerName: playerMap.get(playerCode)?.playerName ?? playerCode,
+                  records: [],
+                  totalSum: total,
+                  averageScore: total,
+                  validRecordsCount: 0
+                })),
+                allRecords: []
+              }
+            }
+          } else {
+            // 原有逻辑：尝试独立F轮次，其次F1/F2/F3（取第一个有数据的）
+            try {
+              scoreData = await loadRoundScoreData(year, 'F', yamlDoc)
+            } catch {
+              scoreData = null
+            }
+            if (!scoreData?.playerScores?.length) {
+              for (const fr of ['F1', 'F2', 'F3']) {
+                try {
+                  const frData = await loadRoundScoreData(year, fr, yamlDoc)
+                  if (frData?.playerScores?.length) {
+                    scoreData = frData
+                    break
+                  }
+                } catch {
+                  // 该轮次无数据，继续尝试下一轮
+                }
               }
             }
           }
-          if (scoreData?.playerScores?.length > 0) {
+          if (scoreData && scoreData.playerScores.length > 0) {
             // 按平均分排序，兼容Decimal
             const sortedPlayers = [...scoreData.playerScores].sort(
               (a, b) => {
