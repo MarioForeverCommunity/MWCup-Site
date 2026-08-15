@@ -782,8 +782,8 @@ async function exportDetailedToExcel() {
 }
 
 async function exportPublicToExcel() {
-  // 针对大众评分，手动构造Sheet，支持合并与选手码
-  if (!scoreData.value || scoreData.value.scoringScheme !== 'E' || !scoreData.value.publicScores) {
+  // 针对大众评分，手动构造Sheet，支持合并与选手码（E：评委+大众混合，F：纯大众评分）
+  if (!scoreData.value || !['E', 'F'].includes(scoreData.value.scoringScheme) || !scoreData.value.publicScores) {
     alert('暂无大众评分可导出')
     return
   }
