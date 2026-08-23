@@ -167,9 +167,9 @@
 .app-title, .page-header h2 {
   background: linear-gradient(135deg, var(--primary-color), #ff8a65, #ffb74d);
   background-size: 200% 200%;
-  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
   animation: gradientMove 3s ease-in-out infinite;
 }
 
