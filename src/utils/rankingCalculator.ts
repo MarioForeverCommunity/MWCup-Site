@@ -370,28 +370,8 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
           let originalScoreRate = 0;
           let calculatedOriginalScore = 0;
 
-          if (scoringScheme === 'E') {
-            // 评分方案E：评委评分去除附加分*75% + 大众评分去除附加分*25%
-
-            // 计算评委原始分（去除加分项和扣分项）
-            let judgeOriginalScoreSum = 0;
-            let judgeValidCount = 0;
-            for (const record of playerScore.records) {
-              if (!record.isRevoked) {
-                let judgeBaseScore = 0;
-                for (const [key, value] of Object.entries(record.scores)) {
-                  if (key !== '加分项' && key !== '扣分项') {
-                    const score = typeof value === 'number' ? value : Number(value);
-                    judgeBaseScore += score;
-                  }
-                }
-                judgeOriginalScoreSum += judgeBaseScore;
-                judgeValidCount++;
-              }
-            }
-            const judgeOriginalScore = judgeValidCount > 0 ? new Decimal(judgeOriginalScoreSum).div(judgeValidCount).toDecimalPlaces(1, Decimal.ROUND_HALF_UP).toNumber() : 0;
-
-            // 计算大众原始分（去除附加分和扣分）
+          if (scoringScheme === 'E' || scoringScheme === 'F') {
+            // 计算大众原始分（去除附加分和扣分），E/F 方案共用
             let publicOriginalScore = 0;
             if (scoreData.publicScores) {
               const playerPublicScore = scoreData.publicScores.find(ps => ps.playerCode === level.playerCode);
@@ -413,9 +393,35 @@ export async function calculateOriginalScoreRanking(filters?: RankingFilters): P
               }
             }
 
-            // 计算评分方案E的原始分：评委原始分*75% + 大众原始分*25%
-            originalScore = new Decimal(judgeOriginalScore).times(0.75).plus(new Decimal(publicOriginalScore).times(0.25)).toDecimalPlaces(1, Decimal.ROUND_HALF_UP).toNumber();
-            calculatedOriginalScore = originalScore;
+            if (scoringScheme === 'E') {
+              // 评分方案E：评委评分去除附加分*75% + 大众评分去除附加分*25%
+
+              // 计算评委原始分（去除加分项和扣分项）
+              let judgeOriginalScoreSum = 0;
+              let judgeValidCount = 0;
+              for (const record of playerScore.records) {
+                if (!record.isRevoked) {
+                  let judgeBaseScore = 0;
+                  for (const [key, value] of Object.entries(record.scores)) {
+                    if (key !== '加分项' && key !== '扣分项') {
+                      const score = typeof value === 'number' ? value : Number(value);
+                      judgeBaseScore += score;
+                    }
+                  }
+                  judgeOriginalScoreSum += judgeBaseScore;
+                  judgeValidCount++;
+                }
+              }
+              const judgeOriginalScore = judgeValidCount > 0 ? new Decimal(judgeOriginalScoreSum).div(judgeValidCount).toDecimalPlaces(1, Decimal.ROUND_HALF_UP).toNumber() : 0;
+
+              // 计算评分方案E的原始分：评委原始分*75% + 大众原始分*25%
+              originalScore = new Decimal(judgeOriginalScore).times(0.75).plus(new Decimal(publicOriginalScore).times(0.25)).toDecimalPlaces(1, Decimal.ROUND_HALF_UP).toNumber();
+              calculatedOriginalScore = originalScore;
+            } else {
+              // 评分方案F：纯大众评分，原始分即为大众原始分（去除附加分和扣分）
+              originalScore = publicOriginalScore;
+              calculatedOriginalScore = originalScore;
+            }
           } else {
             // 其他评分方案的原始分计算（保持原有逻辑）
             let originalScoreSum = 0;
