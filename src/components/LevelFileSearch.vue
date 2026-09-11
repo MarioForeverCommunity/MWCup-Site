@@ -299,12 +299,8 @@ function downloadMusicPack() {
   // 届次中文名（如“2026年第十五届”），与 rankingCalculator 的 editionMap 对应值一致
   const editionName = getEditionDisplayText(selectedYear.value)
   const url = MUSIC_PACK_BASE_URL + encodeURIComponent(editionName) + '/' + encodeURIComponent(currentMusicPackName.value)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = currentMusicPackName.value
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+  // 新窗口打开音乐包链接
+  window.open(url, '_blank')
 }
 
 /**
