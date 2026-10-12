@@ -1,4 +1,4 @@
-/* 
+/*
  * theme.css - 全局主题样式
  * 定义了项目的橙色主题配色方案和通用样式变量
  */
@@ -9,7 +9,7 @@
   --primary-hover: #ff8c69;
   --primary-active: #e55347;
   --primary-dark: #d45537;
-  
+
   /* 背景色 */
   --bg-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
   --bg-container: rgba(255, 248, 240, 0.8);
@@ -24,52 +24,52 @@
   --bg-input: rgba(255, 250, 245, 0.9);
   --bg-error: rgba(255, 234, 234, 0.9);
   --bg-success: rgba(240, 248, 255, 0.9);
-  
+
   /* 强调色 */
   --accent-color: #50c878;
-  
+
   /* 边框色 */
   --border-light: rgba(255, 210, 190, 0.6);
   --border-medium: rgba(255, 180, 150, 0.5);
   --border-strong: rgba(255, 140, 105, 0.3);
   --border-accent: rgba(255, 140, 105, 0.2);
-  
+
   /* 文字颜色 */
   --text-primary: #2c3e50;
   --text-secondary: #34495e;
   --text-muted: #7f8c8d;
   --text-link: #3498db;
   --text-error: #e74c3c;
-  
+
   /* 阴影 */
   --shadow-light: 0 6px 20px rgba(255, 140, 105, 0.1);
   --shadow-medium: 0 8px 25px rgba(255, 140, 105, 0.15);
   --shadow-strong: 0 15px 40px rgba(255, 140, 105, 0.2);
   --shadow-button: 0 6px 20px rgba(255, 99, 71, 0.25);
-  
+
   /* 模糊效果 */
   --blur-light: blur(8px);
   --blur-medium: blur(12px);
   --blur-strong: blur(18px);
-  
+
   /* 圆角 */
   --radius-small: 6px;
   --radius-medium: 8px;
   --radius-large: 12px;
   --radius-xl: 15px;
   --radius-xxl: 20px;
-  
+
   /* 间距 */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
   --spacing-lg: 20px;
   --spacing-xl: 30px;
-  
+
   /* 字体 */
-  --font-family: Helvetica, Arial, "Microsoft YaHei", "PingFang SC", "WenQuanYi Micro Hei", "Tahoma", sans-serif;
+  --font-family: Inter, Helvetica, Arial, "Microsoft YaHei", "PingFang SC", "WenQuanYi Micro Hei", Tahoma, sans-serif;
   --font-mono: 'Courier New', monospace;
-  
+
   /* 过渡动画 */
   --transition-fast: all 0.2s ease;
   --transition-normal: all 0.3s ease;
