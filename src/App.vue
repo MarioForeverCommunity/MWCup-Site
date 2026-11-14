@@ -463,7 +463,7 @@ const formatBuildTime = (isoString: string) => {
     top: 0;
     left: 0;
     width: 250px;
-    height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     z-index: 1001;
