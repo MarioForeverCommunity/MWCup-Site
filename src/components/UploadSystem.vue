@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getEditionOptions } from '../utils/editionHelper'
 import { COMPETITION_YEARS, ARCHIVE_YEARS } from '../utils/editionHelper'
@@ -35,6 +35,15 @@ const onYearChange = () => {
   }
 }
 
+// 年份变化时重置 iframe 加载状态
+watch(activeYear, () => {
+  resetIframeState()
+})
+
+onBeforeUnmount(() => {
+  if (iframeTimer) clearTimeout(iframeTimer)
+})
+
 // 使用 getEditionOptions 生成带有届数的选项
 const competitionOptions = getEditionOptions([...competitionYears])
 
@@ -66,6 +75,40 @@ const ysepanPassword = computed(() => getYsepanPassword(activeYear.value))
 
 // 判断是否显示iframe（只有比赛系统显示）
 const showIframe = computed(() => competitionYears.includes(activeYear.value))
+
+// iframe 加载状态：加载中 / 加载失败（跨域 iframe 的 onerror 不可靠，用超时兜底）
+const iframeLoading = ref(false)
+const iframeFailed = ref(false)
+let iframeTimer: ReturnType<typeof setTimeout> | undefined
+const IFRAME_TIMEOUT = 15000
+
+const onIframeLoad = () => {
+  if (iframeTimer) clearTimeout(iframeTimer)
+  iframeLoading.value = false
+  iframeFailed.value = false
+}
+
+const resetIframeState = () => {
+  if (iframeTimer) clearTimeout(iframeTimer)
+  iframeFailed.value = false
+  iframeLoading.value = showIframe.value
+  if (showIframe.value) {
+    iframeTimer = setTimeout(() => {
+      if (iframeLoading.value) {
+        iframeLoading.value = false
+        iframeFailed.value = true
+      }
+    }, IFRAME_TIMEOUT)
+  }
+}
+
+const retryIframe = () => {
+  resetIframeState()
+}
+
+onMounted(() => {
+  resetIframeState()
+})
 
 // 临时禁用的年份列表（后续如需禁用某个年份，可在此添加）
 const disabledYears: readonly string[] = ['']
@@ -135,13 +178,27 @@ const openUrl = () => {
 
     <div v-else-if="showIframe" class="iframe-container">
       <iframe
+        :key="currentUrl"
         :src="currentUrl"
         frameborder="0"
         class="upload-iframe"
         title="Mario Worker Cup 上传系统"
         sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups allow-modals"
         loading="lazy"
+        @load="onIframeLoad"
       ></iframe>
+      <div v-if="iframeLoading" class="iframe-overlay">
+        <div class="iframe-hint">上传系统加载中…</div>
+      </div>
+      <div v-if="iframeFailed" class="iframe-overlay iframe-error">
+        <div class="notice-content">
+          <div class="notice-text">上传系统加载超时或未响应</div>
+          <div class="iframe-error-actions">
+            <button class="btn-base btn-primary" @click="retryIframe">重新加载</button>
+            <button class="btn-base" @click="openUrl">在新标签页打开</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -187,6 +244,7 @@ const openUrl = () => {
 }
 
 .iframe-container {
+  position: relative;
   flex: 1;
   width: 100%;
   overflow: hidden;
@@ -229,6 +287,31 @@ const openUrl = () => {
   min-height: 760px;
   border-top: 2px solid var(--primary-hover);
   flex: 1;
+}
+
+.iframe-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-secondary);
+  z-index: 1;
+}
+
+.iframe-hint {
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.iframe-error .notice-text {
+  margin-bottom: var(--spacing-md);
+}
+
+.iframe-error-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
 }
 
 /* 响应式调整 */

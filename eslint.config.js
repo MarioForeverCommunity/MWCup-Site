@@ -41,6 +41,17 @@ export default [
   },
 
   {
+    name: 'app/tests',
+    files: ['tests/**/*.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.es2022
+      }
+    }
+  },
+
+  {
     name: 'app/vue-rules',
     files: ['**/*.vue'],
     languageOptions: {
