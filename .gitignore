@@ -25,6 +25,7 @@ dist-ssr
 .editorconfig
 .claude
 .trae
+.docs/*
 
 public/data/levels/*
 !public/data/levels/*.json
