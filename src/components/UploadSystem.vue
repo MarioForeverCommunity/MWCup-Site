@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getEditionOptions } from '../utils/editionHelper'
 import { COMPETITION_YEARS, ARCHIVE_YEARS } from '../utils/editionHelper'
 import { uploadUrlMap as urlMap, getYsepanPassword } from '../utils/urlMap'
+import UploadSystem2027 from './UploadSystem2027.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,6 +33,17 @@ const onYearChange = () => {
     router.push(`/upload/${activeYear.value}`)
   } else {
     router.push('/upload')
+  }
+}
+
+// 2027 走完全 API 化页面（作为本页内容区，不使用 iframe）
+const isApiYear = computed(() => activeYear.value === '2027')
+const openUrl = () => {
+  if (isApiYear.value) return
+  if (showIframe.value) {
+    window.open(currentUrl.value, '_blank', 'noopener,noreferrer')
+  } else {
+    window.open(currentUrl.value, '_blank')
   }
 }
 
@@ -73,8 +85,8 @@ const currentUrl = computed(() => {
 // ysepan 网盘访问密码
 const ysepanPassword = computed(() => getYsepanPassword(activeYear.value))
 
-// 判断是否显示iframe（只有比赛系统显示）
-const showIframe = computed(() => competitionYears.includes(activeYear.value))
+// 判断是否显示iframe（比赛系统年份，但 2027 走 API 页面除外）
+const showIframe = computed(() => competitionYears.includes(activeYear.value) && !isApiYear.value)
 
 // iframe 加载状态：加载中 / 加载失败（跨域 iframe 的 onerror 不可靠，用超时兜底）
 const iframeLoading = ref(false)
@@ -116,18 +128,10 @@ const disabledYears: readonly string[] = ['']
 // 判断是否显示工事中提示
 const showConstructionNotice = computed(() => disabledYears.includes(activeYear.value))
 
-// 打开链接（比赛系统新窗口不带referrer，其他正常）
-const openUrl = () => {
-  if (showIframe.value) {
-    window.open(currentUrl.value, '_blank', 'noopener,noreferrer')
-  } else {
-    window.open(currentUrl.value, '_blank')
-  }
-}
 </script>
 
 <template>
-  <div class="upload-system-container">
+  <div class="upload-system-container" :class="{ 'api-year-layout': isApiYear }">
     <div class="year-selector">
       <select
         v-model="activeYear"
@@ -156,6 +160,7 @@ const openUrl = () => {
       </select>
 
       <button
+        v-if="!isApiYear"
         class="btn-base btn-primary"
         @click="openUrl"
       >
@@ -176,6 +181,8 @@ const openUrl = () => {
       </div>
     </div>
 
+    <UploadSystem2027 v-else-if="isApiYear" />
+
     <div v-else-if="showIframe" class="iframe-container">
       <iframe
         :key="currentUrl"
@@ -187,9 +194,6 @@ const openUrl = () => {
         loading="lazy"
         @load="onIframeLoad"
       ></iframe>
-      <div v-if="iframeLoading" class="iframe-overlay">
-        <div class="iframe-hint">上传系统加载中…</div>
-      </div>
       <div v-if="iframeFailed" class="iframe-overlay iframe-error">
         <div class="notice-content">
           <div class="notice-text">上传系统加载超时或未响应</div>
@@ -218,6 +222,13 @@ const openUrl = () => {
   margin-top: var(--spacing-md);
   justify-content: center;
   align-items: center;
+}
+
+/* 2027 API 年份：整个上传容器固定为视口高度，只让内部内容区滚动，
+   这样年份选择器始终停留在顶部（与 iframe 年份内部滚动的效果一致）。 */
+.upload-system-container.api-year-layout {
+  height: 100vh;
+  overflow: hidden;
 }
 
 .password-notice {
@@ -297,11 +308,6 @@ const openUrl = () => {
   justify-content: center;
   background-color: var(--background-secondary);
   z-index: 1;
-}
-
-.iframe-hint {
-  color: var(--text-secondary);
-  font-size: 16px;
 }
 
 .iframe-error .notice-text {

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import RoundSelector from '../components/RoundSelector.vue'
 import UploadSystem from '../components/UploadSystem.vue'
+import Admin2027 from '../components/Admin2027.vue'
 import LevelFileSearch from '../components/LevelFileSearch.vue'
 import StatsAnalysis from '../components/StatsAnalysis.vue'
 import DocumentDisplay from '../components/DocumentDisplay.vue'
@@ -31,7 +32,7 @@ const routes = [
   {
     path: '/upload',
     name: 'Upload',
-    component: UploadSystem
+    redirect: '/upload/2027'
   },
   {
     path: '/upload/:year',
@@ -96,6 +97,13 @@ const routes = [
     path: '/poker',
     name: 'Poker',
     component: PokerTable
+  },
+  {
+    // 管理控制台：URL 带 secret（即 manage_url），由比赛系统 /admin_gate/<secret> 校验后直接返回本 SPA，
+    // 浏览器 URL 保持不变（与旧版 /manage/<secret> 行为一致）
+    path: '/admin/2027/:secret',
+    name: 'Admin2027',
+    component: Admin2027
   }
 ]
 

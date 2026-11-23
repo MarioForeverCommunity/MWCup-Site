@@ -20,6 +20,8 @@ const getActiveTab = () => {
   if (path.startsWith('/stats')) return 'stats'
   if (path.startsWith('/docs')) return 'docs'
   if (path.startsWith('/poker')) return 'poker'
+  // 管理后台等独立页面不激活任何侧边栏导航
+  if (path.startsWith('/admin')) return ''
   return 'matches'
 }
 
@@ -71,6 +73,7 @@ watch(() => route.path, (newPath) => {
   else if (newPath.startsWith('/stats')) activeTab.value = 'stats'
   else if (newPath.startsWith('/docs')) activeTab.value = 'docs'
   else if (newPath.startsWith('/poker')) activeTab.value = 'poker'
+  else if (newPath.startsWith('/admin')) activeTab.value = ''
   else activeTab.value = 'matches'
 }, { immediate: true })
 
