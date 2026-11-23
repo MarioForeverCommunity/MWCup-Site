@@ -34,6 +34,31 @@ bun run deploy     # 部署到生产服务器 (bash deploy.sh)
 
 **验证顺序**: `lint` → `build` (包含类型检查)
 
+### 本地调试 2027 上传页与管理后台
+
+2027 的比赛系统已无独立域名，全部经官网域名下的 `/api/2027/` 访问。Vite dev server 已配置代理，本地即可直接调试，无需先部署：
+
+```bash
+bun run dev     # 默认把 /api/2027/* 代理到线上 https://mwcup.marioforever.net
+```
+
+两种目标模式：
+
+1. **默认（连线上比赛系统）**：路径原样转发，由线上 Nginx 完成 `/api/2027/x → /api/x` 映射。
+   本地登录管理后台时，session cookie 会种在 `localhost`（代理同源），刷新后仍有效。
+2. **连本地比赛系统**：先本地起 uvicorn（`uvicorn contest:app --port 7227`），再
+
+   ```bash
+   # 方式一：环境变量
+   MWCUP_2027_ORIGIN=http://127.0.0.1:7227 bun run dev
+   # 方式二：项目根目录 .env.local 写入
+   MWCUP_2027_ORIGIN=http://127.0.0.1:7227
+   ```
+
+   此时代理会按生产 Nginx 规则在本地做路径映射：`download/`、`musics/`、`manage_logout` 走无 `/api/` 前缀的路由，其余加 `/api/`。
+
+2022–2026 的 iframe 页无需代理，直接嵌入各年度域名（`https://mwcup20xx.marioforever.net`）。
+
 ## 项目结构
 
 ```
